@@ -1,0 +1,103 @@
+from rest_framework import serializers
+
+from rooms.models import Room
+from rooms.services import calculate_stay_total
+
+from .models import Booking
+from .services import create_booking, is_room_available
+
+
+class BookingListSerializer(serializers.ModelSerializer):
+    hospedaje = serializers.CharField(source="room.accommodation.name", read_only=True)
+    habitacion = serializers.CharField(source="room.number", read_only=True)
+    ciudad = serializers.CharField(source="room.accommodation.city", read_only=True)
+    huesped = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Booking
+        fields = (
+            "id",
+            "hospedaje",
+            "habitacion",
+            "ciudad",
+            "huesped",
+            "check_in",
+            "check_out",
+            "total_amount",
+            "status",
+            "created_at",
+        )
+
+    def get_huesped(self, obj):
+        return {
+            "id": obj.guest_id,
+            "email": obj.guest.email,
+            "nombre": obj.guest.get_full_name() or obj.guest.username,
+        }
+
+
+class BookingDetailSerializer(BookingListSerializer):
+    room_id = serializers.IntegerField(source="room.id", read_only=True)
+    desglose_precio = serializers.SerializerMethodField()
+
+    class Meta(BookingListSerializer.Meta):
+        fields = BookingListSerializer.Meta.fields + (
+            "room_id",
+            "desglose_precio",
+            "updated_at",
+        )
+
+    def get_desglose_precio(self, obj):
+        if obj.status == Booking.Status.CANCELADA:
+            return None
+        try:
+            return calculate_stay_total(obj.room, obj.check_in, obj.check_out)
+        except ValueError:
+            return None
+
+
+class BookingCreateSerializer(serializers.Serializer):
+    room = serializers.PrimaryKeyRelatedField(
+        queryset=Room.objects.select_related("accommodation")
+    )
+    check_in = serializers.DateField()
+    check_out = serializers.DateField()
+
+    def validate(self, data):
+        room = data["room"]
+        check_in = data["check_in"]
+        check_out = data["check_out"]
+        available, message = is_room_available(room, check_in, check_out)
+        if not available:
+            raise serializers.ValidationError({"detail": message})
+        return data
+
+    def create(self, validated_data):
+        request = self.context["request"]
+        return create_booking(
+            request.user,
+            validated_data["room"],
+            validated_data["check_in"],
+            validated_data["check_out"],
+        )
+
+
+class BookingPreviewSerializer(serializers.Serializer):
+    """Vista previa de precio antes de confirmar reserva."""
+
+    room = serializers.PrimaryKeyRelatedField(queryset=Room.objects.all())
+    check_in = serializers.DateField()
+    check_out = serializers.DateField()
+
+    def validate(self, data):
+        available, message = is_room_available(
+            data["room"], data["check_in"], data["check_out"]
+        )
+        if not available:
+            raise serializers.ValidationError({"detail": message})
+        return data
+
+    def to_representation(self, instance):
+        return calculate_stay_total(
+            instance["room"], instance["check_in"], instance["check_out"]
+        )

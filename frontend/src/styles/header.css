@@ -1,0 +1,585 @@
+/* Site header v2 */
+
+.site-header--v2 {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent;
+  transition:
+    background 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    padding 0.25s ease;
+}
+
+.site-header--v2.is-scrolled {
+  background: #fff;
+  border-bottom-color: rgba(30, 58, 95, 0.08);
+  box-shadow: 0 4px 24px rgba(30, 58, 95, 0.08);
+}
+
+.header-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.85rem 16px;
+  transition: padding 0.25s ease;
+}
+
+.site-header--v2.is-scrolled .header-container {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+
+@media (min-width: 769px) {
+  .header-container {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+.header-grid {
+  display: flex;
+  align-items: center;
+  gap: 1rem 1.5rem;
+}
+
+/* Marca */
+
+.hospy-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  color: inherit;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.hospy-brand:hover {
+  text-decoration: none;
+  opacity: 0.94;
+}
+
+.hospy-brand-icon {
+  flex-shrink: 0;
+  border-radius: 10px;
+}
+
+.hospy-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.hospy-brand-name {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--home-deep, #1e3a5f);
+  line-height: 1.1;
+}
+
+.hospy-brand-tagline {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--home-turquoise, #2c7da0);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hospy-brand-verified {
+  display: none;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #1e7a4a;
+  background: rgba(30, 122, 74, 0.1);
+  border: 1px solid rgba(30, 122, 74, 0.2);
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 900px) {
+  .hospy-brand-verified {
+    display: inline-flex;
+  }
+}
+
+/* Nav escritorio */
+
+.header-nav-desktop {
+  display: none;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+
+@media (min-width: 769px) {
+  .header-nav-desktop {
+    display: flex;
+  }
+}
+
+.header-nav-link {
+  position: relative;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #3d4f63;
+  text-decoration: none;
+  padding: 0.35rem 0;
+  transition: color 0.2s ease;
+}
+
+.header-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: var(--home-turquoise, #2c7da0);
+  border-radius: 2px;
+  transition: width 0.22s ease;
+}
+
+.header-nav-link:hover,
+.header-nav-link.is-active {
+  color: var(--home-deep, #1e3a5f);
+  text-decoration: none;
+}
+
+.header-nav-link:hover::after,
+.header-nav-link.is-active::after {
+  width: 100%;
+}
+
+/* Zona derecha */
+
+.header-end {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.header-inbox-wrap {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .header-inbox-wrap {
+    display: flex;
+  }
+}
+
+.header-auth-desktop {
+  display: none;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+@media (min-width: 769px) {
+  .header-auth-desktop {
+    display: flex;
+  }
+}
+
+.header-link-auth {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--home-deep, #1e3a5f);
+  text-decoration: none;
+  padding: 0.4rem 0.5rem;
+  position: relative;
+}
+
+.header-link-auth::after {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.2rem;
+  height: 2px;
+  background: var(--home-turquoise, #2c7da0);
+  transform: scaleX(0);
+  transition: transform 0.22s ease;
+}
+
+.header-link-auth:hover {
+  text-decoration: none;
+  color: var(--home-turquoise, #2c7da0);
+}
+
+.header-link-auth:hover::after {
+  transform: scaleX(1);
+}
+
+.btn-header-register {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1.15rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--home-turquoise, #2c7da0), var(--home-deep, #1e3a5f));
+  border: none;
+  box-shadow: 0 4px 14px rgba(44, 125, 160, 0.35);
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.btn-header-register:hover {
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(30, 58, 95, 0.28);
+  filter: brightness(1.05);
+}
+
+/* Menú usuario */
+
+.header-user-menu--desktop {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .header-user-menu--desktop {
+    display: block;
+  }
+}
+
+.header-user-menu {
+  position: relative;
+}
+
+.header-user-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.5rem 0.25rem 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.header-user-trigger:hover {
+  border-color: var(--home-turquoise, #2c7da0);
+  box-shadow: 0 2px 12px rgba(44, 125, 160, 0.12);
+}
+
+.header-user-name {
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--home-deep, #1e3a5f);
+}
+
+.header-user-chevron {
+  color: var(--muted);
+  transition: transform 0.2s ease;
+}
+
+.header-user-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.header-user-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 120;
+  min-width: 15rem;
+  padding: 0.35rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(30, 58, 95, 0.15);
+  animation: header-dropdown-in 0.2s ease;
+}
+
+@keyframes header-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header-user-dropdown-head {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.25rem;
+}
+
+.header-user-dropdown-head strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.header-user-dropdown-head .muted {
+  font-size: 0.75rem;
+  display: block;
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-user-item {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.header-user-item:hover {
+  background: rgba(44, 125, 160, 0.08);
+  text-decoration: none;
+}
+
+.header-user-item--danger {
+  color: var(--danger);
+}
+
+.header-user-item--danger:hover {
+  background: rgba(192, 57, 43, 0.08);
+}
+
+/* Hamburguesa */
+
+.header-menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--home-deep, #1e3a5f);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.header-menu-toggle:hover {
+  background: rgba(44, 125, 160, 0.1);
+}
+
+@media (min-width: 769px) {
+  .header-menu-toggle {
+    display: none;
+  }
+}
+
+/* Drawer móvil */
+
+.header-mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 109;
+  border: none;
+  background: rgba(15, 39, 68, 0.45);
+  animation: header-fade-in 0.25s ease;
+}
+
+.header-mobile-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 110;
+  width: min(100%, 320px);
+  height: 100%;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: calc(4.5rem + env(safe-area-inset-top, 0px)) 1.25rem 2rem;
+  background: #fff;
+  box-shadow: -8px 0 32px rgba(30, 58, 95, 0.15);
+  animation: header-drawer-in 0.28s ease;
+  overflow-y: auto;
+}
+
+@keyframes header-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes header-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.header-mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.header-mobile-nav .header-nav-link {
+  font-size: 1.05rem;
+  padding: 0.85rem 0.5rem;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.header-mobile-auth {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.header-mobile-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.header-mobile-btn--ghost {
+  color: var(--home-deep, #1e3a5f);
+  border: 1.5px solid var(--border);
+  background: #fff;
+}
+
+.header-mobile-btn--primary {
+  color: #fff;
+  background: linear-gradient(135deg, var(--home-turquoise, #2c7da0), var(--home-deep, #1e3a5f));
+  box-shadow: 0 4px 16px rgba(44, 125, 160, 0.3);
+}
+
+.header-mobile-user {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.header-mobile-user .header-user-menu {
+  width: 100%;
+}
+
+.header-mobile-user .header-user-trigger {
+  width: 100%;
+  justify-content: flex-start;
+  min-height: 48px;
+}
+
+.header-mobile-user .header-user-dropdown {
+  position: static;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+  margin-top: 0.5rem;
+}
+
+.header-mobile-menu-item {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.65rem 0.5rem;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+}
+
+.header-mobile-menu-item--danger {
+  color: var(--danger);
+}
+
+/* Móvil: ocultar auth desktop legacy */
+
+@media (max-width: 768px) {
+  .site-header--v2 .header-auth-desktop,
+  .site-header--v2 .header-user-menu--desktop {
+    display: none !important;
+  }
+
+  .hospy-brand-tagline {
+    display: none;
+  }
+
+  .hospy-brand-name {
+    font-size: 1.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-mobile-drawer,
+  .header-mobile-backdrop,
+  .header-user-dropdown {
+    animation: none;
+  }
+
+  .header-nav-link::after,
+  .header-link-auth::after {
+    transition: none;
+  }
+}

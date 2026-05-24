@@ -1,0 +1,23 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.env
+db.sqlite3
+celerybeat-schedule
+celerybeat-schedule-*
+*.log
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+staticfiles/
+media/
+.DS_Store
+Thumbs.db
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
