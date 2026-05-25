@@ -26,12 +26,13 @@ interface AuthState {
       password: string;
       username?: string;
     },
-    asOwner?: boolean,
+    options?: { asOwner?: boolean; asSponsor?: boolean },
   ) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   isRole: (...roles: UserRole[]) => boolean;
   isOwnerApproved: () => boolean;
+  isSponsorApproved: () => boolean;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -94,9 +95,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password: string;
         username?: string;
       },
-      asOwner = false,
+      options?: { asOwner?: boolean; asSponsor?: boolean },
     ) => {
-      const path = asOwner ? "/auth/registro-propietario/" : "/auth/registro/";
+      const path = options?.asSponsor
+        ? "/auth/registro-patrocinador/"
+        : options?.asOwner
+          ? "/auth/registro-propietario/"
+          : "/auth/registro/";
       const res = await api.post<RegisterResponse>(path, data, false);
       setTokens(res.access, res.refresh);
       setUser(res.user);
@@ -121,6 +126,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
+  const isSponsorApproved = useCallback(
+    () =>
+      user?.role === "patrocinador" ? user.sponsor_status === "aprobado" : false,
+    [user],
+  );
+
   const value = useMemo(
     () => ({
       user,
@@ -131,8 +142,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshUser,
       isRole,
       isOwnerApproved,
+      isSponsorApproved,
     }),
-    [user, loading, login, register, logout, refreshUser, isRole, isOwnerApproved],
+    [
+      user,
+      loading,
+      login,
+      register,
+      logout,
+      refreshUser,
+      isRole,
+      isOwnerApproved,
+      isSponsorApproved,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

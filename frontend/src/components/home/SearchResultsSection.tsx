@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { AccommodationListItem } from "../../api/types";
 import type { SearchFilters } from "../SearchBar";
+import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { PrimeIcon } from "../PrimeIcon";
 import { AccommodationCard } from "../AccommodationCard";
 import { EmptyState } from "../ui/EmptyState";
@@ -31,12 +32,13 @@ export function SearchResultsSection({
   onClear,
   onRetry,
 }: Props) {
+  const { t } = useLocaleCurrency();
   const firstCardRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     if (!loading && !error && items.length > 0) {
-      const t = window.setTimeout(() => firstCardRef.current?.focus(), 400);
-      return () => window.clearTimeout(t);
+      const timer = window.setTimeout(() => firstCardRef.current?.focus(), 400);
+      return () => window.clearTimeout(timer);
     }
   }, [loading, error, items.length]);
 
@@ -55,12 +57,12 @@ export function SearchResultsSection({
           {showBackToHome && onBackToHome && (
             <button type="button" className="btn btn-outline btn-sm" onClick={onBackToHome}>
               <PrimeIcon name="pi-arrow-left" size={14} />
-              Volver al inicio
+              {t("home.backHome")}
             </button>
           )}
           {(filters || hasBrowse) && (
             <button type="button" className="btn btn-outline btn-sm" onClick={onClear}>
-              Limpiar filtros
+              {t("common.clearFilters")}
             </button>
           )}
         </div>
@@ -71,9 +73,9 @@ export function SearchResultsSection({
       {!loading && error && (
         <EmptyState
           icon="pi-exclamation-triangle"
-          title="No pudimos cargar los resultados"
+          title={t("home.loadErrorTitle")}
           message={error}
-          actionLabel="Reintentar"
+          actionLabel={t("common.retry")}
           onAction={onRetry}
         />
       )}
@@ -81,8 +83,8 @@ export function SearchResultsSection({
       {!loading && !error && items.length === 0 && (
         <EmptyState
           icon="pi-search"
-          title="Sin alojamientos"
-          message="No hay opciones con esos criterios. Prueba otras fechas, otra ciudad o quita filtros."
+          title={t("home.noResultsTitle")}
+          message={t("home.noResultsMsg")}
         />
       )}
 

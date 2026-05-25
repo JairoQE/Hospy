@@ -317,7 +317,7 @@ export function AccommodationForm({
                   </div>
                 ) : (
                   <>
-                    <label className="checkbox-label service-check">
+                    <label className="checkbox-label service-check-label">
                       <input
                         type="checkbox"
                         checked={value.service_ids.includes(s.id)}

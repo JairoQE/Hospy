@@ -186,3 +186,25 @@ def test_login(api_client, huesped):
     )
     assert response.status_code == 200
     assert "access" in response.data
+
+
+@pytest.mark.django_db
+def test_config_contacto_usa_datos_administrador(api_client, admin_user):
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    User.objects.create_user(
+        email="viejo@hospy.local",
+        username="admin_viejo",
+        password="Testpass123!",
+        role=User.Role.ADMINISTRADOR,
+        is_superuser=True,
+    )
+    admin_user.phone = "+51 902 192 870"
+    admin_user.save(update_fields=["phone"])
+
+    response = api_client.get("/api/v1/anuncios/config/")
+    assert response.status_code == 200
+    assert response.data["admin_email"] == admin_user.email
+    assert "902" in response.data["admin_phone"]
+    assert response.data["admin_whatsapp_url"].startswith("https://wa.me/")

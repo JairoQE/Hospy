@@ -1,0 +1,673 @@
+/* Perfil detallado del propietario — Hospy */
+
+.owner-store-page {
+  min-height: 60vh;
+  background: #f8fafc;
+  padding-bottom: 3rem;
+}
+
+.owner-store-shell {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+@media (min-width: 768px) {
+  .owner-store-shell {
+    padding: 24px;
+  }
+}
+
+.owner-store-shell--narrow {
+  max-width: 640px;
+}
+
+.owner-store-loading {
+  text-align: center;
+  padding: 4rem 0;
+}
+
+.owner-store-breadcrumb {
+  margin-bottom: 1rem;
+}
+
+.owner-store-breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.owner-store-breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.owner-store-page-kicker {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+}
+
+.card-elevated {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+/* —— Hero —— */
+.owner-store-hero {
+  position: relative;
+}
+
+.owner-store-hero-cover {
+  height: 120px;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.35;
+}
+
+@media (min-width: 1024px) {
+  .owner-store-hero-cover {
+    height: 160px;
+  }
+}
+
+.owner-store-hero-inner {
+  padding: 1.25rem 1.25rem 1.5rem;
+  position: relative;
+}
+
+.owner-store-hero-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .owner-store-hero-main {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+.owner-store-hero-avatar {
+  width: 96px !important;
+  height: 96px !important;
+  font-size: 2rem !important;
+}
+
+.owner-store-hero-name {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.owner-store-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+}
+
+@media (min-width: 1024px) {
+  .owner-store-badges {
+    justify-content: flex-start;
+  }
+}
+
+.owner-store-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.owner-store-badge-pill--verified {
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.owner-store-badge-pill--super {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.owner-store-badge-pill--fast {
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.owner-store-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+@media (min-width: 640px) {
+  .owner-store-metrics {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .owner-store-metrics {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.owner-store-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  text-align: center;
+  min-width: 0;
+}
+
+.owner-store-metric .star-rating {
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.owner-store-metric .star-rating-value {
+  font-size: 1.15rem;
+}
+
+.owner-store-metric strong {
+  display: block;
+  font-size: 1.25rem;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.owner-store-metric-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.3;
+  margin-top: 0.1rem;
+}
+
+.owner-store-metric-muted {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.owner-store-metric--link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.owner-store-metric--link:hover strong {
+  color: var(--primary);
+}
+
+.owner-store-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+@media (min-width: 1024px) {
+  .owner-store-hero-actions {
+    justify-content: flex-start;
+  }
+}
+
+.owner-store-btn-outline {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+}
+
+.owner-store-btn-outline.is-active {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.owner-store-btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #475569;
+}
+
+.owner-store-contact-hint {
+  margin: 0.75rem 0 0;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.owner-store-trust-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* —— About —— */
+.owner-store-about {
+  padding: 1.25rem 1.5rem;
+}
+
+.owner-store-section-title {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.owner-store-about-text {
+  margin: 0 0 1.25rem;
+  line-height: 1.6;
+  color: #334155;
+}
+
+.owner-store-about-subtitle {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.owner-store-verify-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.owner-store-verify-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.owner-store-verify-list .pi {
+  color: #16a34a;
+}
+
+.owner-store-languages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+}
+
+.owner-store-lang-chip {
+  padding: 0.3rem 0.75rem;
+  background: #f1f5f9;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: #1e293b;
+}
+
+.owner-store-text-link {
+  color: var(--primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.owner-store-text-link:hover {
+  text-decoration: underline;
+}
+
+/* —— Filters —— */
+.owner-store-listings-section {
+  margin-bottom: 1.25rem;
+}
+
+.owner-store-listings-section > .owner-store-section-title {
+  padding: 0 0.25rem;
+}
+
+.owner-store-filters-wrap {
+  margin-bottom: 1rem;
+}
+
+.owner-store-filters-scroll {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding: 0.25rem 0 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.owner-store-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  padding: 0.45rem 0.9rem;
+  border: none;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #1e293b;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.owner-store-chip:hover {
+  background: #e2e8f0;
+}
+
+.owner-store-chip.is-active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.owner-store-chip--sm {
+  font-size: 0.82rem;
+  padding: 0.35rem 0.7rem;
+}
+
+.owner-store-chip--filter {
+  border: 1px dashed #94a3b8;
+  background: #fff;
+}
+
+.owner-store-filters-panel {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.owner-store-filters-panel-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.owner-store-filters-panel-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.owner-store-filters-price {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.owner-store-filters-price input[type="range"] {
+  width: 100%;
+}
+
+/* —— Property grid —— */
+.owner-store-listings-count {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+}
+
+.owner-store-properties-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .owner-store-properties-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .owner-store-properties-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.owner-store-property-card {
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.owner-store-property-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.owner-store-property-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.owner-store-property-image {
+  aspect-ratio: 4 / 3;
+  background: #e2e8f0 center / cover no-repeat;
+  position: relative;
+}
+
+.owner-store-property-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.owner-store-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.owner-store-badge--new {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.owner-store-badge--offer {
+  left: auto;
+  right: 0.5rem;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.owner-store-property-body {
+  padding: 1rem;
+}
+
+.owner-store-property-type {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.04em;
+}
+
+.owner-store-property-title {
+  margin: 0.25rem 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.owner-store-property-location {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.owner-store-property-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.78rem;
+  color: #475569;
+}
+
+.owner-store-property-features span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.owner-store-property-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.owner-store-property-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.owner-store-property-rating--muted {
+  font-weight: 500;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.owner-store-property-price strong {
+  font-size: 1.05rem;
+  color: var(--primary);
+}
+
+.owner-store-property-price-label,
+.owner-store-property-price-unit {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.owner-store-property-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.owner-store-listings-empty,
+.owner-store-load-more {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.owner-store-load-more {
+  padding-top: 0.5rem;
+}
+
+/* —— Reviews —— */
+.owner-store-reviews {
+  padding: 1.25rem 1.5rem;
+}
+
+.owner-store-reviews-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #64748b;
+}
+
+.owner-store-reviews-empty p {
+  margin: 0.75rem 0 0;
+  max-width: 40ch;
+  margin-inline: auto;
+}
+
+.owner-store-reviews-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.owner-store-review-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.owner-store-review-item:last-child {
+  border-bottom: none;
+}
+
+.owner-store-review-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.owner-store-review-acc {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+}
+
+.owner-store-review-comment {
+  margin: 0;
+  line-height: 1.5;
+  color: #334155;
+}
+
+/* —— Bottom CTA —— */
+.owner-store-bottom-cta {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.owner-store-bottom-cta h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+}
+
+.owner-store-bottom-cta p {
+  margin: 0 0 1rem;
+}

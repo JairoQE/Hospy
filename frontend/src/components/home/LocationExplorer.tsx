@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { api } from "../../api/client";
 import type { BrowseTile } from "../../api/types";
 import type { LocationSearchParams } from "../../data/peruLocations";
+import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { PrimeIcon } from "../PrimeIcon";
 import { BrowseTilesCarousel } from "./BrowseTilesCarousel";
 import { Skeleton } from "../ui/Skeleton";
@@ -23,16 +24,10 @@ interface Props {
 
 type Level = "departamento" | "provincia" | "distrito";
 
-const KIND_LABEL: Record<Level, string> = {
-  departamento: "Departamentos",
-  provincia: "Provincias",
-  distrito: "Distritos",
-};
-
-const ZONA_LABEL: Record<string, string> = {
-  costa: "Costa",
-  sierra: "Sierra",
-  selva: "Selva",
+const KIND_KEY: Record<Level, string> = {
+  departamento: "location.departments",
+  provincia: "location.provinces",
+  distrito: "location.districts",
 };
 
 const ZONA_ORDER = ["costa", "sierra", "selva"] as const;
@@ -46,7 +41,6 @@ function groupByZona(items: UbigeoItem[]) {
   }
   return ZONA_ORDER.filter((z) => buckets[z]?.length).map((z) => ({
     zona: z,
-    label: ZONA_LABEL[z] ?? z,
     items: buckets[z]!,
   }));
 }
@@ -56,6 +50,10 @@ export function LocationExplorer({
   departmentsLoading = false,
   onSelect,
 }: Props) {
+  const { t, tVars } = useLocaleCurrency();
+  const zonaLabel = (zona: string) => t(`location.${zona}`);
+  const kindLabel = (level: Level) => t(KIND_KEY[level]);
+
   const [depto, setDepto] = useState<UbigeoItem | null>(null);
   const [prov, setProv] = useState<UbigeoItem | null>(null);
   const [items, setItems] = useState<UbigeoItem[]>([]);
@@ -75,12 +73,12 @@ export function LocationExplorer({
       setItems(Array.isArray(data) ? data : []);
       setLevel("provincia");
     } catch {
-      setError("No se pudieron cargar las provincias.");
+      setError(t("location.loadProvError"));
       setItems([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const loadDistritos = useCallback(
     async (provincia: string, departamento?: string) => {
@@ -93,13 +91,13 @@ export function LocationExplorer({
         setItems(Array.isArray(data) ? data : []);
         setLevel("distrito");
       } catch {
-        setError("No se pudieron cargar los distritos.");
+        setError(t("location.loadDistError"));
         setItems([]);
       } finally {
         setLoading(false);
       }
     },
-    [],
+    [t],
   );
 
   const resetToRoot = () => {
@@ -158,8 +156,11 @@ export function LocationExplorer({
 
   const grouped = useMemo(() => {
     if (level !== "provincia") return null;
-    return groupByZona(filteredItems);
-  }, [filteredItems, level]);
+    return groupByZona(filteredItems).map((g) => ({
+      ...g,
+      label: zonaLabel(g.zona),
+    }));
+  }, [filteredItems, level, t]);
 
   const showZonaGroups = level === "provincia" && grouped && grouped.length > 0;
 
@@ -167,15 +168,12 @@ export function LocationExplorer({
 
   return (
     <section className="home-block location-explorer">
-      <h2 className="home-block-title">Explora por departamento</h2>
-      <p className="muted home-block-sub">
-        Provincias y distritos agrupados por región natural (costa, sierra, selva) según UBIGEO
-        INEI.
-      </p>
+      <h2 className="home-block-title">{t("home.browseByDept")}</h2>
+      <p className="muted home-block-sub">{t("home.browseByDeptSub")}</p>
 
-      <nav className="location-breadcrumb" aria-label="Ubicación">
+      <nav className="location-breadcrumb" aria-label={t("search.destination")}>
         <button type="button" className="location-crumb" onClick={resetToRoot}>
-          Perú
+          {t("common.peru")}
         </button>
         {depto && (
           <span className="location-crumb-wrap">
@@ -192,7 +190,7 @@ export function LocationExplorer({
               {prov.nombre}
               {prov.zona_natural && (
                 <span className={`location-zona-badge location-zona-${prov.zona_natural}`}>
-                  {ZONA_LABEL[prov.zona_natural]}
+                  {zonaLabel(prov.zona_natural)}
                 </span>
               )}
             </span>
@@ -211,16 +209,16 @@ export function LocationExplorer({
           <BrowseTilesCarousel
             tiles={departmentTiles}
             onSelect={onDepartmentTile}
-            ariaLabel="Departamentos del Perú"
+            ariaLabel={t("location.deptsAria")}
           />
         ) : (
-          <p className="muted">No hay departamentos configurados en el inicio.</p>
+          <p className="muted">{t("location.noDepts")}</p>
         )
       ) : (
         <>
           <div className="location-explorer-toolbar">
             <p className="location-level-label">
-              {KIND_LABEL[level]}
+              {kindLabel(level)}
               {items.length > 0 && (
                 <span className="location-count"> ({items.length})</span>
               )}
@@ -229,10 +227,14 @@ export function LocationExplorer({
               <input
                 type="search"
                 className="location-search"
-                placeholder={`Buscar ${KIND_LABEL[level].toLowerCase()}…`}
+                placeholder={tVars("location.searchPlaceholder", {
+                  kind: kindLabel(level).toLowerCase(),
+                })}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                aria-label={`Filtrar ${KIND_LABEL[level].toLowerCase()}`}
+                aria-label={tVars("location.filterAria", {
+                  kind: kindLabel(level).toLowerCase(),
+                })}
               />
             )}
           </div>
@@ -270,7 +272,9 @@ export function LocationExplorer({
                 </section>
               ))}
               {filteredItems.length === 0 && query && (
-                <p className="muted location-grid-empty">Sin coincidencias para «{query}».</p>
+                <p className="muted location-grid-empty">
+                  {tVars("location.noMatch", { query })}
+                </p>
               )}
             </div>
           )}
@@ -289,7 +293,7 @@ export function LocationExplorer({
                   <span className="location-chip-name">{item.nombre}</span>
                   {level === "provincia" && item.zona_natural && (
                     <span className={`location-zona-tag location-zona-${item.zona_natural}`}>
-                      {ZONA_LABEL[item.zona_natural]}
+                      {zonaLabel(item.zona_natural)}
                     </span>
                   )}
                   {level === "provincia" && (
@@ -299,7 +303,7 @@ export function LocationExplorer({
               ))}
               {filteredItems.length === 0 && !loading && (
                 <p className="muted location-grid-empty">
-                  {query ? `Sin coincidencias para «${query}».` : "Sin resultados."}
+                  {query ? tVars("location.noMatch", { query }) : t("location.noResults")}
                 </p>
               )}
             </div>
@@ -316,7 +320,7 @@ export function LocationExplorer({
               }
             }}
           >
-            <PrimeIcon name="pi-arrow-left" size={14} /> Volver
+            <PrimeIcon name="pi-arrow-left" size={14} /> {t("common.back")}
           </button>
         </>
       )}

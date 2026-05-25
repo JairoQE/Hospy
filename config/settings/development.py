@@ -22,7 +22,12 @@ if os.environ.get("USE_SQLITE", "").lower() in ("true", "1", "yes"):
         }
     }
     CACHES = {  # noqa: F405
-        "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}
+        "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
+        "hospix": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "hospix-chat-sessions",
+            "OPTIONS": {"MAX_ENTRIES": 300},
+        },
     }
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_TASK_EAGER_PROPAGATES = True

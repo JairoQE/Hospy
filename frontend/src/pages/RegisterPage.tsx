@@ -1,6 +1,7 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ApiError } from "../api/client";
+import { ApiError, api } from "../api/client";
+import type { SponsorContactConfig } from "../api/types";
 import { formatApiError, parseFieldErrors } from "../api/errors";
 import { HospyBrand } from "../components/brand/HospyBrand";
 import { PrimeIcon } from "../components/PrimeIcon";
@@ -40,9 +41,10 @@ function friendlyFieldError(key: string, message: string): string {
 
 interface Props {
   asOwner?: boolean;
+  asSponsor?: boolean;
 }
 
-export function RegisterPage({ asOwner = false }: Props) {
+export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
   const { register } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -59,6 +61,16 @@ export function RegisterPage({ asOwner = false }: Props) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [sponsorConfig, setSponsorConfig] = useState<SponsorContactConfig | null>(null);
+  const [sponsorAck, setSponsorAck] = useState(false);
+
+  useEffect(() => {
+    if (!asSponsor) return;
+    api
+      .get<SponsorContactConfig>("/anuncios/config/", false)
+      .then(setSponsorConfig)
+      .catch(() => setSponsorConfig(null));
+  }, [asSponsor]);
 
   const set = (k: keyof typeof form, v: string) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -120,6 +132,12 @@ export function RegisterPage({ asOwner = false }: Props) {
     setError("");
     setFieldErrors({});
     if (!validateAll()) return;
+    if (asSponsor && !sponsorAck) {
+      setError(
+        "Debes confirmar que contactarás al administrador por WhatsApp para el acuerdo financiero.",
+      );
+      return;
+    }
 
     setLoading(true);
     try {
@@ -130,21 +148,21 @@ export function RegisterPage({ asOwner = false }: Props) {
           last_name: form.last_name.trim(),
           password: form.password,
         },
-        asOwner,
+        { asOwner: asOwner && !asSponsor, asSponsor },
       );
       setSuccess(true);
       window.setTimeout(() => {
-        navigate(asOwner ? "/panel" : "/", { replace: true });
+        navigate(asSponsor ? "/patrocinio" : asOwner ? "/panel" : "/", { replace: true });
       }, 1400);
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(formatApiError(err.data));
         const parsed = parseFieldErrors(err.data);
         const friendly: Record<string, string> = {};
         for (const [k, v] of Object.entries(parsed)) {
           friendly[k] = friendlyFieldError(k, v);
         }
         setFieldErrors(friendly);
+        setError(formatApiError(err.data));
       } else {
         setError("No se pudo registrar. Comprueba tu conexión e inténtalo de nuevo.");
       }
@@ -157,12 +175,26 @@ export function RegisterPage({ asOwner = false }: Props) {
   const ownerLabel = asOwner
     ? "Registrarme como huésped"
     : "Quiero publicar hospedajes";
+  const sponsorLink = asSponsor ? "/registro" : "/registro-patrocinador";
+  const sponsorLabel = asSponsor
+    ? "Registrarme como huésped"
+    : "¿Deseas patrocinar este sistema?";
 
-  const title = asOwner ? "Registro propietario" : "Crear cuenta";
-  const subtitle = asOwner
-    ? "Un administrador validará tu cuenta como anfitrión. Cuando te aprueben podrás publicar hospedajes."
-    : "Con tu cuenta podrás reservar hospedajes. El inicio de sesión es con tu correo.";
-  const submitLabel = asOwner ? "Solicitar cuenta de propietario" : "Crear cuenta";
+  const title = asSponsor
+    ? "Registro patrocinador"
+    : asOwner
+      ? "Registro propietario"
+      : "Crear cuenta";
+  const subtitle = asSponsor
+    ? "Los anuncios requieren un acuerdo financiero con el administrador. Tras registrarte, contáctalo por WhatsApp; cuando apruebe tu cuenta podrás subir creativos."
+    : asOwner
+      ? "Un administrador validará tu cuenta como anfitrión. Cuando te aprueben podrás publicar hospedajes."
+      : "Con tu cuenta podrás reservar hospedajes. El inicio de sesión es con tu correo.";
+  const submitLabel = asSponsor
+    ? "Solicitar cuenta de patrocinador"
+    : asOwner
+      ? "Solicitar cuenta de propietario"
+      : "Crear cuenta";
 
   return (
     <div className="login-page register-page">
@@ -173,6 +205,28 @@ export function RegisterPage({ asOwner = false }: Props) {
 
         <h1 className="login-title">{title}</h1>
         <p className="login-subtitle">{subtitle}</p>
+
+        {asSponsor && !success && (
+          <aside className="sponsor-register-notice" role="note">
+            <strong>Acuerdo financiero obligatorio</strong>
+            <p>
+              Antes de publicar anuncios debes coordinar precio y condiciones con el
+              administrador de Hospy por WhatsApp.
+            </p>
+            {sponsorConfig?.admin_whatsapp_url ? (
+              <a
+                href={sponsorConfig.admin_whatsapp_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary btn-sm sponsor-wa-btn"
+              >
+                <PrimeIcon name="pi-whatsapp" size={16} /> Contactar administrador
+              </a>
+            ) : (
+              <p className="muted">WhatsApp del administrador no configurado (HOSPY_ADMIN_WHATSAPP).</p>
+            )}
+          </aside>
+        )}
 
         {success && (
           <div
@@ -358,6 +412,18 @@ export function RegisterPage({ asOwner = false }: Props) {
               )}
             </div>
 
+            {asSponsor && (
+              <label className="register-sponsor-ack">
+                <input
+                  type="checkbox"
+                  checked={sponsorAck}
+                  onChange={(e) => setSponsorAck(e.target.checked)}
+                />
+                Confirmo que contactaré al administrador por WhatsApp para el acuerdo financiero
+                antes de esperar la publicación de mis anuncios.
+              </label>
+            )}
+
             {error && (
               <div
                 className="login-alert login-alert--error"
@@ -416,15 +482,27 @@ export function RegisterPage({ asOwner = false }: Props) {
           <p className="login-link-primary">
             ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
           </p>
-          <Link
-            to={ownerLink}
-            className={`login-link-secondary${asOwner ? "" : " register-owner-link"}`}
-          >
-            <PrimeIcon name="pi-building" size={16} /> {ownerLabel}
-          </Link>
+          {!asSponsor && (
+            <Link
+              to={ownerLink}
+              className={`login-link-secondary${asOwner ? "" : " register-owner-link"}`}
+            >
+              <PrimeIcon name="pi-building" size={16} /> {ownerLabel}
+            </Link>
+          )}
+          {!asOwner && !asSponsor && (
+            <Link to={sponsorLink} className="login-link-secondary register-sponsor-link">
+              <PrimeIcon name="pi-flag" size={16} /> {sponsorLabel}
+            </Link>
+          )}
+          {asSponsor && (
+            <Link to={sponsorLink} className="login-link-secondary">
+              Registrarme como huésped
+            </Link>
+          )}
         </div>
 
-        {!asOwner && (
+        {!asOwner && !asSponsor && (
           <aside className="register-demo" aria-label="Información de prueba">
             <strong>¿Solo quieres probar?</strong>
             Usa el inicio de sesión con la demo: huesped@hospy.local / Huesped123!

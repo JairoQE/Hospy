@@ -7,16 +7,19 @@ import { displayName } from "../utils/format";
 
 export function AdminUsersPage() {
   const [pendingOwners, setPendingOwners] = useState<User[]>([]);
+  const [pendingSponsors, setPendingSponsors] = useState<User[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       api.get<User[] | Paginated<User>>("/auth/propietarios-pendientes/"),
+      api.get<User[] | Paginated<User>>("/auth/patrocinadores-pendientes/"),
       api.get<Paginated<Booking> | Booking[]>("/reservas/"),
     ])
-      .then(([owners, b]) => {
+      .then(([owners, sponsors, b]) => {
         setPendingOwners(unwrapList(owners));
+        setPendingSponsors(unwrapList(sponsors));
         setBookings(unwrapList(b));
       })
       .finally(() => setLoading(false));
@@ -36,7 +39,7 @@ export function AdminUsersPage() {
     <div className="admin-page">
       <h1 className="admin-page-title">Usuarios</h1>
       <p className="admin-page-sub">
-        Propietarios en revisión y huéspedes con actividad de reservas.
+        Propietarios y patrocinadores en revisión, y huéspedes con actividad de reservas.
       </p>
 
       {loading && <p className="admin-loading">Cargando…</p>}
@@ -57,8 +60,30 @@ export function AdminUsersPage() {
                 ))}
               </ul>
             )}
-            <Link to="/admin/moderacion" className="admin-link-btn">
+            <Link to="/admin/moderacion#propietarios-pendientes" className="admin-link-btn">
               Ir a moderación
+            </Link>
+          </section>
+
+          <section className="admin-moderation-section">
+            <h2 className="admin-section-title">
+              Patrocinadores pendientes ({pendingSponsors.length})
+            </h2>
+            {pendingSponsors.length === 0 ? (
+              <p className="muted">Sin patrocinadores pendientes.</p>
+            ) : (
+              <ul className="admin-card-list">
+                {pendingSponsors.map((s) => (
+                  <li key={s.id} className="admin-card-item">
+                    <strong>{displayName(s)}</strong>
+                    <span className="muted"> · {s.email}</span>
+                    {s.phone && <span className="muted"> · {s.phone}</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Link to="/admin/moderacion#patrocinadores-pendientes" className="admin-link-btn">
+              Aprobar patrocinadores
             </Link>
           </section>
 

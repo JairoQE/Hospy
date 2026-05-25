@@ -4,6 +4,7 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import "leaflet/dist/leaflet.css";
+import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
 
 const defaultIcon = L.icon({
   iconUrl: markerIcon,
@@ -33,6 +34,7 @@ export function PropertyMap({
   zoom = 15,
   scrollWheelZoom = false,
 }: Props) {
+  const { t, tVars } = useLocaleCurrency();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
 
@@ -75,7 +77,7 @@ export function PropertyMap({
   if (!valid) {
     return (
       <div className={`property-map-wrap property-map-wrap--empty ${className}`}>
-        <span className="muted">Ubicación no disponible</span>
+        <span className="muted">{t("detail.mapUnavailable")}</span>
       </div>
     );
   }
@@ -84,7 +86,7 @@ export function PropertyMap({
     <div
       ref={containerRef}
       className={`property-map-wrap ${className}`}
-      aria-label={`Mapa de ${name}`}
+      aria-label={tVars("detail.mapOf", { name })}
     />
   );
 }

@@ -1,4 +1,5 @@
 import type { GeolocationStatus } from "../../hooks/useGeolocation";
+import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { HomeHeroSearch } from "./HomeHeroSearch";
 import type { SearchFilters } from "../SearchBar";
 
@@ -9,16 +10,17 @@ type Props = {
 };
 
 export function HomeHero({ onSearch, geoStatus, geoHint }: Props) {
+  const { t } = useLocaleCurrency();
+
   return (
     <section className="home-hero home-hero--v2" aria-labelledby="home-hero-title">
       <div className="home-hero-bg" aria-hidden />
       <div className="container home-hero-inner">
         <h1 id="home-hero-title" className="home-hero-title">
-          Encuentra tu próxima <span className="home-hero-highlight">estancia</span>
+          {t("home.heroTitle")}{" "}
+          <span className="home-hero-highlight">{t("home.heroHighlight")}</span>
         </h1>
-        <p className="home-hero-sub">
-          Busca hoteles, hostales y hospedajes verificados en todo el Perú
-        </p>
+        <p className="home-hero-sub">{t("home.heroSub")}</p>
         <HomeHeroSearch onSearch={onSearch} />
         {geoHint && (geoStatus === "prompt" || geoStatus === "loading" || geoStatus === "error") && (
           <p className="home-hero-geo-hint" role="status">

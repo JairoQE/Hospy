@@ -1,3 +1,4 @@
+import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
 import { PropertyMap } from "./PropertyMap";
 
 interface Props {
@@ -10,10 +11,12 @@ interface Props {
 }
 
 export function MapModal({ open, onClose, latitude, longitude, name, address }: Props) {
+  const { t } = useLocaleCurrency();
+
   if (!open) return null;
 
   return (
-    <div className="map-modal-overlay" role="dialog" aria-modal aria-label="Mapa">
+    <div className="map-modal-overlay" role="dialog" aria-modal aria-label={t("detail.mapDialog")}>
       <div className="map-modal">
         <div className="map-modal-header">
           <h2>{name}</h2>
@@ -37,7 +40,7 @@ export function MapModal({ open, onClose, latitude, longitude, name, address }: 
           target="_blank"
           rel="noreferrer"
         >
-          Cómo llegar en Google Maps
+          {t("detail.googleMaps")}
         </a>
       </div>
     </div>

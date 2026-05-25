@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DateRangePicker } from "./calendar/DateRangePicker";
 import { todayPlusDays } from "../utils/format";
 
 export interface SearchFilters {
@@ -50,24 +51,17 @@ export function SearchBar({ initial, onSearch }: Props) {
             onChange={(e) => update("ciudad", e.target.value)}
           />
         </label>
-        <label>
-          Entrada
-          <input
-            type="date"
-            value={f.entrada}
-            onChange={(e) => update("entrada", e.target.value)}
-            required
+        <div className="search-bar-dates">
+          <DateRangePicker
+            startDate={f.entrada}
+            endDate={f.salida}
+            minDate={todayPlusDays(0)}
+            onChange={(start, end) => {
+              update("entrada", start);
+              update("salida", end);
+            }}
           />
-        </label>
-        <label>
-          Salida
-          <input
-            type="date"
-            value={f.salida}
-            onChange={(e) => update("salida", e.target.value)}
-            required
-          />
-        </label>
+        </div>
         <label>
           Tipo
           <select value={f.tipo} onChange={(e) => update("tipo", e.target.value)}>

@@ -4,6 +4,8 @@ Rutas API v1 — alineadas al documento de requisitos Hospy.
 
 from django.urls import include, path
 
+from sponsors.urls import urlpatterns_mine
+
 urlpatterns = [
     path("auth/", include("accounts.urls")),
     path("", include("properties.urls")),
@@ -13,4 +15,7 @@ urlpatterns = [
     path("", include("notifications.urls")),
     path("", include("messaging.urls")),
     path("integracion/", include("properties.urls_integration")),
+    path("hospix/", include("hospix.urls")),
+    path("anuncios/", include("sponsors.urls")),
+    path("mis-anuncios/", include(urlpatterns_mine)),
 ]

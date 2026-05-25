@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from accounts.follows import followers_count, following_count, is_following
+from properties.images import validate_uploaded_image
 from properties.media_urls import media_public_path
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -33,8 +35,23 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
 
+ROLE_CATEGORY = {
+    User.Role.HUESPED: "Huésped en Hospy",
+    User.Role.PROPIETARIO: "Propietario de hospedajes",
+    User.Role.PATROCINADOR: "Patrocinador en Hospy",
+    User.Role.ADMINISTRADOR: "Equipo Hospy",
+}
+
+
 class UserSerializer(serializers.ModelSerializer):
     photo_url = serializers.SerializerMethodField()
+    cover_photo_url = serializers.SerializerMethodField()
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+    owner_average_rating = serializers.SerializerMethodField()
+    owner_reviews_count = serializers.SerializerMethodField()
+    accommodations_count = serializers.SerializerMethodField()
+    accommodations = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -47,9 +64,22 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
             "owner_status",
             "owner_rejection_reason",
+            "sponsor_status",
+            "sponsor_rejection_reason",
+            "sponsor_warning_message",
+            "sponsor_warning_at",
             "phone",
+            "bio",
             "photo",
             "photo_url",
+            "cover_photo",
+            "cover_photo_url",
+            "followers_count",
+            "following_count",
+            "owner_average_rating",
+            "owner_reviews_count",
+            "accommodations_count",
+            "accommodations",
             "date_joined",
             "last_login",
         )
@@ -58,13 +88,227 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
             "owner_status",
             "owner_rejection_reason",
+            "sponsor_status",
+            "sponsor_rejection_reason",
+            "sponsor_warning_message",
+            "sponsor_warning_at",
             "date_joined",
             "last_login",
             "photo_url",
+            "cover_photo_url",
+            "followers_count",
+            "following_count",
         )
 
     def get_photo_url(self, obj):
         return media_public_path(obj.photo) if obj.photo else None
+
+    def get_cover_photo_url(self, obj):
+        return media_public_path(obj.cover_photo) if obj.cover_photo else None
+
+    def get_followers_count(self, obj):
+        return followers_count(obj)
+
+    def get_following_count(self, obj):
+        return following_count(obj)
+
+    def _owner_stats_cached(self, obj):
+        if not hasattr(obj, "_owner_stats_cache"):
+            from properties.owner_stats import get_owner_public_stats
+
+            obj._owner_stats_cache = get_owner_public_stats(obj.pk)
+        return obj._owner_stats_cache
+
+    def get_owner_average_rating(self, obj):
+        if obj.role != User.Role.PROPIETARIO:
+            return None
+        return self._owner_stats_cached(obj)["average_rating"]
+
+    def get_owner_reviews_count(self, obj):
+        if obj.role != User.Role.PROPIETARIO:
+            return None
+        return self._owner_stats_cached(obj)["reviews_count"]
+
+    def get_accommodations_count(self, obj):
+        if obj.role != User.Role.PROPIETARIO:
+            return None
+        return self._owner_stats_cached(obj)["accommodations_count"]
+
+    def get_accommodations(self, obj):
+        if obj.role != User.Role.PROPIETARIO:
+            return None
+        from properties.owner_stats import owner_public_accommodations
+        from properties.serializers import AccommodationListSerializer
+
+        qs = owner_public_accommodations(obj.pk)
+        return AccommodationListSerializer(qs, many=True, context=self.context).data
+
+    def validate_photo(self, value):
+        if value:
+            validate_uploaded_image(value)
+        return value
+
+    def validate_cover_photo(self, value):
+        if value:
+            validate_uploaded_image(value)
+        return value
+
+    def validate_bio(self, value):
+        return (value or "").strip()[:500]
+
+
+class PublicUserProfileSerializer(serializers.ModelSerializer):
+    photo_url = serializers.SerializerMethodField()
+    cover_photo_url = serializers.SerializerMethodField()
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
+    role_category = serializers.SerializerMethodField()
+    is_self = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "role",
+            "bio",
+            "photo_url",
+            "cover_photo_url",
+            "followers_count",
+            "following_count",
+            "is_following",
+            "is_self",
+            "role_category",
+            "date_joined",
+        )
+
+    def get_photo_url(self, obj):
+        return media_public_path(obj.photo) if obj.photo else None
+
+    def get_cover_photo_url(self, obj):
+        return media_public_path(obj.cover_photo) if obj.cover_photo else None
+
+    def get_followers_count(self, obj):
+        return followers_count(obj)
+
+    def get_following_count(self, obj):
+        return following_count(obj)
+
+    def get_is_following(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return is_following(request.user, obj)
+
+    def get_is_self(self, obj):
+        request = self.context.get("request")
+        return bool(request and request.user.is_authenticated and request.user.pk == obj.pk)
+
+    def get_role_category(self, obj):
+        return ROLE_CATEGORY.get(obj.role, "Usuario de Hospy")
+
+
+class OwnerPublicProfileSerializer(PublicUserProfileSerializer):
+    """Perfil público de propietario con locales y calificación global."""
+
+    owner_average_rating = serializers.SerializerMethodField()
+    owner_reviews_count = serializers.SerializerMethodField()
+    accommodations_count = serializers.SerializerMethodField()
+    accommodations = serializers.SerializerMethodField()
+    recent_reviews = serializers.SerializerMethodField()
+    identity_verified = serializers.SerializerMethodField()
+    is_superhost = serializers.SerializerMethodField()
+    responds_fast = serializers.SerializerMethodField()
+    response_time_label = serializers.SerializerMethodField()
+    email_verified = serializers.SerializerMethodField()
+    phone_verified = serializers.SerializerMethodField()
+    languages = serializers.SerializerMethodField()
+
+    class Meta(PublicUserProfileSerializer.Meta):
+        fields = PublicUserProfileSerializer.Meta.fields + (
+            "owner_average_rating",
+            "owner_reviews_count",
+            "accommodations_count",
+            "accommodations",
+            "recent_reviews",
+            "identity_verified",
+            "is_superhost",
+            "responds_fast",
+            "response_time_label",
+            "email_verified",
+            "phone_verified",
+            "languages",
+        )
+
+    def _owner_stats_cached(self, obj):
+        if not hasattr(obj, "_owner_stats_cache"):
+            from properties.owner_stats import get_owner_public_stats
+
+            obj._owner_stats_cache = get_owner_public_stats(obj.pk)
+        return obj._owner_stats_cache
+
+    def get_owner_average_rating(self, obj):
+        return self._owner_stats_cached(obj)["average_rating"]
+
+    def get_owner_reviews_count(self, obj):
+        return self._owner_stats_cached(obj)["reviews_count"]
+
+    def get_accommodations_count(self, obj):
+        return self._owner_stats_cached(obj)["accommodations_count"]
+
+    def get_accommodations(self, obj):
+        from properties.owner_stats import owner_public_accommodations
+        from properties.serializers import OwnerStoreAccommodationSerializer
+
+        qs = owner_public_accommodations(obj.pk)
+        return OwnerStoreAccommodationSerializer(qs, many=True, context=self.context).data
+
+    def get_recent_reviews(self, obj):
+        from properties.media_urls import media_public_path
+        from properties.owner_stats import owner_recent_reviews
+
+        rows = []
+        for r in owner_recent_reviews(obj.pk, limit=6):
+            author = r.author
+            rows.append(
+                {
+                    "id": r.id,
+                    "author_name": author.get_full_name() or author.username,
+                    "author_photo_url": media_public_path(author.photo)
+                    if author.photo
+                    else None,
+                    "rating": r.rating,
+                    "comment": r.comment,
+                    "created_at": r.created_at,
+                    "accommodation_name": r.accommodation.name,
+                }
+            )
+        return rows
+
+    def get_identity_verified(self, obj):
+        return obj.owner_status == User.OwnerStatus.APROBADO
+
+    def get_is_superhost(self, obj):
+        stats = self._owner_stats_cached(obj)
+        return stats["average_rating"] >= 4.8 and stats["reviews_count"] >= 5
+
+    def get_responds_fast(self, obj):
+        return bool(obj.phone) or obj.owner_status == User.OwnerStatus.APROBADO
+
+    def get_response_time_label(self, obj):
+        return "< 1 hora" if self.get_responds_fast(obj) else "En el día"
+
+    def get_email_verified(self, obj):
+        return bool(obj.email)
+
+    def get_phone_verified(self, obj):
+        return bool((obj.phone or "").strip())
+
+    def get_languages(self, obj):
+        return ["Español"]
 
 
 class RegisterSerializer(serializers.ModelSerializer):

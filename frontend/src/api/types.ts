@@ -1,6 +1,7 @@
-export type UserRole = "huesped" | "propietario" | "administrador";
+export type UserRole = "huesped" | "propietario" | "patrocinador" | "administrador";
 
 export type OwnerStatus = "pendiente" | "aprobado" | "rechazado" | "";
+export type SponsorStatus = "pendiente" | "aprobado" | "rechazado" | "";
 
 export interface User {
   id: number;
@@ -11,11 +12,45 @@ export interface User {
   role: UserRole;
   owner_status?: OwnerStatus;
   owner_rejection_reason?: string;
+  sponsor_status?: SponsorStatus;
+  sponsor_rejection_reason?: string;
+  sponsor_warning_message?: string;
+  sponsor_warning_at?: string | null;
   phone: string;
   photo: string | null;
   photo_url?: string | null;
+  cover_photo?: string | null;
+  cover_photo_url?: string | null;
+  bio?: string;
+  followers_count?: number;
+  following_count?: number;
+  owner_average_rating?: number;
+  owner_reviews_count?: number;
+  accommodations_count?: number;
+  accommodations?: AccommodationListItem[];
   date_joined: string;
   last_login: string | null;
+}
+
+export interface PublicUserProfile {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  role: UserRole;
+  bio: string;
+  photo_url: string | null;
+  cover_photo_url: string | null;
+  followers_count: number;
+  following_count: number;
+  is_following: boolean;
+  is_self: boolean;
+  role_category: string;
+  date_joined: string;
+  owner_average_rating?: number;
+  owner_reviews_count?: number;
+  accommodations_count?: number;
+  accommodations?: AccommodationListItem[];
 }
 
 export interface Paginated<T> {
@@ -37,9 +72,39 @@ export interface AccommodationListItem {
   descuento_porcentaje?: string | number | null;
   foto_principal: string | null;
   distance_km?: number | null;
+  created_at?: string;
   status?: string;
   is_active?: boolean;
 }
+
+export interface OwnerReviewPreview {
+  id: number;
+  author_name: string;
+  author_photo_url: string | null;
+  rating: number;
+  comment: string;
+  created_at: string;
+  accommodation_name: string;
+}
+
+export interface OwnerStoreListingItem extends AccommodationListItem {
+  region?: string;
+  services_preview?: { slug: string; name: string }[];
+  max_capacity?: number | null;
+}
+
+/** Perfil público del propietario (vista detallada). */
+export type OwnerStoreProfile = PublicUserProfile & {
+  recent_reviews?: OwnerReviewPreview[];
+  identity_verified?: boolean;
+  is_superhost?: boolean;
+  responds_fast?: boolean;
+  response_time_label?: string;
+  email_verified?: boolean;
+  phone_verified?: boolean;
+  languages?: string[];
+  accommodations?: OwnerStoreListingItem[];
+};
 
 export interface OfferRoomSummary {
   id: number;
@@ -110,10 +175,15 @@ export interface AccommodationDetail {
   fotos: AccommodationPhoto[];
   faqs?: AccommodationFaq[];
   owner_email: string;
+  propietario_id: number;
   /** Nombre público para titulares (ej. otros alojamientos del mismo propietario). */
   propietario_nombre: string;
+  propietario_bio?: string;
   propietario_telefono: string;
   propietario_foto_url: string | null;
+  propietario_seguidores?: number;
+  propietario_calificacion?: number;
+  propietario_resenas_total?: number;
   otros_mismo_propietario: AccommodationListItem[];
   created_at: string;
   updated_at: string;
@@ -272,4 +342,51 @@ export interface MessageReport {
   reviewed_by_name: string;
   created_at: string;
   reviewed_at: string | null;
+}
+
+export type SponsorAdMediaType = "image" | "gif" | "video";
+
+export interface SponsorAd {
+  id: number;
+  title: string;
+  link_url: string;
+  media?: string;
+  media_url: string | null;
+  media_type: SponsorAdMediaType;
+  duration_seconds: number;
+  status: "pendiente" | "aprobado" | "rechazado" | "baja";
+  takedown_reason?: string;
+  rejection_reason?: string;
+  is_active: boolean;
+  display_order: number;
+  sponsor?: number;
+  sponsor_name?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SponsorAdReport {
+  id: number;
+  ad: number;
+  ad_title: string;
+  ad_media_url: string | null;
+  sponsor_email: string;
+  sponsor_name: string;
+  reporter_name: string;
+  reason: string;
+  reason_label: string;
+  detail: string;
+  status: string;
+  admin_notes?: string;
+  warning_sent?: string;
+  created_at: string;
+  reviewed_at: string | null;
+}
+
+export interface SponsorContactConfig {
+  admin_email: string;
+  admin_phone: string;
+  admin_whatsapp: string;
+  admin_whatsapp_url: string;
+  max_duration_seconds: number;
 }

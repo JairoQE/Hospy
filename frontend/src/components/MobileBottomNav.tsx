@@ -116,7 +116,7 @@ function inboxActive(canal: string) {
 }
 
 function buildItems(
-  isRole: (r: "huesped" | "propietario" | "administrador") => boolean,
+  isRole: (r: "huesped" | "propietario" | "patrocinador" | "administrador") => boolean,
   loggedIn: boolean,
   summary: { notificaciones: number; mensajes: number },
 ): NavItem[] {
@@ -183,6 +183,21 @@ function buildItems(
         label: "Panel",
         icon: <IconGrid />,
         isActive: (p) => p.startsWith("/panel"),
+      },
+      profile,
+    ];
+  }
+
+  if (isRole("patrocinador")) {
+    return [
+      home,
+      alerts,
+      messages,
+      {
+        to: "/patrocinio",
+        label: "Anuncios",
+        icon: <IconGrid />,
+        isActive: (p) => p.startsWith("/patrocinio"),
       },
       profile,
     ];

@@ -148,3 +148,19 @@ def test_consulta_requiere_huesped(api_client, propietario, hospedaje_aprobado):
         format="json",
     )
     assert r.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+def test_admin_puede_consultar_anfitrion(api_client, admin_user, hospedaje_aprobado, propietario):
+    acc, _ = hospedaje_aprobado
+    api_client.force_authenticate(user=admin_user)
+    r = api_client.get(f"/api/v1/hospedajes/{acc.pk}/consulta/")
+    assert r.status_code == status.HTTP_200_OK
+    r = api_client.post(
+        f"/api/v1/hospedajes/{acc.pk}/consulta/",
+        {"body": "Mensaje del equipo Hospy"},
+        format="json",
+    )
+    assert r.status_code == status.HTTP_201_CREATED
+    conv = Conversation.objects.get(guest=admin_user, accommodation=acc)
+    assert conv.owner_id == propietario.id

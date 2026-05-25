@@ -7,7 +7,7 @@ interface Props {
   value: string;
   onChange: (value: string) => void;
   onSelect: (option: DestinationOption) => void;
-  placeholder?: string;
+  placeholder: string;
 }
 
 function normalizeQuery(q: string) {
@@ -18,7 +18,7 @@ export function DestinationAutocomplete({
   value,
   onChange,
   onSelect,
-  placeholder = "Ciudad o destino",
+  placeholder,
 }: Props) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);

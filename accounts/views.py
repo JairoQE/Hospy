@@ -13,11 +13,17 @@ from notifications.services import (
 
 from .auth_throttle import AuthEndpointThrottle
 from .password_reset import reset_password, send_password_reset_email
+from sponsors.serializers import RegisterPatrocinadorSerializer, SponsorApprovalSerializer
+
+from accounts.follows import toggle_follow
+
 from .serializers import (
     CustomTokenObtainPairSerializer,
     OwnerApprovalSerializer,
+    OwnerPublicProfileSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
+    PublicUserProfileSerializer,
     RegisterPropietarioSerializer,
     RegisterSerializer,
     UserSerializer,
@@ -60,6 +66,12 @@ class RegisterPropietarioView(RegisterView):
         return response
 
 
+class RegisterPatrocinadorView(RegisterView):
+    """POST /api/v1/auth/registro-patrocinador/ — cuenta para publicar anuncios."""
+
+    serializer_class = RegisterPatrocinadorSerializer
+
+
 class PerfilView(generics.RetrieveUpdateAPIView):
     """GET/PATCH /api/v1/auth/perfil/"""
 
@@ -67,6 +79,48 @@ class PerfilView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class PublicUserProfileView(generics.RetrieveAPIView):
+    """GET /api/v1/usuarios/<pk>/ — perfil público con seguidores."""
+
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = PublicUserProfileSerializer
+
+    def get_queryset(self):
+        return User.objects.filter(is_active=True)
+
+
+class OwnerStoreView(generics.RetrieveAPIView):
+    """GET /api/v1/anfitriones/<pk>/ — tienda pública del propietario (solo role propietario)."""
+
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = OwnerPublicProfileSerializer
+
+    def get_queryset(self):
+        return User.objects.filter(is_active=True, role=User.Role.PROPIETARIO)
+
+
+class FollowUserView(APIView):
+    """POST /api/v1/usuarios/<pk>/seguir/ — seguir o dejar de seguir."""
+
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, pk):
+        target = get_object_or_404(User, pk=pk, is_active=True)
+        try:
+            following_now, count = toggle_follow(request.user, target)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {
+                "following": following_now,
+                "followers_count": count,
+                "detail": "Ahora sigues a este usuario."
+                if following_now
+                else "Dejaste de seguir a este usuario.",
+            }
+        )
 
 
 class PasswordResetRequestView(APIView):
@@ -162,3 +216,45 @@ class PropietarioAprobarView(APIView):
         notify_owner_registration_moderated(owner, aprobado, motivo)
 
         return Response(UserSerializer(owner).data)
+
+
+class PatrocinadoresPendientesView(generics.ListAPIView):
+    """GET /api/v1/auth/patrocinadores-pendientes/"""
+
+    serializer_class = UserSerializer
+    permission_classes = (IsAdministrador,)
+
+    def get_queryset(self):
+        return User.objects.filter(
+            role=User.Role.PATROCINADOR,
+            sponsor_status=User.SponsorStatus.PENDIENTE,
+        ).order_by("-date_joined")
+
+
+class PatrocinadorAprobarView(APIView):
+    """POST /api/v1/auth/patrocinadores/{id}/aprobar/"""
+
+    permission_classes = (IsAdministrador,)
+
+    def post(self, request, pk):
+        sponsor = get_object_or_404(User, pk=pk, role=User.Role.PATROCINADOR)
+        if sponsor.sponsor_status != User.SponsorStatus.PENDIENTE:
+            return Response(
+                {"detail": "Solo se pueden moderar cuentas en estado pendiente."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = SponsorApprovalSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        aprobado = serializer.validated_data["aprobado"]
+        motivo = serializer.validated_data.get("motivo", "")
+
+        if aprobado:
+            sponsor.sponsor_status = User.SponsorStatus.APROBADO
+            sponsor.sponsor_rejection_reason = ""
+        else:
+            sponsor.sponsor_status = User.SponsorStatus.RECHAZADO
+            sponsor.sponsor_rejection_reason = motivo
+
+        sponsor.save(update_fields=["sponsor_status", "sponsor_rejection_reason"])
+        return Response(UserSerializer(sponsor).data)

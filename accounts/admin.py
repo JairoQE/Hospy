@@ -11,10 +11,11 @@ class UserAdmin(BaseUserAdmin):
         "username",
         "role",
         "owner_status",
+        "sponsor_status",
         "is_staff",
         "is_active",
     )
-    list_filter = ("role", "owner_status", "is_staff", "is_active")
+    list_filter = ("role", "owner_status", "sponsor_status", "is_staff", "is_active")
     search_fields = ("email", "username", "first_name", "last_name")
     ordering = ("email",)
     fieldsets = BaseUserAdmin.fieldsets + (
@@ -25,8 +26,11 @@ class UserAdmin(BaseUserAdmin):
                     "role",
                     "owner_status",
                     "owner_rejection_reason",
+                    "sponsor_status",
+                    "sponsor_rejection_reason",
                     "phone",
                     "photo",
+                    "cover_photo",
                 )
             },
         ),

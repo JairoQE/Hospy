@@ -33,6 +33,8 @@ INSTALLED_APPS = [
     "reviews",
     "notifications",
     "messaging",
+    "hospix",
+    "sponsors",
 ]
 
 MIDDLEWARE = [
@@ -103,6 +105,9 @@ STORAGES = build_storages(MEDIA_ROOT, MEDIA_URL)
 
 # Límites de imágenes (RF-11, RF-22)
 MAX_UPLOAD_IMAGE_SIZE_MB = int(os.environ.get("MAX_UPLOAD_IMAGE_SIZE_MB", "5"))
+MAX_UPLOAD_VIDEO_SIZE_MB = int(os.environ.get("MAX_UPLOAD_VIDEO_SIZE_MB", "15"))
+MAX_SPONSOR_AD_DURATION_SEC = int(os.environ.get("MAX_SPONSOR_AD_DURATION_SEC", "10"))
+HOSPY_ADMIN_WHATSAPP = os.environ.get("HOSPY_ADMIN_WHATSAPP", "51123456789")
 MAX_ACCOMMODATION_PHOTOS = 10
 MAX_ROOM_PHOTOS = 5
 
@@ -169,7 +174,13 @@ CACHES = {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": REDIS_URL,
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
-    }
+    },
+    # Hospix: solo memoria temporal (TTL), sin guardar chats en BD
+    "hospix": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "hospix-chat-sessions",
+        "OPTIONS": {"MAX_ENTRIES": 300},
+    },
 }
 
 # --- Celery ---

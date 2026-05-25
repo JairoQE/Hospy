@@ -4,6 +4,7 @@ import { ApiError, api } from "../api/client";
 import { unwrapList } from "../api/unwrap";
 import { AccommodationCard } from "../components/AccommodationCard";
 import { ContactHostSection } from "../components/ContactHostSection";
+import { OwnerStoreBanner } from "../components/owner/OwnerStoreBanner";
 import { MapModal } from "../components/MapModal";
 import { AccommodationFaqSection } from "../components/AccommodationFaqSection";
 import { PhotoGallery } from "../components/PhotoGallery";
@@ -17,7 +18,10 @@ import type {
 } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import { useChatDock } from "../context/ChatDockContext";
+import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
+import { DateRangePicker } from "../components/calendar/DateRangePicker";
 import { recordRecentView } from "../hooks/useRecentlyViewed";
+import { canInquireHost } from "../utils/hostChat";
 import { formatDate, formatMoney, roomTypeLabel, todayPlusDays, typeLabel } from "../utils/format";
 import { resolveMediaUrl } from "../utils/media";
 import { IconCheck, IconEye, IconMapPin, IconUser } from "../components/icons";
@@ -47,6 +51,7 @@ export function AccommodationDetailPage() {
   const navigate = useNavigate();
   const { user, isRole } = useAuth();
   const { openChat } = useChatDock();
+  const { t, tVars } = useLocaleCurrency();
 
   const entrada = searchParams.get("entrada") ?? "";
   const salida = searchParams.get("salida") ?? "";
@@ -81,10 +86,10 @@ export function AccommodationDetailPage() {
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps -- solo al abrir o cambiar hospedaje
 
   useEffect(() => {
-    if (searchParams.get("chat") !== "1" || user?.role !== "huesped" || !acc) return;
+    if (searchParams.get("chat") !== "1" || !canInquireHost(user?.role) || !acc) return;
     openChat({
       mode: "guest",
-      peerName: acc.propietario_nombre || "el anfitrión",
+      peerName: acc.propietario_nombre || t("detail.hostDefault"),
       peerPhotoUrl: acc.propietario_foto_url,
       hospedajeId: acc.id,
       hospedajeName: acc.name,
@@ -118,18 +123,21 @@ export function AccommodationDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    if (!acc) return;
+    if (!acc || !user?.id) return;
     const primary = acc.fotos?.find((f) => f.is_primary) ?? acc.fotos?.[0];
-    recordRecentView({
-      id: acc.id,
-      name: acc.name,
-      city: acc.city,
-      type: acc.type,
-      foto_principal: primary ? primary.image_url ?? primary.image : null,
-      average_rating: acc.average_rating,
-      precio_desde: null,
-    });
-  }, [acc]);
+    recordRecentView(
+      {
+        id: acc.id,
+        name: acc.name,
+        city: acc.city,
+        type: acc.type,
+        foto_principal: primary ? primary.image_url ?? primary.image : null,
+        average_rating: acc.average_rating,
+        precio_desde: null,
+      },
+      user.id,
+    );
+  }, [acc, user?.id]);
 
   const hasDates = Boolean(entrada && salida);
 
@@ -192,11 +200,11 @@ export function AccommodationDetailPage() {
       return;
     }
     if (!isRole("huesped")) {
-      setError("Solo los huéspedes pueden reservar.");
+      setError(t("detail.guestsOnly"));
       return;
     }
     if (!room || !entrada || !salida) {
-      setError("Selecciona fechas y una habitación.");
+      setError(t("detail.pickRoomDates"));
       scrollTo("disponibilidad");
       return;
     }
@@ -208,23 +216,23 @@ export function AccommodationDetailPage() {
         check_in: entrada,
         check_out: salida,
       });
-      setMsg("Reserva creada. El propietario debe confirmarla.");
+      setMsg(t("detail.bookingCreated"));
       setTimeout(() => navigate("/mis-reservas"), 1500);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "No se pudo reservar");
+      setError(e instanceof ApiError ? e.message : t("detail.bookingFailed"));
     } finally {
       setBooking(false);
     }
   };
 
   if (loading) {
-    return <div className="container page page-loading">Cargando hospedaje…</div>;
+    return <div className="container page page-loading">{t("detail.loading")}</div>;
   }
   if (!acc) {
     return (
       <div className="container page">
-        <p className="error-msg">{error || "No encontrado"}</p>
-        <Link to="/">Volver al inicio</Link>
+        <p className="error-msg">{error || t("detail.notFound")}</p>
+        <Link to="/">{t("home.backHome")}</Link>
       </div>
     );
   }
@@ -243,7 +251,7 @@ export function AccommodationDetailPage() {
       />
       <div className="container">
         <nav className="property-breadcrumb">
-          <Link to="/">Inicio</Link>
+          <Link to="/">{t("detail.home")}</Link>
           <span>/</span>
           <Link to={`/?ciudad=${encodeURIComponent(acc.city)}`}>{acc.city}</Link>
           <span>/</span>
@@ -255,7 +263,7 @@ export function AccommodationDetailPage() {
             <div className="property-title-row">
               <h1>{acc.name}</h1>
               {stars > 0 && (
-                <span className="property-stars" aria-label={`${stars} estrellas`}>
+                <span className="property-stars" aria-label={`${stars} ${t("common.stars")}`}>
                   {"★".repeat(stars)}
                 </span>
               )}
@@ -273,20 +281,20 @@ export function AccommodationDetailPage() {
                 {fullAddress}
               </a>
               <button type="button" className="link-btn" onClick={() => setMapOpen(true)}>
-                · Ubicación excelente — Ver mapa
+                · {t("detail.locationExcellent")}
               </button>
             </p>
           </div>
           <div className="property-header-actions">
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMapOpen(true)}>
-              Mapa
+              {t("detail.map")}
             </button>
             <button
               type="button"
               className="btn btn-primary"
               onClick={() => scrollTo("disponibilidad")}
             >
-              Reservar ahora
+              {t("detail.bookNow")}
             </button>
           </div>
         </header>
@@ -310,9 +318,11 @@ export function AccommodationDetailPage() {
       <div className="container property-layout">
         <main className="property-main">
           <section className="property-section" id="descripcion">
-            <h2>Sobre este alojamiento</h2>
+            <h2>{t("detail.about")}</h2>
             <p className="property-description">{acc.description}</p>
           </section>
+
+          <OwnerStoreBanner accommodation={acc} />
 
           <ContactHostSection
             accommodation={acc}
@@ -321,7 +331,7 @@ export function AccommodationDetailPage() {
             onOpenChat={() =>
               openChat({
                 mode: "guest",
-                peerName: acc.propietario_nombre || "el anfitrión",
+                peerName: acc.propietario_nombre || t("detail.hostDefault"),
                 peerPhotoUrl: acc.propietario_foto_url,
                 hospedajeId: acc.id,
                 hospedajeName: acc.name,
@@ -331,51 +341,42 @@ export function AccommodationDetailPage() {
 
           <section className="property-section" id="disponibilidad">
             <div className="section-head-row">
-              <h2>Disponibilidad</h2>
+              <h2>{t("detail.availability")}</h2>
               {minPrice != null && (
                 <p className="price-from">
-                  Desde <strong>{formatMoney(minPrice)}</strong>
-                  {hasDates ? " por estancia" : " / noche"}
+                  {t("detail.fromPrice")} <strong>{formatMoney(minPrice)}</strong>
+                  {hasDates ? t("detail.perStay") : t("detail.perNight")}
                 </p>
               )}
             </div>
 
-            <div className="availability-search card">
-              <label>
-                Entrada
-                <input
-                  type="date"
-                  value={localEntrada}
-                  onChange={(e) => setLocalEntrada(e.target.value)}
-                />
-              </label>
-              <label>
-                Salida
-                <input
-                  type="date"
-                  value={localSalida}
-                  onChange={(e) => setLocalSalida(e.target.value)}
-                />
-              </label>
-              <button type="button" className="btn btn-primary" onClick={applyDates}>
-                Ver precios
-              </button>
+            <div className="availability-search card availability-search--calendar">
+              <DateRangePicker
+                startDate={localEntrada}
+                endDate={localSalida}
+                minDate={todayPlusDays(0)}
+                onChange={(start, end) => {
+                  setLocalEntrada(start);
+                  setLocalSalida(end);
+                }}
+                onApply={applyDates}
+                applyLabel={t("detail.viewPrices")}
+                showPresets
+                marketingHint={t("calendar.stayDiscountHint")}
+              />
             </div>
 
             {!hasDates && (
-              <p className="muted avail-hint">
-                Elige fechas de entrada y salida y pulsa «Ver precios» para activar la
-                reserva.
-              </p>
+              <p className="muted avail-hint">{t("detail.datesHint")}</p>
             )}
 
             <div className="availability-table-wrap">
               <table className="availability-table">
                 <thead>
                   <tr>
-                    <th>Tipo de habitación</th>
-                    <th>Personas</th>
-                    <th>{hasDates ? "Precio estancia" : "Precio / noche"}</th>
+                    <th>{t("detail.roomTypeCol")}</th>
+                    <th>{t("detail.guests")}</th>
+                    <th>{hasDates ? t("detail.priceStay") : t("detail.priceNight")}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -383,7 +384,7 @@ export function AccommodationDetailPage() {
                   {rooms.length === 0 && (
                     <tr>
                       <td colSpan={4} className="muted">
-                        No hay habitaciones publicadas.
+                        {t("detail.noRooms")}
                       </td>
                     </tr>
                   )}
@@ -399,20 +400,20 @@ export function AccommodationDetailPage() {
                         <tr>
                           <td>
                             <strong>
-                              Habitación {r.number} — {roomTypeLabel(r.type)}
+                              {t("detail.room")} {r.number} — {roomTypeLabel(r.type)}
                             </strong>
                             {r.description && (
                               <p className="room-desc">{r.description}</p>
                             )}
                             <ul className="room-features">
-                              <li>Capacidad: {r.capacity} pers.</li>
-                              {r.floor != null && <li>Piso {r.floor}</li>}
+                              <li>{tVars("detail.capacity", { n: r.capacity })}</li>
+                              {r.floor != null && <li>{tVars("detail.floor", { n: r.floor })}</li>}
                             </ul>
                           </td>
                           <td className="capacity-cell">
                             <span
                               className="capacity-icons"
-                              aria-label={`${r.capacity} persona${r.capacity === 1 ? "" : "s"}`}
+                              aria-label={`${r.capacity} ${r.capacity === 1 ? t("detail.person") : t("detail.persons")}`}
                             >
                               {Array.from(
                                 { length: Math.min(r.capacity, 4) },
@@ -430,7 +431,11 @@ export function AccommodationDetailPage() {
                               <>
                                 <span className="room-price">{formatMoney(price)}</span>
                                 {hasDates && quote && (
-                                  <small>{quote.noches} noches</small>
+                                  <small>
+                                    {quote.noches === 1
+                                      ? tVars("detail.night", { n: quote.noches })
+                                      : tVars("detail.nights", { n: quote.noches })}
+                                  </small>
                                 )}
                               </>
                             ) : (
@@ -443,7 +448,9 @@ export function AccommodationDetailPage() {
                               className={`btn btn-ghost btn-sm btn-room-eye${expanded ? " is-active" : ""}`}
                               aria-expanded={expanded}
                               aria-controls={`room-detail-${r.id}`}
-                              title={expanded ? "Ocultar detalle" : "Ver detalle y fotos"}
+                              title={
+                                expanded ? t("detail.hideDetail") : t("detail.viewDetailPhotos")
+                              }
                               onClick={() =>
                                 setExpandedRoomId(expanded ? null : r.id)
                               }
@@ -454,17 +461,13 @@ export function AccommodationDetailPage() {
                               type="button"
                               className="btn btn-primary btn-sm"
                               disabled={booking || !hasDates}
-                              title={
-                                !hasDates
-                                  ? "Elige fechas y pulsa «Ver precios»"
-                                  : undefined
-                              }
+                              title={!hasDates ? t("detail.pickDatesHint") : undefined}
                               onClick={() => {
                                 setSelectedRoom(r.id);
                                 handleBook(r.id);
                               }}
                             >
-                              Reservar
+                              {t("detail.reserve")}
                             </button>
                           </td>
                         </tr>
@@ -473,43 +476,43 @@ export function AccommodationDetailPage() {
                             <td colSpan={4}>
                               <div className="room-detail-expand">
                                 <h4 className="room-detail-expand-title">
-                                  Habitación {r.number}
+                                  {t("detail.room")} {r.number}
                                 </h4>
                                 <dl className="room-detail-dl">
                                   <div>
-                                    <dt>Tipo</dt>
+                                    <dt>{t("detail.type")}</dt>
                                     <dd>{roomTypeLabel(r.type)}</dd>
                                   </div>
                                   <div>
-                                    <dt>Capacidad</dt>
-                                    <dd>{r.capacity} personas</dd>
+                                    <dt>{t("detail.capacityLabel")}</dt>
+                                    <dd>{tVars("detail.capacityPersons", { n: r.capacity })}</dd>
                                   </div>
                                   <div>
-                                    <dt>Piso</dt>
+                                    <dt>{t("detail.floorLabel")}</dt>
                                     <dd>{r.floor != null ? r.floor : "—"}</dd>
                                   </div>
                                   <div>
-                                    <dt>Precio base / noche</dt>
+                                    <dt>{t("detail.basePriceNight")}</dt>
                                     <dd>{formatMoney(r.base_price)}</dd>
                                   </div>
                                   {hasDates && quote && (
                                     <div>
-                                      <dt>Precio estancia</dt>
+                                      <dt>{t("detail.stayPrice")}</dt>
                                       <dd>{formatMoney(quote.total)}</dd>
                                     </div>
                                   )}
                                 </dl>
                                 <div className="room-detail-desc">
-                                  <strong>Descripción</strong>
+                                  <strong>{t("detail.description")}</strong>
                                   <p>
                                     {r.description?.trim()
                                       ? r.description
-                                      : "Sin descripción adicional."}
+                                      : t("detail.noDescription")}
                                   </p>
                                 </div>
                                 {fotos.length > 0 ? (
                                   <div className="room-detail-photos">
-                                    <strong>Fotos</strong>
+                                    <strong>{t("detail.photos")}</strong>
                                     <div className="room-detail-photo-strip">
                                       {fotos.map((f) => {
                                         const src = resolveMediaUrl(
@@ -532,7 +535,7 @@ export function AccommodationDetailPage() {
                                   </div>
                                 ) : (
                                   <p className="muted room-detail-no-photos">
-                                    Esta habitación aún no tiene fotos.
+                                    {t("detail.noRoomPhotos")}
                                   </p>
                                 )}
                               </div>
@@ -550,23 +553,23 @@ export function AccommodationDetailPage() {
           </section>
 
           <section className="property-section" id="servicios">
-            <h2>Servicios de {acc.name}</h2>
+            <h2>{tVars("detail.servicesOf", { name: acc.name })}</h2>
             {score > 0 && (
               <p className="muted services-score">
-                Puntuación general: <strong>{score.toFixed(1)}</strong>
+                {t("detail.overallScore")} <strong>{score.toFixed(1)}</strong>
               </p>
             )}
-            <div className="services-grid">
+            <ul className="services-grid" role="list">
               {(acc.services ?? []).map((s) => (
-                <div key={s.id} className="service-item">
-                  <PrimeIcon name="pi-check" className="service-check" size={14} />
-                  {s.name}
-                </div>
+                <li key={s.id} className="service-item">
+                  <PrimeIcon name="pi-check" className="service-check" size={14} aria-hidden />
+                  <span>{s.name}</span>
+                </li>
               ))}
-              {(acc.services ?? []).length === 0 && (
-                <p className="muted">Sin servicios registrados.</p>
-              )}
-            </div>
+            </ul>
+            {(acc.services ?? []).length === 0 && (
+              <p className="muted">{t("detail.noServices")}</p>
+            )}
           </section>
 
           <AccommodationFaqSection
@@ -576,13 +579,15 @@ export function AccommodationDetailPage() {
 
           <section className="property-section" id="resenas">
             <div className="section-head-row">
-              <h2>Comentarios de los clientes</h2>
+              <h2>{t("detail.reviewsTitle")}</h2>
               {reviews.length > 0 && (
-                <span className="reviews-count">{reviews.length} comentarios</span>
+                <span className="reviews-count">
+                  {tVars("detail.reviewsCount", { n: reviews.length })}
+                </span>
               )}
             </div>
             {reviews.length === 0 ? (
-              <p className="muted">Aún no hay reseñas publicadas.</p>
+              <p className="muted">{t("detail.noReviews")}</p>
             ) : (
               <div className="reviews-grid">
                 {reviews.slice(0, 6).map((r) => (
@@ -600,7 +605,9 @@ export function AccommodationDetailPage() {
           {(acc.otros_mismo_propietario?.length ?? 0) > 0 && (
             <section className="property-section owner-more-section" id="mismo-propietario">
               <h2>
-                Otros alojamientos de {acc.propietario_nombre} que te pueden gustar
+                {tVars("detail.moreFromHost", {
+                  name: acc.propietario_nombre || t("detail.hostDefault"),
+                })}
               </h2>
               <div className="owner-more-scroll" role="list">
                 {acc.otros_mismo_propietario.map((item) => (
@@ -617,7 +624,7 @@ export function AccommodationDetailPage() {
           )}
 
           <section className="property-section" id="ubicacion">
-            <h2>Ubicación</h2>
+            <h2>{t("detail.location")}</h2>
             <p className="muted">{fullAddress}</p>
             <PropertyMap
               latitude={lat}
@@ -627,7 +634,7 @@ export function AccommodationDetailPage() {
               className="property-map-large"
             />
             <button type="button" className="btn btn-ghost" onClick={() => setMapOpen(true)}>
-              Ver mapa ampliado
+              {t("detail.viewLargeMap")}
             </button>
           </section>
         </main>
@@ -640,14 +647,14 @@ export function AccommodationDetailPage() {
                   <strong>{ratingLabel(score)}</strong>
                   <p className="muted">
                     {reviews.length > 0
-                      ? `${reviews.length} comentarios`
-                      : "Sin comentarios aún"}
+                      ? tVars("detail.reviewsCount", { n: reviews.length })
+                      : t("detail.noCommentsYet")}
                   </p>
                 </div>
                 <div className="score-box">{score.toFixed(1)}</div>
               </>
             ) : (
-              <p className="muted">Sin valoraciones aún</p>
+              <p className="muted">{t("detail.noRatings")}</p>
             )}
             {topReview && (
               <blockquote className="featured-review">
@@ -666,12 +673,12 @@ export function AccommodationDetailPage() {
               className="property-map-sidebar"
             />
             <button type="button" className="map-overlay-btn" onClick={() => setMapOpen(true)}>
-              Ver en el mapa
+              {t("detail.viewOnMap")}
             </button>
           </div>
 
           <div className="sidebar-card highlights-card">
-            <h3>Puntos fuertes</h3>
+            <h3>{t("detail.highlights")}</h3>
             <ul>
               <li className="highlight-with-icon">
                 <IconMapPin size={16} className="highlight-icon" />
@@ -685,51 +692,55 @@ export function AccommodationDetailPage() {
               ))}
               {minPrice != null && (
                 <li>
-                  Desde <strong>{formatMoney(minPrice)}</strong>
+                  {t("detail.fromPrice")} <strong>{formatMoney(minPrice)}</strong>
                 </li>
               )}
             </ul>
           </div>
 
           <div className="sidebar-card book-card sticky-book">
-            <h3>Tu reserva</h3>
+            <h3>{t("detail.yourBooking")}</h3>
             {hasDates ? (
               <>
                 <p>
                   {formatDate(entrada)} → {formatDate(salida)}
                 </p>
                 <label>
-                  Habitación
+                  {t("detail.roomSelect")}
                   <select
                     value={selectedRoom ?? ""}
                     onChange={(e) => setSelectedRoom(Number(e.target.value))}
                   >
                     {rooms.map((r) => (
                       <option key={r.id} value={r.id}>
-                        Hab. {r.number} · {r.capacity} pers.
+                        {tVars("detail.roomOption", {
+                          number: r.number,
+                          capacity: r.capacity,
+                        })}
                       </option>
                     ))}
                   </select>
                 </label>
                 {selectedRoom && roomQuotes[selectedRoom] && (
                   <p className="book-total">
-                    Total: <strong>{formatMoney(roomQuotes[selectedRoom]!.total)}</strong>
+                    {t("detail.total")}{" "}
+                    <strong>{formatMoney(roomQuotes[selectedRoom]!.total)}</strong>
                   </p>
                 )}
               </>
             ) : (
-              <p className="muted">Selecciona fechas en disponibilidad.</p>
+              <p className="muted">{t("detail.selectDatesSidebar")}</p>
             )}
             <button
               type="button"
               className="btn btn-primary btn-block"
               disabled={booking || !rooms.length || !hasDates}
-              title={!hasDates ? "Elige fechas en disponibilidad" : undefined}
+              title={!hasDates ? t("detail.pickDatesSidebar") : undefined}
               onClick={() => handleBook()}
             >
-              {booking ? "Reservando…" : "Reservaré"}
+              {booking ? t("detail.booking") : t("detail.book")}
             </button>
-            <p className="book-note muted">Todavía no se te cobrará nada</p>
+            <p className="book-note muted">{t("detail.noChargeYet")}</p>
           </div>
         </aside>
       </div>

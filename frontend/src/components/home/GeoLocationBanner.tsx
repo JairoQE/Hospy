@@ -1,4 +1,5 @@
 import type { GeolocationStatus } from "../../hooks/useGeolocation";
+import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { IconMapPin, IconSpinner } from "../icons";
 
 type Props = {
@@ -8,18 +9,18 @@ type Props = {
 };
 
 export function GeoLocationBanner({ status, onActivate, onSkip }: Props) {
+  const { t } = useLocaleCurrency();
+
   if (status !== "prompt" && status !== "loading") return null;
 
   return (
-    <aside className="geo-banner fade-in" aria-label="Sugerencia de ubicación">
+    <aside className="geo-banner fade-in" aria-label={t("geo.title")}>
       <span className="geo-banner-icon" aria-hidden>
         <IconMapPin size={28} />
       </span>
       <p className="geo-banner-text">
-        <strong>¿Explorar cerca de ti?</strong>
-        <span className="geo-banner-sub">
-          Activa tu ubicación para ver hoteles, hostales y hospedajes en tu zona.
-        </span>
+        <strong>{t("geo.title")}</strong>
+        <span className="geo-banner-sub">{t("geo.sub")}</span>
       </p>
       <div className="geo-banner-actions">
         <button
@@ -30,14 +31,14 @@ export function GeoLocationBanner({ status, onActivate, onSkip }: Props) {
         >
           {status === "loading" ? (
             <>
-              <IconSpinner size={18} /> Obteniendo…
+              <IconSpinner size={18} /> {t("geo.loading")}
             </>
           ) : (
-            "Activar ubicación"
+            t("geo.activate")
           )}
         </button>
         <button type="button" className="btn btn-outline btn-sm" onClick={onSkip}>
-          Omitir
+          {t("geo.skip")}
         </button>
       </div>
     </aside>

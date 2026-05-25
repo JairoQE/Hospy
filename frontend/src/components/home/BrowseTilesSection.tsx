@@ -1,5 +1,5 @@
 import type { BrowseTile } from "../../api/types";
-
+import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { resolveMediaUrl } from "../../utils/media";
 
 import { PrimeIcon } from "../PrimeIcon";
@@ -26,6 +26,7 @@ interface Props {
 
 
 export function BrowseTilesSection({ title, subtitle, tiles, loading = false, onSelect }: Props) {
+  const { t } = useLocaleCurrency();
 
   if (!loading && tiles.length === 0) return null;
 
@@ -97,7 +98,9 @@ export function BrowseTilesSection({ title, subtitle, tiles, loading = false, on
 
                   {count != null && (
 
-                    <span className="browse-tile-badge">{count} aloj.</span>
+                    <span className="browse-tile-badge">
+                      {count} {t("home.staysAbbr")}
+                    </span>
 
                   )}
 

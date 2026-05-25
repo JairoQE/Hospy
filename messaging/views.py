@@ -77,8 +77,10 @@ class ConversationViewSet(
         return [permissions.IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
-        if request.user.role != User.Role.HUESPED:
-            raise PermissionDenied("Solo los huéspedes pueden iniciar una consulta.")
+        if request.user.role not in (User.Role.HUESPED, User.Role.ADMINISTRADOR):
+            raise PermissionDenied(
+                "Solo los huéspedes o el equipo Hospy pueden iniciar una consulta."
+            )
 
         ser = ConversationCreateSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
@@ -143,15 +145,17 @@ class AccommodationInquiryView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
-    def _require_guest(self, request, accommodation):
-        if request.user.role != User.Role.HUESPED:
-            raise PermissionDenied("Solo los huéspedes pueden consultar al anfitrión.")
+    def _require_inquiry_access(self, request, accommodation):
+        if request.user.role not in (User.Role.HUESPED, User.Role.ADMINISTRADOR):
+            raise PermissionDenied(
+                "Solo los huéspedes o el equipo Hospy pueden consultar al anfitrión."
+            )
         if accommodation.owner_id == request.user.id:
             raise PermissionDenied("No puedes consultar tu propio hospedaje.")
 
     def get(self, request, pk):
         accommodation = get_public_accommodation(pk)
-        self._require_guest(request, accommodation)
+        self._require_inquiry_access(request, accommodation)
         conv = Conversation.objects.filter(
             accommodation=accommodation, guest=request.user
         ).first()
@@ -180,7 +184,7 @@ class AccommodationInquiryView(APIView):
 
     def post(self, request, pk):
         accommodation = get_public_accommodation(pk)
-        self._require_guest(request, accommodation)
+        self._require_inquiry_access(request, accommodation)
 
         ser = MessageCreateSerializer(data=request.data)
         ser.is_valid(raise_exception=True)

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { AccommodationPhoto } from "../api/types";
+import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
 import { resolveMediaUrl } from "../utils/media";
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function PhotoGallery({ fotos, name }: Props) {
+  const { t, tVars } = useLocaleCurrency();
   const [lightbox, setLightbox] = useState<number | null>(null);
   const sorted = [...fotos].sort((a, b) => {
     if (a.is_primary !== b.is_primary) return a.is_primary ? -1 : 1;
@@ -20,7 +22,7 @@ export function PhotoGallery({ fotos, name }: Props) {
   if (urls.length === 0) {
     return (
       <div className="property-gallery property-gallery--empty">
-        <span>Sin fotos</span>
+        <span>{t("detail.galleryNoPhotos")}</span>
       </div>
     );
   }
@@ -38,7 +40,7 @@ export function PhotoGallery({ fotos, name }: Props) {
           className="gallery-main"
           style={{ backgroundImage: `url(${main})` }}
           onClick={() => setLightbox(0)}
-          aria-label={`Foto principal de ${name}`}
+          aria-label={tVars("detail.mainPhotoAria", { name })}
         />
         <div className="gallery-side">
           {side.map((url, i) => (
@@ -48,7 +50,7 @@ export function PhotoGallery({ fotos, name }: Props) {
               className="gallery-side-item"
               style={{ backgroundImage: `url(${url})` }}
               onClick={() => setLightbox(i + 1)}
-              aria-label={`Foto ${i + 2}`}
+              aria-label={tVars("detail.photoN", { n: i + 2 })}
             />
           ))}
           {side.length < 2 &&
@@ -67,7 +69,7 @@ export function PhotoGallery({ fotos, name }: Props) {
                 onClick={() => setLightbox(i + 3)}
               >
                 {i === thumbs.length - 1 && extra > 0 && (
-                  <span className="gallery-more">+{extra} fotos</span>
+                  <span className="gallery-more">{tVars("detail.morePhotos", { n: extra })}</span>
                 )}
               </button>
             ))}

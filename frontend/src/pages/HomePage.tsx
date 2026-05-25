@@ -37,6 +37,8 @@ import type { LocationSearchParams } from "../data/peruLocations";
 import { useGeolocation } from "../hooks/useGeolocation";
 
 import { useRecentlyViewed } from "../hooks/useRecentlyViewed";
+import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
+import { translateBrowseTiles } from "../utils/browseTileI18n";
 
 
 
@@ -61,9 +63,9 @@ type BrowseMeta = {
 
 
 export function HomePage() {
-
   const location = useLocation();
   const navigate = useNavigate();
+  const { t, tVars, language } = useLocaleCurrency();
 
   const geo = useGeolocation();
 
@@ -105,7 +107,14 @@ export function HomePage() {
 
   const [tilesLoading, setTilesLoading] = useState(true);
 
-
+  const typeTilesI18n = useMemo(
+    () => translateBrowseTiles(typeTiles, language),
+    [typeTiles, language],
+  );
+  const regionTilesI18n = useMemo(
+    () => translateBrowseTiles(regionTiles, language),
+    [regionTiles, language],
+  );
 
   const loadList = useCallback(
 
@@ -264,20 +273,11 @@ export function HomePage() {
   }, [location.hash]);
 
   const geoHint = useMemo(() => {
-
-    if (geo.status === "loading") return "Obteniendo tu ubicación…";
-
+    if (geo.status === "loading") return t("home.geoLoading");
     if (geo.status === "error" && geo.errorMessage) return geo.errorMessage;
-
-    if (geo.status === "prompt") {
-
-      return "Activa tu ubicación en el banner de abajo para ver opciones cercanas.";
-
-    }
-
+    if (geo.status === "prompt") return t("home.geoPrompt");
     return null;
-
-  }, [geo.status, geo.errorMessage]);
+  }, [geo.status, geo.errorMessage, t]);
 
 
 
@@ -302,9 +302,10 @@ export function HomePage() {
         provincia: f.provincia,
         distrito: f.distrito,
       },
-      placeLabel ? `Resultados en ${placeLabel}` : "Resultados de búsqueda",
+      placeLabel
+        ? tVars("home.resultsInPlace", { place: placeLabel })
+        : t("home.resultsSearch"),
     );
-
   };
 
 
@@ -327,8 +328,7 @@ export function HomePage() {
 
     setBrowse({ label, zona });
 
-    loadList({ zona, ordenar: "-rating" }, `Alojamientos en la ${label}`);
-
+    loadList({ zona, ordenar: "-rating" }, tVars("home.staysInRegion", { region: label }));
   };
 
 
@@ -381,10 +381,8 @@ export function HomePage() {
 
       },
 
-      `Alojamientos en ${params.label}`,
-
+      tVars("home.staysInPlace", { place: params.label }),
     );
-
   };
 
 
@@ -408,13 +406,13 @@ export function HomePage() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get("ofertas") === "1") {
-      loadList({ ofertas: 1, ordenar: "-rating" }, "Hospedajes con oferta");
+      loadList({ ofertas: 1, ordenar: "-rating" }, t("home.offersTitle"));
       return;
     }
-    if (resultsTitle === "Hospedajes con oferta") {
+    if (lastQueryRef.current?.query.ofertas === 1) {
       clearResults();
     }
-  }, [location.search, loadList, resultsTitle]);
+  }, [location.search, loadList, t]);
 
   const retrySearch = () => {
 
@@ -472,31 +470,19 @@ export function HomePage() {
             <div id="tipos">
 
               <BrowseTilesSection
-
-                title="Busca por tipo de alojamiento"
-
-                tiles={typeTiles}
-
+                title={t("home.browseByType")}
+                tiles={typeTilesI18n}
                 loading={tilesLoading}
-
                 onSelect={onBrowseTile}
-
               />
-
             </div>
 
             <BrowseTilesSection
-
-              title="Explora por región natural"
-
-              subtitle="Costa, Sierra o Selva del Perú"
-
-              tiles={regionTiles}
-
+              title={t("home.browseByRegion")}
+              subtitle={t("home.browseByRegionSub")}
+              tiles={regionTilesI18n}
               loading={tilesLoading}
-
               onSelect={onBrowseTile}
-
             />
 
             <div id="destinos">

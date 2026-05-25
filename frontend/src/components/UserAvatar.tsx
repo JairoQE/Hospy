@@ -5,14 +5,22 @@ import { resolveMediaUrl } from "../utils/media";
 type Size = "sm" | "md" | "lg" | "xl";
 
 interface Props {
-  user: Pick<User, "first_name" | "last_name" | "email" | "photo" | "photo_url">;
+  user: Pick<User, "first_name" | "last_name"> & {
+    photo?: string | null;
+    photo_url?: string | null;
+    email?: string;
+    username?: string;
+  };
   size?: Size;
   className?: string;
 }
 
 export function UserAvatar({ user, size = "md", className = "" }: Props) {
   const src = resolveMediaUrl(user.photo_url ?? user.photo);
-  const name = displayName(user);
+  const name = displayName({
+    ...user,
+    email: user.email ?? user.username ?? "?",
+  });
   const initial = name.charAt(0).toUpperCase();
 
   return (

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { Ref } from "react";
 import type { AccommodationListItem } from "../api/types";
+import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
 import { formatMoney, typeLabel } from "../utils/format";
 import { resolveMediaUrl } from "../utils/media";
 
@@ -19,6 +20,7 @@ export function AccommodationCard({
   compact = false,
   cardRef,
 }: Props) {
+  const { t, tVars } = useLocaleCurrency();
   const qs = new URLSearchParams();
   if (checkIn) qs.set("entrada", checkIn);
   if (checkOut) qs.set("salida", checkOut);
@@ -38,7 +40,7 @@ export function AccommodationCard({
         className="acc-card-image"
         style={fotoUrl ? { backgroundImage: `url(${fotoUrl})` } : undefined}
       >
-        {!fotoUrl && <span className="acc-card-placeholder">Sin foto</span>}
+        {!fotoUrl && <span className="acc-card-placeholder">{t("common.noPhoto")}</span>}
         {item.oferta_activa && (
           <span className="acc-card-offer">
             −{Number(item.descuento_porcentaje) || ""}%
@@ -50,24 +52,26 @@ export function AccommodationCard({
         <h3>{item.name}</h3>
         <p className="acc-card-meta">
           {item.city}
-          {item.distance_km != null && <> · A {item.distance_km} km de ti</>}
+          {item.distance_km != null && (
+            <> · {tVars("common.distanceKm", { km: item.distance_km })}</>
+          )}
         </p>
         <div className="acc-card-footer">
           <span className="rating" title={`${rating} estrellas`}>
-            ★ {rating > 0 ? rating.toFixed(1) : "Nuevo"}
+            ★ {rating > 0 ? rating.toFixed(1) : t("price.new")}
           </span>
           <span className={`price${hasDates ? " price--highlight" : ""}`}>
             {item.precio_desde != null ? (
               <>
-                {hasDates ? "Total desde " : "desde "}
+                {hasDates ? `${t("price.totalFrom")} ` : `${t("price.from")} `}
                 {item.oferta_activa && item.precio_desde_original != null && (
                   <span className="price-was">{formatMoney(item.precio_desde_original)}</span>
                 )}
                 <strong>{formatMoney(item.precio_desde)}</strong>
-                {!hasDates && <span className="price-unit"> / noche</span>}
+                {!hasDates && <span className="price-unit"> {t("price.perNight")}</span>}
               </>
             ) : (
-              "Consultar"
+              t("price.consult")
             )}
           </span>
         </div>

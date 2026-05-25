@@ -179,6 +179,29 @@ npm run build
 python scripts/probar_flujo_local.py
 ```
 
+## Hospix (asistente virtual)
+
+Botón flotante **Hospix** en casi todas las páginas (excepto login, registro y admin).
+
+**Motor híbrido** (`POST /api/v1/hospix/chat/`):
+
+- Hospedajes **reales** desde la base de datos al buscar por ciudad
+- Reservas del huésped y pendientes del propietario si hay sesión JWT
+- FAQ y flujos guiados; **IA con Gemini** (gratuito) o OpenAI (ver `.env.example`)
+- Si el backend falla, el frontend usa reglas locales como respaldo
+- **Los mensajes del chat no se guardan en la base de datos**: solo memoria temporal (caché RAM con TTL ~30 min y `sessionStorage` mínimo para el id de sesión)
+
+```env
+HOSPIX_LLM_ENABLED=true
+HOSPIX_LLM_PROVIDER=gemini
+GEMINI_API_KEY=tu-clave-de-google-ai-studio
+GEMINI_MODEL=gemini-2.0-flash
+```
+
+Obtén la clave en [Google AI Studio](https://aistudio.google.com/apikey). **No la subas a GitHub**; solo en `.env` local.
+
+Documentación: [`frontend/docs/HOSPIX_API.md`](frontend/docs/HOSPIX_API.md).
+
 ## Rutas principales del frontend
 
 | Ruta        | Descripción              |

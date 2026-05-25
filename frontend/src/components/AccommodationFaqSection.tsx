@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { AccommodationFaq } from "../api/types";
+import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
 
 interface Props {
   propertyName: string;
@@ -22,6 +23,7 @@ function FaqColumn({ items }: { items: AccommodationFaq[] }) {
 }
 
 export function AccommodationFaqSection({ propertyName, faqs }: Props) {
+  const { tVars } = useLocaleCurrency();
   const [left, right] = useMemo(() => {
     const mid = Math.ceil(faqs.length / 2);
     return [faqs.slice(0, mid), faqs.slice(mid)];
@@ -31,7 +33,7 @@ export function AccommodationFaqSection({ propertyName, faqs }: Props) {
 
   return (
     <section className="property-section property-faq-section" id="preguntas-frecuentes">
-      <h2>Preguntas frecuentes sobre {propertyName}</h2>
+      <h2>{tVars("detail.faqTitle", { name: propertyName })}</h2>
       <div className="property-faq-grid">
         <FaqColumn items={left} />
         {right.length > 0 && <FaqColumn items={right} />}

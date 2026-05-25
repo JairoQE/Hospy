@@ -4,7 +4,11 @@ import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { ChatDockProvider } from "./context/ChatDockContext";
+import { HospixChatProvider } from "./context/HospixChatContext";
+import { LocaleCurrencyProvider } from "./context/LocaleCurrencyContext";
+import { FloatingChatHeads } from "./components/chat/FloatingChatHeads";
 import { GlobalChatDock } from "./components/GlobalChatDock";
+import { HospixWidget } from "./components/hospix/HospixWidget";
 import { AccommodationDetailPage } from "./pages/AccommodationDetailPage";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import { AdminConsultasPage } from "./pages/AdminConsultasPage";
@@ -20,14 +24,19 @@ import { MyBookingsPage } from "./pages/MyBookingsPage";
 import { OwnerEditAccommodationPage } from "./pages/OwnerEditAccommodationPage";
 import { OwnerPanelPage } from "./pages/OwnerPanelPage";
 import { InboxPage } from "./pages/InboxPage";
+import { OwnerStorePage } from "./pages/OwnerStorePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { SponsorPanelPage } from "./pages/SponsorPanelPage";
+import { InfoPage } from "./pages/InfoPage";
 
 export default function App() {
   return (
     <AuthProvider>
+      <LocaleCurrencyProvider>
       <ChatDockProvider>
         <BrowserRouter>
+        <HospixChatProvider>
           <Routes>
             <Route element={<Layout />}>
             <Route index element={<HomePage />} />
@@ -39,10 +48,16 @@ export default function App() {
                 </ErrorBoundary>
               }
             />
+            <Route path="anfitrion/:ownerId" element={<OwnerStorePage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="recuperar-contraseña" element={<ForgotPasswordPage />} />
             <Route path="registro" element={<RegisterPage />} />
             <Route path="registro-propietario" element={<RegisterPage asOwner />} />
+            <Route path="registro-patrocinador" element={<RegisterPage asSponsor />} />
+            <Route path="sobre-nosotros" element={<InfoPage pageId="sobre-nosotros" />} />
+            <Route path="centro-ayuda" element={<InfoPage pageId="centro-ayuda" />} />
+            <Route path="contacto" element={<InfoPage pageId="contacto" />} />
+            <Route path="legal/:slug" element={<InfoPage />} />
             <Route
               path="mis-reservas"
               element={
@@ -64,6 +79,14 @@ export default function App() {
               element={
                 <ProtectedRoute roles={["propietario"]}>
                   <OwnerEditAccommodationPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="patrocinio"
+              element={
+                <ProtectedRoute roles={["patrocinador"]}>
+                  <SponsorPanelPage />
                 </ProtectedRoute>
               }
             />
@@ -90,6 +113,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="perfil/:userId" element={<ProfilePage />} />
             <Route
               path="perfil"
               element={
@@ -101,9 +125,13 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
+          <FloatingChatHeads />
           <GlobalChatDock />
+          <HospixWidget />
+        </HospixChatProvider>
         </BrowserRouter>
       </ChatDockProvider>
+      </LocaleCurrencyProvider>
     </AuthProvider>
   );
 }

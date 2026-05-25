@@ -1,3 +1,4 @@
 source .venv/Scripts/activate
+# En .env: HOSPIX_LLM_ENABLED=true, GEMINI_API_KEY=tu-clave (Google AI Studio)
 python manage.py runserver
 python manage.py migrate

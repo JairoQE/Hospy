@@ -94,6 +94,11 @@ export function HeaderUserMenu({ user, onLogout, className = "" }: Props) {
               Mi panel
             </Link>
           )}
+          {user.role === "patrocinador" && (
+            <Link to="/patrocinio" role="menuitem" className="header-user-item" onClick={close}>
+              Mis anuncios
+            </Link>
+          )}
           {user.role === "administrador" && (
             <>
               <Link to="/admin" role="menuitem" className="header-user-item" onClick={close}>

@@ -1,44 +1,117 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError, api } from "../api/client";
-import type { User } from "../api/types";
-import { UserAvatar } from "../components/UserAvatar";
+import type { PublicUserProfile, User } from "../api/types";
+import { ProfileHero } from "../components/profile/ProfileHero";
 import { useAuth } from "../context/AuthContext";
-import { displayName, formatDate, roleLabel } from "../utils/format";
+import { formatDate, profileHeading, roleLabel } from "../utils/format";
 import { formatLastAccessRelative } from "../utils/relativeTime";
+import { resolveMediaUrl } from "../utils/media";
 
 export function ProfilePage() {
-  const { user, refreshUser, isRole } = useAuth();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const { userId: userIdParam } = useParams<{ userId?: string }>();
+  const navigate = useNavigate();
+  const { user: me, refreshUser, isRole } = useAuth();
+
+  const [publicProfile, setPublicProfile] = useState<PublicUserProfile | null>(null);
+  const [loadingPublic, setLoadingPublic] = useState(false);
+
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
     phone: "",
+    bio: "",
   });
   const [msg, setMsg] = useState("");
+  const [photoMsg, setPhotoMsg] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+
+  const targetId = userIdParam ? Number(userIdParam) : me?.id;
+  const isOwn = !userIdParam || (me && targetId === me.id);
+
+  const loadPublic = useCallback(async (id: number) => {
+    setLoadingPublic(true);
+    setError("");
+    try {
+      const data = await api.get<PublicUserProfile>(`/auth/usuarios/${id}/`, false);
+      if (data.is_self) {
+        navigate("/perfil", { replace: true });
+        return;
+      }
+      if (data.role === "propietario") {
+        navigate(`/anfitrion/${id}`, { replace: true });
+        return;
+      }
+      setPublicProfile(data);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "No se pudo cargar el perfil");
+      setPublicProfile(null);
+    } finally {
+      setLoadingPublic(false);
+    }
+  }, [me, navigate]);
 
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!isOwn && targetId && !Number.isNaN(targetId)) {
+      void loadPublic(targetId);
+    } else {
+      setPublicProfile(null);
+    }
+  }, [isOwn, targetId, loadPublic]);
+
+  useEffect(() => {
+    if (!me || !isOwn) return;
     setForm({
-      first_name: user.first_name ?? "",
-      last_name: user.last_name ?? "",
-      phone: user.phone ?? "",
+      first_name: me.first_name ?? "",
+      last_name: me.last_name ?? "",
+      phone: me.phone ?? "",
+      bio: me.bio ?? "",
     });
-  }, [user]);
+  }, [me, isOwn]);
 
-  if (!user) return null;
+  const displayUser = isOwn ? me : publicProfile;
+  if (!displayUser && !loadingPublic) {
+    if (!isOwn) return <div className="container page"><p className="error-msg">{error || "Perfil no encontrado."}</p></div>;
+    return null;
+  }
+  if (!displayUser) {
+    return <div className="container page muted">Cargando perfil…</div>;
+  }
 
-  const name = displayName(user);
+  const { title, showEmail } = profileHeading(
+    isOwn
+      ? me!
+      : {
+          first_name: publicProfile!.first_name,
+          last_name: publicProfile!.last_name,
+          username: publicProfile!.username,
+          email: "",
+        },
+  );
+
+  const coverUrl =
+    resolveMediaUrl(
+      isOwn
+        ? me?.cover_photo_url ?? me?.cover_photo ?? null
+        : publicProfile?.cover_photo_url ?? null,
+    ) ?? null;
+
+  const followersCount = isOwn
+    ? me?.followers_count ?? 0
+    : publicProfile?.followers_count ?? 0;
+  const followingCount = isOwn ? me?.following_count ?? 0 : publicProfile?.following_count ?? 0;
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOwn) return;
     setMsg("");
     setError("");
     setSaving(true);
@@ -54,7 +127,7 @@ export function ProfilePage() {
   };
 
   const uploadPhoto = async (file: File) => {
-    setMsg("");
+    setPhotoMsg("");
     setError("");
     setUploadingPhoto(true);
     try {
@@ -62,12 +135,63 @@ export function ProfilePage() {
       body.append("photo", file);
       await api.patch<User>("/auth/perfil/", body);
       await refreshUser();
-      setMsg("Foto de perfil actualizada.");
+      setPhotoMsg("Foto actualizada.");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Error al subir la foto");
     } finally {
       setUploadingPhoto(false);
-      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const uploadCover = async (file: File) => {
+    setPhotoMsg("");
+    setError("");
+    setUploadingCover(true);
+    try {
+      const body = new FormData();
+      body.append("cover_photo", file);
+      await api.patch<User>("/auth/perfil/", body);
+      await refreshUser();
+      setPhotoMsg("Portada actualizada.");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error al subir la portada");
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const removeCover = async () => {
+    if (!window.confirm("¿Quitar la foto de portada?")) return;
+    setPhotoMsg("");
+    setUploadingCover(true);
+    try {
+      await api.patch<User>("/auth/perfil/", { cover_photo: null });
+      await refreshUser();
+      setPhotoMsg("Portada eliminada.");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudo quitar la portada");
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const toggleFollow = async () => {
+    if (!publicProfile || !me) return;
+    setFollowLoading(true);
+    try {
+      const res = await api.post<{
+        following: boolean;
+        followers_count: number;
+      }>(`/auth/usuarios/${publicProfile.id}/seguir/`);
+      setPublicProfile({
+        ...publicProfile,
+        is_following: res.following,
+        followers_count: res.followers_count,
+      });
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Error al seguir");
+    } finally {
+      setFollowLoading(false);
     }
   };
 
@@ -75,135 +199,160 @@ export function ProfilePage() {
     ? "/admin"
     : isRole("propietario")
       ? "/panel"
-      : "/mis-reservas";
+      : isRole("patrocinador")
+        ? "/patrocinio"
+        : "/mis-reservas";
   const panelLabel = isRole("administrador")
     ? "Panel de moderación"
     : isRole("propietario")
       ? "Mi panel de hospedajes"
-      : "Mis reservas";
+      : isRole("patrocinador")
+        ? "Mis anuncios"
+        : "Mis reservas";
+
+  const heroUser = isOwn ? me! : publicProfile!;
 
   return (
     <div className="profile-page">
-      <div className="profile-cover" aria-hidden />
-      <div className="container profile-page-inner">
-        <header className="profile-header card">
-          <div className="profile-avatar-block">
-            <UserAvatar user={user} size="xl" className="profile-avatar" />
-            <label className="profile-photo-btn">
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                hidden
-                disabled={uploadingPhoto}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) uploadPhoto(file);
-                }}
-              />
-              {uploadingPhoto ? "Subiendo…" : "Cambiar foto"}
-            </label>
-          </div>
-          <div className="profile-header-text">
-            <h1>{name}</h1>
-            <p className="profile-email muted">{user.email}</p>
-            <div className="profile-badges">
-              <span className="profile-role-badge">{roleLabel(user.role)}</span>
-              {user.username && (
-                <span className="profile-username muted">@{user.username}</span>
-              )}
-            </div>
-          </div>
-        </header>
+      <ProfileHero
+        user={heroUser}
+        title={title}
+        coverUrl={coverUrl}
+        isOwn={Boolean(isOwn)}
+        showEmail={Boolean(isOwn && showEmail)}
+        email={isOwn ? me?.email : undefined}
+        followersCount={followersCount}
+        followingCount={followingCount}
+        isFollowing={publicProfile?.is_following}
+        followLoading={followLoading}
+        canFollow={!isOwn && !!me}
+        onFollowToggle={!isOwn && me ? toggleFollow : undefined}
+        uploadingCover={uploadingCover}
+        uploadingPhoto={uploadingPhoto}
+        onCoverSelect={isOwn ? uploadCover : undefined}
+        onCoverRemove={isOwn && coverUrl ? removeCover : undefined}
+        onPhotoSelect={isOwn ? uploadPhoto : undefined}
+        flash={photoMsg || (isOwn ? "" : error)}
+        flashError={!!error && !photoMsg}
+      />
 
-        <div className="profile-grid">
-          <aside className="profile-aside">
-            <section className="card profile-info-card">
-              <h2>Información de la cuenta</h2>
-              <dl className="profile-dl">
-                <div>
-                  <dt>Correo</dt>
-                  <dd>{user.email}</dd>
+      <div className="container profile-content">
+        {isOwn ? (
+          <div className="profile-grid">
+            <aside className="profile-aside">
+              <section className="card profile-info-card">
+                <h2>Información de la cuenta</h2>
+                <dl className="profile-dl">
+                  <div>
+                    <dt>Correo</dt>
+                    <dd>{me?.email}</dd>
+                  </div>
+                  <div>
+                    <dt>Usuario</dt>
+                    <dd>{me?.username || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Rol en Hospy</dt>
+                    <dd>{roleLabel(me?.role ?? "huesped")}</dd>
+                  </div>
+                  <div>
+                    <dt>Miembro desde</dt>
+                    <dd>{formatDate(me?.date_joined ?? "")}</dd>
+                  </div>
+                  <div>
+                    <dt>Último acceso</dt>
+                    <dd>{formatLastAccessRelative(me?.last_login ?? null)}</dd>
+                  </div>
+                  <div>
+                    <dt>Teléfono</dt>
+                    <dd>{me?.phone?.trim() || "Sin registrar"}</dd>
+                  </div>
+                </dl>
+              </section>
+
+              <section className="card profile-quick-card">
+                <h2>Accesos rápidos</h2>
+                <Link to={panelLink} className="profile-quick-link">
+                  {panelLabel}
+                </Link>
+                <Link to="/bandeja?canal=notificacion" className="profile-quick-link">
+                  Notificaciones
+                </Link>
+                <Link to="/bandeja?canal=mensaje" className="profile-quick-link">
+                  Mensajes
+                </Link>
+                {me?.role === "propietario" && (
+                  <Link to={`/anfitrion/${me.id}`} className="profile-quick-link">
+                    Ver mi perfil de propietario
+                  </Link>
+                )}
+              </section>
+            </aside>
+
+            <section className="card profile-form-card">
+              <h2>Editar perfil</h2>
+              <p className="muted profile-form-hint">
+                Personaliza cómo te ven otros usuarios en Hospy.
+              </p>
+              <form className="profile-form" onSubmit={save}>
+                <label>
+                  Biografía (visible en tu perfil público)
+                  <textarea
+                    rows={4}
+                    maxLength={500}
+                    value={form.bio}
+                    onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                    placeholder="Cuéntanos sobre ti o tu negocio…"
+                  />
+                </label>
+                <div className="form-row">
+                  <label>
+                    Nombre
+                    <input
+                      value={form.first_name}
+                      onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+                      autoComplete="given-name"
+                    />
+                  </label>
+                  <label>
+                    Apellido
+                    <input
+                      value={form.last_name}
+                      onChange={(e) => setForm({ ...form, last_name: e.target.value })}
+                      autoComplete="family-name"
+                    />
+                  </label>
                 </div>
-                <div>
-                  <dt>Usuario</dt>
-                  <dd>{user.username || "—"}</dd>
-                </div>
-                <div>
-                  <dt>Rol en Hospy</dt>
-                  <dd>{roleLabel(user.role)}</dd>
-                </div>
-                <div>
-                  <dt>Miembro desde</dt>
-                  <dd>{formatDate(user.date_joined)}</dd>
-                </div>
-                <div>
-                  <dt>Último acceso</dt>
-                  <dd>{formatLastAccessRelative(user.last_login)}</dd>
-                </div>
-                <div>
-                  <dt>Teléfono</dt>
-                  <dd>{user.phone?.trim() || "Sin registrar"}</dd>
-                </div>
-              </dl>
+                <label>
+                  Teléfono
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    placeholder="+51 999 999 999"
+                  />
+                </label>
+                {msg && <p className="success-msg">{msg}</p>}
+                {error && <p className="error-msg">{error}</p>}
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? "Guardando…" : "Guardar cambios"}
+                </button>
+              </form>
             </section>
-
-            <section className="card profile-quick-card">
-              <h2>Accesos rápidos</h2>
-              <Link to={panelLink} className="profile-quick-link">
-                {panelLabel}
-              </Link>
-              <Link to="/bandeja?canal=notificacion" className="profile-quick-link">
-                Notificaciones
-              </Link>
-              <Link to="/bandeja?canal=mensaje" className="profile-quick-link">
-                Mensajes
-              </Link>
-            </section>
-          </aside>
-
-          <section className="card profile-form-card">
-            <h2>Editar datos personales</h2>
-            <p className="muted profile-form-hint">
-              Estos datos pueden verse en reservas y mensajes con otros usuarios.
+          </div>
+        ) : (
+          <section className="card profile-public-note">
+            <p className="muted">
+              Perfil público en Hospy.{" "}
+              {me ? (
+                <Link to="/perfil">Ver mi perfil</Link>
+              ) : (
+                <Link to="/login">Inicia sesión</Link>
+              )}{" "}
+              para seguir a este usuario.
             </p>
-            <form className="profile-form" onSubmit={save}>
-              <div className="form-row">
-                <label>
-                  Nombre
-                  <input
-                    value={form.first_name}
-                    onChange={(e) => setForm({ ...form, first_name: e.target.value })}
-                    autoComplete="given-name"
-                  />
-                </label>
-                <label>
-                  Apellido
-                  <input
-                    value={form.last_name}
-                    onChange={(e) => setForm({ ...form, last_name: e.target.value })}
-                    autoComplete="family-name"
-                  />
-                </label>
-              </div>
-              <label>
-                Teléfono
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="+51 999 999 999"
-                  autoComplete="tel"
-                />
-              </label>
-              {msg && <p className="success-msg">{msg}</p>}
-              {error && <p className="error-msg">{error}</p>}
-              <button type="submit" className="btn btn-primary" disabled={saving}>
-                {saving ? "Guardando…" : "Guardar cambios"}
-              </button>
-            </form>
           </section>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -188,6 +188,7 @@ class AccommodationListSerializer(serializers.ModelSerializer):
             "descuento_porcentaje",
             "foto_principal",
             "distance_km",
+            "created_at",
         )
 
     def _display_prices(self, obj):
@@ -219,6 +220,32 @@ class AccommodationListSerializer(serializers.ModelSerializer):
         return media_public_path(foto.image)
 
 
+class OwnerStoreAccommodationSerializer(AccommodationListSerializer):
+    """Hospedaje en el perfil público del propietario (más detalle para tarjetas)."""
+
+    region = serializers.CharField(read_only=True)
+    services_preview = serializers.SerializerMethodField()
+    max_capacity = serializers.SerializerMethodField()
+
+    class Meta(AccommodationListSerializer.Meta):
+        fields = AccommodationListSerializer.Meta.fields + (
+            "region",
+            "services_preview",
+            "max_capacity",
+        )
+
+    def get_services_preview(self, obj):
+        return [
+            {"slug": s.slug, "name": s.name}
+            for s in obj.services.all()[:5]
+            if s.is_active
+        ]
+
+    def get_max_capacity(self, obj):
+        caps = [r.capacity for r in obj.habitaciones.all() if r.capacity]
+        return max(caps) if caps else None
+
+
 class AccommodationOwnerListSerializer(AccommodationListSerializer):
     """Listado del propietario: incluye estado de aprobación."""
 
@@ -231,9 +258,14 @@ class AccommodationDetailSerializer(serializers.ModelSerializer):
     faqs = AccommodationFAQSerializer(many=True, read_only=True)
     services = ServiceSerializer(many=True, read_only=True)
     owner_email = serializers.EmailField(source="owner.email", read_only=True)
+    propietario_id = serializers.IntegerField(source="owner.id", read_only=True)
+    propietario_bio = serializers.SerializerMethodField()
     propietario_nombre = serializers.SerializerMethodField()
     propietario_telefono = serializers.SerializerMethodField()
     propietario_foto_url = serializers.SerializerMethodField()
+    propietario_seguidores = serializers.SerializerMethodField()
+    propietario_calificacion = serializers.SerializerMethodField()
+    propietario_resenas_total = serializers.SerializerMethodField()
     otros_mismo_propietario = serializers.SerializerMethodField()
 
     class Meta:
@@ -257,9 +289,14 @@ class AccommodationDetailSerializer(serializers.ModelSerializer):
             "fotos",
             "faqs",
             "owner_email",
+            "propietario_id",
+            "propietario_bio",
             "propietario_nombre",
             "propietario_telefono",
             "propietario_foto_url",
+            "propietario_seguidores",
+            "propietario_calificacion",
+            "propietario_resenas_total",
             "otros_mismo_propietario",
             "created_at",
             "updated_at",
@@ -281,6 +318,27 @@ class AccommodationDetailSerializer(serializers.ModelSerializer):
         if u.username:
             return u.username
         return u.email.split("@", 1)[0]
+
+    def get_propietario_bio(self, obj):
+        return (obj.owner.bio or "").strip()
+
+    def _owner_stats_cached(self, obj):
+        if not hasattr(obj, "_owner_stats_cache"):
+            from properties.owner_stats import get_owner_public_stats
+
+            obj._owner_stats_cache = get_owner_public_stats(obj.owner_id)
+        return obj._owner_stats_cache
+
+    def get_propietario_seguidores(self, obj):
+        from accounts.follows import followers_count
+
+        return followers_count(obj.owner)
+
+    def get_propietario_calificacion(self, obj):
+        return self._owner_stats_cached(obj)["average_rating"]
+
+    def get_propietario_resenas_total(self, obj):
+        return self._owner_stats_cached(obj)["reviews_count"]
 
     def get_propietario_telefono(self, obj):
         return (obj.owner.phone or "").strip()

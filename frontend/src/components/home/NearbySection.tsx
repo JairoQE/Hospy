@@ -1,14 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AccommodationListItem } from "../../api/types";
+import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { AccommodationCard } from "../AccommodationCard";
 import { SkeletonAccGrid } from "../ui/Skeleton";
 import { EmptyState } from "../ui/EmptyState";
 
-const TYPES = [
-  { id: "hotel", title: "Hoteles" },
-  { id: "hostal", title: "Hostales" },
-  { id: "hospedaje", title: "Hospedajes" },
-] as const;
+const TYPE_IDS = ["hotel", "hostal", "hospedaje"] as const;
 
 type Props = {
   items: AccommodationListItem[];
@@ -17,14 +14,17 @@ type Props = {
 };
 
 export function NearbySection({ items, loading, radiusKm }: Props) {
+  const { t, tVars } = useLocaleCurrency();
+
   const groups = useMemo(
     () =>
-      TYPES.map((t) => ({
-        ...t,
-        items: items.filter((i) => i.type === t.id),
-        count: items.filter((i) => i.type === t.id).length,
+      TYPE_IDS.map((id) => ({
+        id,
+        title: t(`home.typesPlural.${id}`),
+        items: items.filter((i) => i.type === id),
+        count: items.filter((i) => i.type === id).length,
       })),
-    [items],
+    [items, t],
   );
 
   const firstWithResults = groups.find((g) => g.count > 0)?.id ?? groups[0].id;
@@ -57,12 +57,12 @@ export function NearbySection({ items, loading, radiusKm }: Props) {
     return (
       <section className="home-block fade-in section-nearby" aria-labelledby="nearby-title">
         <h2 id="nearby-title" className="home-block-title">
-          Cerca de ti
+          {t("home.nearbyTitle")}
         </h2>
         <EmptyState
           icon="pi-map-marker"
-          title="Sin alojamientos cercanos"
-          message={`No hay publicaciones en un radio de ${radiusKm} km por ahora.`}
+          title={t("home.nearbyEmpty")}
+          message={tVars("home.nearbyEmptyMsg", { km: radiusKm })}
         />
       </section>
     );
@@ -75,9 +75,11 @@ export function NearbySection({ items, loading, radiusKm }: Props) {
       aria-live="polite"
     >
       <h2 id="nearby-title" className="home-block-title">
-        Cerca de ti
+        {t("home.nearbyTitle")}
       </h2>
-      <p className="muted home-block-sub">Radio de {radiusKm} km desde tu ubicación</p>
+      <p className="muted home-block-sub">
+        {tVars("home.nearbySub", { km: radiusKm })}
+      </p>
 
       {loading ? (
         <SkeletonAccGrid count={4} />
@@ -85,11 +87,11 @@ export function NearbySection({ items, loading, radiusKm }: Props) {
         <>
           {mobileSelect ? (
             <label className="nearby-tabs-select">
-              <span className="sr-only">Tipo de alojamiento</span>
+              <span className="sr-only">{t("home.browseByType")}</span>
               <select
                 value={activeTab}
                 onChange={(e) => selectTab(e.target.value)}
-                aria-label="Filtrar por tipo de alojamiento"
+                aria-label={t("home.browseByType")}
               >
                 {groups.map((g) => (
                   <option key={g.id} value={g.id} disabled={g.count === 0}>
@@ -99,7 +101,7 @@ export function NearbySection({ items, loading, radiusKm }: Props) {
               </select>
             </label>
           ) : (
-            <div className="nearby-tabs" role="tablist" aria-label="Tipos de alojamiento cercanos">
+            <div className="nearby-tabs" role="tablist" aria-label={t("home.nearbyTitle")}>
               {groups.map((g) => (
                 <button
                   key={g.id}
@@ -126,7 +128,7 @@ export function NearbySection({ items, loading, radiusKm }: Props) {
             aria-labelledby={`nearby-tab-${active.id}`}
           >
             {active.count === 0 ? (
-              <p className="muted nearby-empty">Sin resultados en esta categoría.</p>
+              <p className="muted nearby-empty">{t("home.nearbyNoCategory")}</p>
             ) : (
               <div className="acc-grid">
                 {active.items.map((item) => (

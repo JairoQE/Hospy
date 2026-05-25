@@ -1,0 +1,168 @@
+/* Chat heads — burbujas apiladas estilo Facebook Messenger */
+
+.chat-head-stack {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--floating-above-nav, 4.5rem) + 8px);
+  z-index: 1210;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.chat-head-stack > * {
+  pointer-events: auto;
+}
+
+.chat-head-bubble-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+}
+
+.chat-head-bubble-wrap:hover .chat-head-bubble-close,
+.chat-head-bubble-wrap:focus-within .chat-head-bubble-close {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.chat-head-bubble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #e4e6eb;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.chat-head-bubble:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+
+.chat-head-bubble-avatar {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  font-size: 1.25rem !important;
+  border: none !important;
+}
+
+.chat-head-hospix-avatar {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50%;
+}
+
+.chat-head-bubble-wrap--hospix .chat-head-bubble {
+  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+}
+
+.chat-head-bubble-wrap--hospix .chat-head-bubble:hover {
+  background: linear-gradient(135deg, #1d4ed8, #172554);
+}
+
+.chat-head-bubble-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border: 2px solid #fff;
+  display: grid;
+  place-items: center;
+}
+
+.chat-head-bubble-close {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  color: #374151;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.85);
+  transition: opacity 0.15s, transform 0.15s, background 0.15s;
+}
+
+.chat-head-bubble-wrap:hover .chat-head-bubble-close,
+.chat-head-bubble-wrap:focus-within .chat-head-bubble-close {
+  pointer-events: auto;
+}
+
+.chat-head-bubble-close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* En táctil: la X visible solo en la esquina, sin tapar la burbuja */
+@media (hover: none) {
+  .chat-head-bubble-close {
+    opacity: 0.92;
+    pointer-events: auto;
+    top: -2px;
+    right: -2px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.chat-head-stack--above-messenger {
+  bottom: min(470px, calc(100vh - 5rem));
+}
+
+.chat-head-stack--above-hospix {
+  bottom: min(520px, calc(100vh - 5rem));
+}
+
+.messenger-dock-host--expanded {
+  position: fixed;
+  right: 16px;
+  bottom: 0;
+  z-index: 1200;
+  pointer-events: none;
+}
+
+.messenger-dock-host--expanded > * {
+  pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  .chat-head-stack {
+    right: 12px;
+    bottom: calc(var(--mobile-nav-offset, 56px) + 12px);
+  }
+
+  .chat-head-bubble,
+  .chat-head-bubble-wrap {
+    width: 52px;
+    height: 52px;
+  }
+}
