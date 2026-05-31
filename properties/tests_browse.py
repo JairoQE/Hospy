@@ -4,6 +4,30 @@ from properties.models import BrowseTile
 
 
 @pytest.mark.django_db
+def test_inicio_bootstrap_agrupa_bloques(api_client):
+    BrowseTile.objects.create(
+        group=BrowseTile.Group.ACCOMMODATION_TYPE,
+        title="Hotel Bootstrap",
+        slug="hotel-bootstrap",
+        filter_value="hotel",
+        order=1,
+    )
+    BrowseTile.objects.create(
+        group=BrowseTile.Group.NATURAL_REGION,
+        title="Costa Bootstrap",
+        slug="costa-bootstrap",
+        filter_value="costa",
+        order=1,
+    )
+    r = api_client.get("/api/v1/inicio-bootstrap/")
+    assert r.status_code == 200
+    assert any(x["title"] == "Hotel Bootstrap" for x in r.data["tipo"])
+    assert any(x["title"] == "Costa Bootstrap" for x in r.data["region"])
+    assert isinstance(r.data["ubigeo_departamentos"], list)
+    assert len(r.data["ubigeo_departamentos"]) >= 20
+
+
+@pytest.mark.django_db
 def test_publico_lista_bloques_inicio(api_client, admin_user):
     BrowseTile.objects.create(
         group=BrowseTile.Group.ACCOMMODATION_TYPE,

@@ -2,17 +2,49 @@ from datetime import timedelta
 
 from django.db.models import Count, Q
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from accounts.permissions import IsAdministrador
 from audit.services import log_action
 
 from .browse_serializers import BrowseTileAdminSerializer, BrowseTilePublicSerializer
 from .models import BrowseTile, BrowseTileClick
+from .ubigeo_loader import list_departamentos
+
+
+@method_decorator(cache_page(60 * 10), name="dispatch")
+class HomeInicioBootstrapView(APIView):
+    """GET /api/v1/inicio-bootstrap/ — datos del home en una sola petición."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        active = BrowseTile.objects.filter(is_active=True)
+        serializer = BrowseTilePublicSerializer
+        return Response(
+            {
+                "tipo": serializer(
+                    active.filter(group=BrowseTile.Group.ACCOMMODATION_TYPE),
+                    many=True,
+                ).data,
+                "region": serializer(
+                    active.filter(group=BrowseTile.Group.NATURAL_REGION),
+                    many=True,
+                ).data,
+                "departamento": serializer(
+                    active.filter(group=BrowseTile.Group.DEPARTMENT),
+                    many=True,
+                ).data,
+                "ubigeo_departamentos": list_departamentos(),
+            }
+        )
 
 
 class BrowseTileViewSet(viewsets.ModelViewSet):

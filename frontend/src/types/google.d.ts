@@ -14,10 +14,21 @@ interface IdConfiguration {
   cancel_on_tap_outside?: boolean;
 }
 
+interface PromptMomentNotification {
+  isDisplayMoment: () => boolean;
+  isDisplayed: () => boolean;
+  isNotDisplayed: () => boolean;
+  getNotDisplayedReason: () => string;
+  isSkippedMoment: () => boolean;
+  getSkippedReason: () => string;
+  isDismissedMoment: () => boolean;
+  getDismissedReason: () => string;
+}
+
 interface GoogleAccountsId {
   initialize: (config: IdConfiguration) => void;
   renderButton: (parent: HTMLElement, options: GsiButtonConfiguration) => void;
-  prompt: () => void;
+  prompt: (listener?: (notification: PromptMomentNotification) => void) => void;
   cancel: () => void;
 }
 

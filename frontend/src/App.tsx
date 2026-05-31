@@ -1,5 +1,7 @@
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { warmupApi } from "./api/homeBootstrap";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -145,6 +147,10 @@ function AppTree() {
 }
 
 export default function App() {
+  useEffect(() => {
+    warmupApi();
+  }, []);
+
   if (googleClientId) {
     return (
       <GoogleOAuthProvider clientId={googleClientId}>

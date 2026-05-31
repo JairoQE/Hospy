@@ -20,6 +20,23 @@ function googleLabel(mode: "login" | "register", loading: boolean): string {
   return mode === "register" ? "Registrarse con Google" : "Acceder con Google";
 }
 
+function promptBlockedMessage(reason: string): string {
+  switch (reason) {
+    case "unregistered_origin":
+      return (
+        "Este dominio no está autorizado en Google Cloud. Agrega https://hospy.pages.dev " +
+        "en «Orígenes de JavaScript autorizados» del cliente OAuth."
+      );
+    case "invalid_client":
+    case "missing_client_id":
+      return "El ID de cliente de Google no es válido. Revisa VITE_GOOGLE_CLIENT_ID en Cloudflare Pages.";
+    case "opt_out_or_no_session":
+      return "No hay sesión de Google en el navegador. Inicia sesión en google.com e inténtalo de nuevo.";
+    default:
+      return "No se pudo abrir el inicio de sesión con Google. Prueba en otra ventana o recarga la página.";
+  }
+}
+
 function GoogleGIcon() {
   return (
     <svg
@@ -57,12 +74,12 @@ export function GoogleSignInButton({
   className = "",
 }: Props) {
   const { scriptLoadedSuccessfully } = useGoogleOAuth();
-  const gsiHostRef = useRef<HTMLDivElement>(null);
   const [gsiReady, setGsiReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const onCredentialRef = useRef(onCredential);
   const onErrorRef = useRef(onError);
   const disabledRef = useRef(disabled);
+  const initializedRef = useRef(false);
 
   onCredentialRef.current = onCredential;
   onErrorRef.current = onError;
@@ -71,48 +88,57 @@ export function GoogleSignInButton({
   const finishLoading = useCallback(() => setLoading(false), []);
 
   useEffect(() => {
-    if (!clientId || !scriptLoadedSuccessfully || !gsiHostRef.current) return;
+    if (!clientId || !scriptLoadedSuccessfully) {
+      setGsiReady(false);
+      return;
+    }
     const gsi = window.google?.accounts?.id;
-    if (!gsi) return;
-
-    const host = gsiHostRef.current;
-    host.innerHTML = "";
-
-    const handleCredential = (res: { credential?: string }) => {
-      finishLoading();
-      if (disabledRef.current) return;
-      if (res.credential) onCredentialRef.current(res.credential);
-      else onErrorRef.current?.("No se recibió credencial de Google.");
-    };
+    if (!gsi) {
+      setGsiReady(false);
+      return;
+    }
 
     gsi.initialize({
       client_id: clientId,
-      callback: handleCredential,
+      callback: (res) => {
+        finishLoading();
+        if (disabledRef.current) return;
+        if (res.credential) onCredentialRef.current(res.credential);
+        else onErrorRef.current?.("No se recibió credencial de Google.");
+      },
       auto_select: false,
       cancel_on_tap_outside: true,
     });
-
-    gsi.renderButton(host, {
-      type: "standard",
-      theme: "outline",
-      size: "large",
-      text: mode === "login" ? "signin_with" : "signup_with",
-      shape: "rectangular",
-      width: 240,
-    });
-
-    setGsiReady(Boolean(host.querySelector('[role="button"]')));
-  }, [clientId, scriptLoadedSuccessfully, mode, finishLoading]);
+    initializedRef.current = true;
+    setGsiReady(true);
+  }, [clientId, scriptLoadedSuccessfully, finishLoading]);
 
   const handleClick = () => {
     if (!clientId || !gsiReady || disabled || loading) return;
-    const gsiButton = gsiHostRef.current?.querySelector('[role="button"]') as HTMLElement | null;
-    if (!gsiButton) {
-      onError?.("No se pudo conectar con Google.");
+    const gsi = window.google?.accounts?.id;
+    if (!gsi || !initializedRef.current) {
+      onError?.("No se pudo conectar con Google. Recarga la página e inténtalo de nuevo.");
       return;
     }
+
     setLoading(true);
-    gsiButton.click();
+    gsi.prompt((notification) => {
+      if (notification.isNotDisplayed()) {
+        finishLoading();
+        onErrorRef.current?.(
+          promptBlockedMessage(notification.getNotDisplayedReason()),
+        );
+        return;
+      }
+      if (notification.isSkippedMoment()) {
+        finishLoading();
+        onErrorRef.current?.("Inicio de sesión con Google cancelado.");
+        return;
+      }
+      if (notification.isDismissedMoment()) {
+        finishLoading();
+      }
+    });
   };
 
   const label = googleLabel(mode, loading);
@@ -134,18 +160,15 @@ export function GoogleSignInButton({
   }
 
   return (
-    <>
-      <div ref={gsiHostRef} className="register-social-google-gsi-host" aria-hidden />
-      <button
-        type="button"
-        className={`register-social-btn register-social-btn--google register-social-btn--active ${className}`.trim()}
-        disabled={!ready || disabled || busy}
-        onClick={handleClick}
-        aria-busy={busy}
-      >
-        <GoogleGIcon />
-        <span className="register-social-btn-label">{label}</span>
-      </button>
-    </>
+    <button
+      type="button"
+      className={`register-social-btn register-social-btn--google register-social-btn--active ${className}`.trim()}
+      disabled={!ready || disabled || busy}
+      onClick={handleClick}
+      aria-busy={busy}
+    >
+      <GoogleGIcon />
+      <span className="register-social-btn-label">{label}</span>
+    </button>
   );
 }

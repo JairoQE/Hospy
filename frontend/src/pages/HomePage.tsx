@@ -28,6 +28,10 @@ import { SearchResultsSection } from "../components/home/SearchResultsSection";
 
 import { ScrollToTopButton } from "../components/ui/ScrollToTopButton";
 
+import {
+  fetchHomeBootstrap,
+  loadCachedHomeBootstrap,
+} from "../api/homeBootstrap";
 import { recordBrowseTileClick } from "../api/browseTiles";
 
 import type { SearchFilters } from "../components/SearchBar";
@@ -46,7 +50,31 @@ import { fetchDistrictCatalogForSearch } from "../utils/fetchDistrictCatalog";
 
 const NEARBY_RADIUS_KM = 25;
 
-
+function initialHomeTilesState(): {
+  typeTiles: BrowseTile[];
+  regionTiles: BrowseTile[];
+  departmentTiles: BrowseTile[];
+  tilesLoading: boolean;
+} {
+  const cached = loadCachedHomeBootstrap();
+  if (!cached) {
+    return {
+      typeTiles: [],
+      regionTiles: [],
+      departmentTiles: [],
+      tilesLoading: true,
+    };
+  }
+  return {
+    typeTiles: cached.tipo,
+    regionTiles: cached.region,
+    departmentTiles: mergeDepartmentTiles(
+      cached.ubigeo_departamentos,
+      cached.departamento,
+    ),
+    tilesLoading: false,
+  };
+}
 
 type BrowseMeta = {
 
@@ -105,13 +133,8 @@ export function HomePage() {
 
   const [resultsTitle, setResultsTitle] = useState<string | null>(null);
 
-  const [typeTiles, setTypeTiles] = useState<BrowseTile[]>([]);
-
-  const [regionTiles, setRegionTiles] = useState<BrowseTile[]>([]);
-
-  const [departmentTiles, setDepartmentTiles] = useState<BrowseTile[]>([]);
-
-  const [tilesLoading, setTilesLoading] = useState(true);
+  const [tileState, setTileState] = useState(initialHomeTilesState);
+  const { typeTiles, regionTiles, departmentTiles, tilesLoading } = tileState;
 
   const typeTilesI18n = useMemo(
     () => translateBrowseTiles(typeTiles, language),
@@ -226,41 +249,48 @@ export function HomePage() {
 
 
 
+  const applyHomeBootstrap = useCallback(
+    (payload: {
+      tipo: BrowseTile[];
+      region: BrowseTile[];
+      departamento: BrowseTile[];
+      ubigeo_departamentos: UbigeoItem[];
+    }) => {
+      setTileState({
+        typeTiles: payload.tipo,
+        regionTiles: payload.region,
+        departmentTiles: mergeDepartmentTiles(
+          payload.ubigeo_departamentos,
+          payload.departamento,
+        ),
+        tilesLoading: false,
+      });
+    },
+    [],
+  );
+
   useEffect(() => {
+    let cancelled = false;
+    const cached = loadCachedHomeBootstrap();
+    if (!cached) {
+      setTileState((prev) => ({ ...prev, tilesLoading: true }));
+    }
 
-    setTilesLoading(true);
-
-    Promise.all([
-
-      api.get<BrowseTile[]>("/inicio-bloques/?group=tipo", false),
-
-      api.get<BrowseTile[]>("/inicio-bloques/?group=region", false),
-
-      api.get<BrowseTile[]>("/inicio-bloques/?group=departamento", false),
-
-      api.get<UbigeoItem[]>("/ubigeo/departamentos/", false),
-
-    ])
-
-      .then(([tipo, region, departamentoAdmin, ubigeoDeptos]) => {
-
-        setTypeTiles(Array.isArray(tipo) ? tipo : []);
-
-        setRegionTiles(Array.isArray(region) ? region : []);
-
-        const admin = Array.isArray(departamentoAdmin) ? departamentoAdmin : [];
-
-        const deptos = Array.isArray(ubigeoDeptos) ? ubigeoDeptos : [];
-
-        setDepartmentTiles(mergeDepartmentTiles(deptos, admin));
-
+    fetchHomeBootstrap()
+      .then((payload) => {
+        if (cancelled) return;
+        applyHomeBootstrap(payload);
       })
+      .catch(() => {
+        if (!cancelled) {
+          setTileState((prev) => ({ ...prev, tilesLoading: false }));
+        }
+      });
 
-      .catch(() => {})
-
-      .finally(() => setTilesLoading(false));
-
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [applyHomeBootstrap]);
 
 
 

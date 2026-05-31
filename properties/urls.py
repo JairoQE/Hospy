@@ -2,7 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from . import views
-from .browse_views import BrowseTileViewSet
+from .browse_views import BrowseTileViewSet, HomeInicioBootstrapView
 from .ubigeo_views import (
     UbigeoBuscarView,
     UbigeoDepartamentosView,
@@ -17,6 +17,11 @@ router.register("inicio-bloques", BrowseTileViewSet, basename="inicio-bloque")
 
 urlpatterns = [
     path("", include(router.urls)),
+    path(
+        "inicio-bootstrap/",
+        HomeInicioBootstrapView.as_view(),
+        name="inicio-bootstrap",
+    ),
     path("ubigeo/departamentos/", UbigeoDepartamentosView.as_view(), name="ubigeo-departamentos"),
     path("ubigeo/provincias/", UbigeoProvinciasView.as_view(), name="ubigeo-provincias"),
     path("ubigeo/distritos/", UbigeoDistritosView.as_view(), name="ubigeo-distritos"),
