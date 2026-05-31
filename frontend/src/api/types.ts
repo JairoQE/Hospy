@@ -265,6 +265,7 @@ export interface Room {
 }
 
 export interface PriceBreakdown {
+  room_id?: number;
   noches: number;
   nights_count?: number;
   total: string | number;

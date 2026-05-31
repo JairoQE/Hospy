@@ -124,7 +124,23 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     return undefined as T;
   }
 
-  const data = await res.json().catch(() => ({}));
+  const contentType = res.headers.get("content-type") ?? "";
+  let data: unknown = {};
+  if (contentType.includes("application/json")) {
+    data = await res.json().catch(() => ({}));
+  } else {
+    const text = await res.text().catch(() => "");
+    if (res.status === 413) {
+      data = { detail: "El archivo es demasiado grande (máx. 5 MB)." };
+    } else if (res.status >= 500) {
+      data = {
+        detail:
+          "El servidor no respondió a tiempo. Espera unos segundos e inténtalo de nuevo.",
+      };
+    } else if (text.trim()) {
+      data = { detail: text.trim().slice(0, 240) };
+    }
+  }
   if (!res.ok) {
     throw new ApiError(res.status, data);
   }

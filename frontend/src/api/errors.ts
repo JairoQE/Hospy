@@ -7,6 +7,7 @@ const FIELD_LABELS: Record<string, string> = {
   last_name: "Apellido",
   non_field_errors: "General",
   detail: "Error",
+  image: "Imagen",
 };
 
 const MESSAGE_ES: Record<string, string> = {

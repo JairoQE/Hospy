@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from . import views
 from .browse_views import BrowseTileViewSet, HomeInicioBootstrapView
+from .panel_views import AdminDashboardBootstrapView, OwnerPanelBootstrapView
 from .ubigeo_views import (
     UbigeoBuscarView,
     UbigeoDepartamentosView,
@@ -21,6 +22,16 @@ urlpatterns = [
         "inicio-bootstrap/",
         HomeInicioBootstrapView.as_view(),
         name="inicio-bootstrap",
+    ),
+    path(
+        "propietario/panel-bootstrap/",
+        OwnerPanelBootstrapView.as_view(),
+        name="propietario-panel-bootstrap",
+    ),
+    path(
+        "admin/dashboard-bootstrap/",
+        AdminDashboardBootstrapView.as_view(),
+        name="admin-dashboard-bootstrap",
     ),
     path("ubigeo/departamentos/", UbigeoDepartamentosView.as_view(), name="ubigeo-departamentos"),
     path("ubigeo/provincias/", UbigeoProvinciasView.as_view(), name="ubigeo-provincias"),

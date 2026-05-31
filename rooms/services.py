@@ -92,6 +92,19 @@ def calculate_stay_total(room: Room, check_in: date, check_out: date) -> dict:
     return result
 
 
+def build_room_price_response(room: Room, check_in: date, check_out: date) -> dict:
+    """Precio + disponibilidad para una habitación (API precio / cotización)."""
+    from bookings.services import is_room_available
+
+    data = calculate_stay_total(room, check_in, check_out)
+    available, message = is_room_available(room, check_in, check_out)
+    data["available"] = available
+    if not available:
+        data["availability_message"] = message
+    data["room_id"] = room.id
+    return data
+
+
 def _booking_blocks_room(room: Room, day: date) -> bool:
     return Booking.objects.filter(
         room=room,

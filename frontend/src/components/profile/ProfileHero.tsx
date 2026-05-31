@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import type { PublicUserProfile, User } from "../../api/types";
+import { IconSpinner } from "../icons";
 import { PrimeIcon } from "../PrimeIcon";
 import { UserAvatar } from "../UserAvatar";
 
@@ -76,10 +77,27 @@ export function ProfileHero({
         <div className="container">
           <div className="profile-identity-card">
             <div className="profile-identity-top">
-              <div className="profile-avatar-wrap">
+              <div
+                className={`profile-avatar-wrap${uploadingPhoto ? " profile-avatar-wrap--uploading" : ""}`}
+              >
                 <UserAvatar user={user} size="xl" className="profile-avatar" />
+                {uploadingPhoto && (
+                  <div
+                    className="profile-avatar-upload-overlay"
+                    role="status"
+                    aria-live="polite"
+                    aria-label="Subiendo foto de perfil"
+                  >
+                    <IconSpinner size={28} className="profile-avatar-upload-spinner" />
+                    <span>Subiendo…</span>
+                  </div>
+                )}
                 {isOwn && onPhotoSelect && (
-                  <label className="profile-avatar-edit" title="Cambiar foto">
+                  <label
+                    className="profile-avatar-edit"
+                    title={uploadingPhoto ? "Subiendo foto…" : "Cambiar foto"}
+                    aria-busy={uploadingPhoto}
+                  >
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
@@ -91,7 +109,11 @@ export function ProfileHero({
                         e.target.value = "";
                       }}
                     />
-                    <PrimeIcon name="pi-camera" size={14} />
+                    {uploadingPhoto ? (
+                      <IconSpinner size={14} />
+                    ) : (
+                      <PrimeIcon name="pi-camera" size={14} />
+                    )}
                   </label>
                 )}
               </div>
@@ -135,9 +157,13 @@ export function ProfileHero({
                               e.target.value = "";
                             }}
                           />
-                          <PrimeIcon name="pi-camera" size={15} />
+                          {uploadingCover ? (
+                            <IconSpinner size={15} />
+                          ) : (
+                            <PrimeIcon name="pi-camera" size={15} />
+                          )}
                           {uploadingCover
-                            ? "Subiendo…"
+                            ? "Subiendo portada…"
                             : coverUrl
                               ? "Editar portada"
                               : "Añadir portada"}

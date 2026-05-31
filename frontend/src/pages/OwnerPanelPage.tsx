@@ -1,14 +1,17 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError, api } from "../api/client";
+import {
+  clearOwnerPanelBootstrapCache,
+  fetchOwnerPanelBootstrap,
+  loadCachedOwnerPanelBootstrap,
+} from "../api/ownerPanelBootstrap";
 import { useAuth } from "../context/AuthContext";
-import { unwrapList } from "../api/unwrap";
 import { formatApiError, parseFieldErrors } from "../api/errors";
 import type {
   AccommodationDetail,
   AccommodationListItem,
   Booking,
-  Paginated,
   Review,
   Service,
 } from "../api/types";
@@ -68,7 +71,7 @@ export function OwnerPanelPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState(emptyAccommodationForm);
 
-  const load = () => {
+  const load = (options?: { skipCache?: boolean }) => {
     if (!ownerApproved) {
       setMine([]);
       setBookings([]);
@@ -77,35 +80,39 @@ export function OwnerPanelPage() {
       setLoading(false);
       return;
     }
-    setLoading(true);
-    Promise.all([
-      api.get<Paginated<AccommodationListItem> | AccommodationListItem[]>(
-        "/hospedajes/mios/",
-      ),
-      api.get<Paginated<Booking> | Booking[]>("/reservas/propietario/"),
-      api
-        .get<Service[] | Paginated<Service>>("/servicios/", false)
-        .then((data) => unwrapList(data)),
-    ])
-      .then(async ([h, b, svc]) => {
-        const list = Array.isArray(h) ? h : h.results;
-        setMine(list);
-        setBookings(Array.isArray(b) ? b : b.results);
-        setServices(svc);
-        const reviewLists = await Promise.all(
-          list
-            .filter((p) => p.status === "aprobado")
-            .map((p) =>
-              api
-                .get<Review[] | Paginated<Review>>(`/hospedajes/${p.id}/resenas/`, false)
-                .then((data) => (Array.isArray(data) ? data : data.results))
-                .catch(() => [] as Review[]),
-            ),
-        );
-        setReviews(reviewLists.flat());
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : "Error"))
-      .finally(() => setLoading(false));
+
+    const apply = (payload: {
+      hospedajes: AccommodationListItem[];
+      reservas: Booking[];
+      resenas: Review[];
+      servicios: Service[];
+    }) => {
+      setMine(payload.hospedajes);
+      setBookings(payload.reservas);
+      setReviews(payload.resenas);
+      setServices(payload.servicios);
+      setLoading(false);
+    };
+
+    if (!options?.skipCache) {
+      const cached = loadCachedOwnerPanelBootstrap();
+      if (cached) {
+        apply(cached);
+      } else {
+        setLoading(true);
+      }
+    } else {
+      setLoading(true);
+    }
+
+    fetchOwnerPanelBootstrap()
+      .then(apply)
+      .catch((e) => {
+        if (!loadCachedOwnerPanelBootstrap()) {
+          setError(e instanceof Error ? e.message : "Error");
+          setLoading(false);
+        }
+      });
   };
 
   useEffect(() => {
@@ -119,10 +126,12 @@ export function OwnerPanelPage() {
     setMsg("");
     try {
       await api.post<AccommodationDetail>("/hospedajes/", formToPayload(form));
+      clearOwnerPanelBootstrapCache();
       setMsg("Hospedaje enviado a revisión del administrador.");
       setForm(emptyAccommodationForm());
       goToTab("dashboard");
-      load();    } catch (err) {
+      load({ skipCache: true });
+    } catch (err) {
       if (err instanceof ApiError) {
         setError(formatApiError(err.data));
         setFieldErrors(parseFieldErrors(err.data));
@@ -138,7 +147,8 @@ export function OwnerPanelPage() {
   ) => {
     try {
       await api.post(`/reservas/${id}/${action}/`);
-      load();
+      clearOwnerPanelBootstrapCache();
+      load({ skipCache: true });
     } catch (e) {
       alert(e instanceof ApiError ? e.message : "Error");
     }

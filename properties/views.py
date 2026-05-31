@@ -1,5 +1,6 @@
 from django.conf import settings
-from django.db.models import Min, Q
+from django.core.cache import cache
+from django.db.models import Min, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.views import APIView
@@ -103,7 +104,14 @@ class AccommodationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         base = Accommodation.objects.filter(is_deleted=False)
 
-        if self.action in ("list", "retrieve", "destacados", "cercanos"):
+        if self.action in (
+            "list",
+            "retrieve",
+            "destacados",
+            "cercanos",
+            "detalle_bootstrap",
+            "cotizacion",
+        ):
             return public_accommodations_queryset()
 
         if self.action == "mios":
@@ -191,7 +199,14 @@ class AccommodationViewSet(viewsets.ModelViewSet):
         return AccommodationDetailSerializer
 
     def get_permissions(self):
-        if self.action in ("list", "retrieve", "destacados", "cercanos"):
+        if self.action in (
+            "list",
+            "retrieve",
+            "destacados",
+            "cercanos",
+            "detalle_bootstrap",
+            "cotizacion",
+        ):
             return [permissions.AllowAny()]
         if self.action == "pendientes":
             return [IsAdministrador()]
@@ -394,6 +409,91 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             ).data
         )
 
+    @action(detail=True, methods=["get"], url_path="detalle-bootstrap")
+    def detalle_bootstrap(self, request, pk=None):
+        """GET /api/v1/hospedajes/{id}/detalle-bootstrap/ — hospedaje, habitaciones y reseñas."""
+        cache_key = f"hospy:detalle_bootstrap:{pk}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+
+        from reviews.models import Review
+        from reviews.serializers import ReviewListSerializer
+        from rooms.models import Room, RoomPhoto
+        from rooms.serializers import RoomPublicSerializer
+
+        accommodation = self.get_object()
+        ctx = {"request": request}
+        rooms_qs = (
+            Room.objects.filter(accommodation=accommodation, is_active=True)
+            .select_related("accommodation", "accommodation__owner")
+            .prefetch_related(
+                Prefetch(
+                    "fotos",
+                    queryset=RoomPhoto.objects.order_by("order", "id"),
+                ),
+                "services",
+            )
+        )
+        reviews_qs = (
+            Review.objects.filter(
+                accommodation_id=accommodation.pk,
+                status=Review.Status.APROBADA,
+            )
+            .select_related("author", "booking", "booking__room")
+            .order_by("-created_at")
+        )
+        payload = {
+            "hospedaje": AccommodationDetailSerializer(
+                accommodation, context=ctx
+            ).data,
+            "habitaciones": RoomPublicSerializer(
+                rooms_qs, many=True, context=ctx
+            ).data,
+            "resenas": ReviewListSerializer(
+                reviews_qs, many=True, context=ctx
+            ).data,
+        }
+        cache.set(cache_key, payload, 180)
+        return Response(payload)
+
+    @action(detail=True, methods=["get"], url_path="cotizacion")
+    def cotizacion(self, request, pk=None):
+        """GET /api/v1/hospedajes/{id}/cotizacion/?entrada=&salida= — precios de todas las habitaciones."""
+        from datetime import date
+
+        from rooms.models import Room
+        from rooms.services import build_room_price_response
+
+        accommodation = self.get_object()
+        entrada_raw = request.query_params.get("entrada")
+        salida_raw = request.query_params.get("salida")
+        if not entrada_raw or not salida_raw:
+            raise ValidationError(
+                {"detail": "Parámetros requeridos: entrada, salida."}
+            )
+        try:
+            check_in = date.fromisoformat(entrada_raw)
+            check_out = date.fromisoformat(salida_raw)
+        except ValueError:
+            raise ValidationError(
+                {"detail": "Fechas inválidas (use YYYY-MM-DD)."}
+            )
+        if check_out <= check_in:
+            raise ValidationError({"salida": "Debe ser posterior a entrada."})
+
+        rooms = Room.objects.filter(
+            accommodation=accommodation, is_active=True
+        ).select_related("accommodation")
+        return Response(
+            {
+                "cotizaciones": [
+                    build_room_price_response(room, check_in, check_out)
+                    for room in rooms
+                ]
+            }
+        )
+
     @action(detail=False, methods=["get"], url_path="cercanos")
     def cercanos(self, request):
         """GET /api/v1/hospedajes/cercanos/?lat=&lng=&radio_km=10"""
@@ -436,10 +536,6 @@ class AccommodationViewSet(viewsets.ModelViewSet):
         if photo.is_primary:
             accommodation.fotos.exclude(pk=photo.pk).update(is_primary=False)
         invalidate_accommodation_cache(accommodation.id)
-
-        from .tasks import process_accommodation_photo_task
-
-        process_accommodation_photo_task.delay(photo.pk)
 
         return Response(
             AccommodationPhotoSerializer(photo, context={"request": request}).data,

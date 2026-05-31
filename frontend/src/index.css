@@ -410,6 +410,35 @@ img {
   background: #f8fafc;
 }
 
+.profile-avatar-wrap--uploading .profile-avatar {
+  opacity: 0.55;
+}
+
+.profile-avatar-upload-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.52);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+.profile-avatar-upload-spinner {
+  color: #fff;
+}
+
+.profile-cover-btn .icon-spinner {
+  flex-shrink: 0;
+}
 
 .profile-card-toolbar {
   margin: 0;
@@ -2907,14 +2936,24 @@ textarea:focus {
 }
 
 .property-gallery--empty {
-  display: grid;
-  place-items: center;
-  height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  height: min(440px, 56vw);
+  min-height: 260px;
+  max-height: 480px;
   border: 1px dashed var(--border);
   border-radius: var(--radius);
   background: linear-gradient(135deg, #d4e8e8, #b8d4d4);
   color: var(--muted);
   font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.property-gallery-empty-icon {
+  opacity: 0.55;
 }
 
 /* Una foto */
@@ -3609,6 +3648,37 @@ textarea:focus {
   margin: 1rem 0;
 }
 
+.property-map-skeleton {
+  width: 100%;
+  border-radius: var(--radius);
+  background: linear-gradient(
+    110deg,
+    var(--bg) 0%,
+    color-mix(in srgb, var(--border) 40%, var(--bg)) 45%,
+    var(--bg) 90%
+  );
+  background-size: 200% 100%;
+  animation: property-map-shimmer 1.2s ease-in-out infinite;
+}
+
+.property-map-skeleton.property-map-sidebar {
+  height: 180px;
+}
+
+.property-map-skeleton.property-map-large {
+  height: 320px;
+  margin: 1rem 0;
+}
+
+@keyframes property-map-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
 .property-map-wrap.map-modal-map {
   height: min(55vh, 480px);
 }
@@ -4135,10 +4205,16 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 
-  .property-gallery {
+  .property-gallery:not(.property-gallery--empty) {
     height: auto;
     max-height: none;
     min-height: 0;
+  }
+
+  .property-gallery--empty {
+    height: min(52vw, 320px);
+    min-height: 220px;
+    max-height: 360px;
   }
 
   .property-gallery--one {

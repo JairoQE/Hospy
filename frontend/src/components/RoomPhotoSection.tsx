@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, api } from "../api/client";
+import { formatApiError } from "../api/errors";
 import type { RoomPhoto } from "../api/types";
 import { resolveMediaUrl } from "../utils/media";
 
 const MAX_PHOTOS = 5;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 interface Props {
   roomId: number;
@@ -28,6 +30,10 @@ export function RoomPhotoSection({ roomId }: Props) {
   }, [load]);
 
   const upload = async (file: File) => {
+    if (file.size > MAX_IMAGE_BYTES) {
+      alert("La imagen no puede superar 5 MB.");
+      return;
+    }
     setUploading(true);
     const body = new FormData();
     body.append("image", file);
@@ -35,7 +41,13 @@ export function RoomPhotoSection({ roomId }: Props) {
       await api.post<RoomPhoto>(`/habitaciones/${roomId}/fotos/`, body);
       load();
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : "Error al subir foto");
+      const msg =
+        e instanceof ApiError
+          ? e.message
+          : e instanceof Error
+            ? e.message
+            : formatApiError(null);
+      alert(msg || "Error al subir foto");
     } finally {
       setUploading(false);
     }

@@ -1,8 +1,12 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ApiError, api } from "../api/client";
+import {
+  fetchAccommodationCotizacion,
+  fetchDetailBootstrap,
+  loadCachedDetailBootstrap,
+} from "../api/detailBootstrap";
 import { formatApiError } from "../api/errors";
-import { unwrapList } from "../api/unwrap";
 import { AccommodationCard } from "../components/AccommodationCard";
 import { ContactHostSection } from "../components/ContactHostSection";
 import { OwnerStoreBanner } from "../components/owner/OwnerStoreBanner";
@@ -10,10 +14,9 @@ import { MapModal } from "../components/MapModal";
 import { CancellationPolicySection } from "../components/bookings/CancellationPolicySection";
 import { AccommodationFaqSection } from "../components/AccommodationFaqSection";
 import { PhotoGallery } from "../components/PhotoGallery";
-import { PropertyMap } from "../components/PropertyMap";
+import { LazyPropertyMap } from "../components/LazyPropertyMap";
 import type {
   AccommodationDetail,
-  Paginated,
   PriceBreakdown,
   Review,
   RoomPublic,
@@ -114,21 +117,35 @@ export function AccommodationDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    setLoading(true);
-    Promise.all([
-      api.get<AccommodationDetail>(`/hospedajes/${id}/`),
-      api.get<RoomPublic[] | Paginated<RoomPublic>>(`/hospedajes/${id}/habitaciones/`),
-      api.get<Review[] | Paginated<Review>>(`/hospedajes/${id}/resenas/`),
-    ])
-      .then(([a, r, rev]) => {
-        setAcc(a);
-        const roomList = unwrapList(r);
-        const reviewList = unwrapList(rev);
-        setRooms(roomList);
-        setReviews(reviewList);
-        if (roomList.length) setSelectedRoom(roomList[0].id);
-      })
+    let cancelled = false;
+
+    const applyBootstrap = (payload: {
+      hospedaje: AccommodationDetail;
+      habitaciones: RoomPublic[];
+      resenas: Review[];
+    }) => {
+      if (cancelled) return;
+      setAcc(payload.hospedaje);
+      setRooms(payload.habitaciones);
+      setReviews(payload.resenas);
+      if (payload.habitaciones.length) {
+        setSelectedRoom(payload.habitaciones[0].id);
+      }
+      setLoading(false);
+    };
+
+    const cached = loadCachedDetailBootstrap(id);
+    if (cached) {
+      applyBootstrap(cached);
+    } else {
+      setLoading(true);
+    }
+
+    fetchDetailBootstrap(id)
+      .then(applyBootstrap)
       .catch((e) => {
+        if (cancelled) return;
+        if (cached) return;
         if (e instanceof ApiError && e.status === 404) {
           setError(
             "Este hospedaje no está disponible públicamente. Si eres el propietario, inicia sesión para verlo en borrador hasta que un admin lo apruebe.",
@@ -136,8 +153,12 @@ export function AccommodationDetailPage() {
         } else {
           setError(e instanceof Error ? e.message : "Error");
         }
-      })
-      .finally(() => setLoading(false));
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   useEffect(() => {
@@ -166,7 +187,7 @@ export function AccommodationDetailPage() {
   );
 
   useEffect(() => {
-    if (!hasDates || rooms.length === 0) {
+    if (!id || !hasDates || rooms.length === 0) {
       setRoomQuotes({});
       setQuoteErrors({});
       setQuotesLoading(false);
@@ -174,46 +195,43 @@ export function AccommodationDetailPage() {
     }
     let cancelled = false;
     setQuotesLoading(true);
-    Promise.all(
-      rooms.map((r) =>
-        api
-          .get<PriceBreakdown>(
-            `/habitaciones/${r.id}/precio/?entrada=${encodeURIComponent(effectiveEntrada)}&salida=${encodeURIComponent(effectiveSalida)}`,
-            false,
-          )
-          .then((q) => ({
-            id: r.id,
-            quote: q,
-            error:
-              q.available === false
-                ? (q.availability_message ?? "No disponible en esas fechas")
-                : null,
-          }))
-          .catch((e) => ({
-            id: r.id,
-            quote: null as PriceBreakdown | null,
-            error:
-              e instanceof ApiError
-                ? formatApiError(e.data)
-                : "No se pudo calcular el precio",
-          })),
-      ),
-    ).then((results) => {
-      if (cancelled) return;
-      const map: Record<number, PriceBreakdown | null> = {};
-      const errs: Record<number, string> = {};
-      results.forEach(({ id, quote, error }) => {
-        map[id] = quote;
-        if (error) errs[id] = error;
+    fetchAccommodationCotizacion(id, effectiveEntrada, effectiveSalida)
+      .then(({ cotizaciones }) => {
+        if (cancelled) return;
+        const map: Record<number, PriceBreakdown | null> = {};
+        const errs: Record<number, string> = {};
+        cotizaciones.forEach((q) => {
+          const roomId = q.room_id;
+          if (roomId == null) return;
+          map[roomId] = q;
+          if (q.available === false) {
+            errs[roomId] =
+              q.availability_message ?? "No disponible en esas fechas";
+          }
+        });
+        setRoomQuotes(map);
+        setQuoteErrors(errs);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        const message =
+          e instanceof ApiError
+            ? formatApiError(e.data)
+            : "No se pudo calcular el precio";
+        const errs: Record<number, string> = {};
+        rooms.forEach((r) => {
+          errs[r.id] = message;
+        });
+        setRoomQuotes({});
+        setQuoteErrors(errs);
+      })
+      .finally(() => {
+        if (!cancelled) setQuotesLoading(false);
       });
-      setRoomQuotes(map);
-      setQuoteErrors(errs);
-      setQuotesLoading(false);
-    });
     return () => {
       cancelled = true;
     };
-  }, [effectiveEntrada, effectiveSalida, hasDates, rooms]);
+  }, [id, effectiveEntrada, effectiveSalida, hasDates, rooms]);
 
   const applyDates = (start: string, end: string) => {
     setLocalEntrada(start);
@@ -770,7 +788,7 @@ export function AccommodationDetailPage() {
           <section className="property-section" id="ubicacion">
             <h2>{t("detail.location")}</h2>
             <p className="muted">{fullAddress}</p>
-            <PropertyMap
+            <LazyPropertyMap
               latitude={lat}
               longitude={lng}
               name={acc.name}
@@ -813,7 +831,7 @@ export function AccommodationDetailPage() {
           </div>
 
           <div className="sidebar-card map-card">
-            <PropertyMap
+            <LazyPropertyMap
               latitude={lat}
               longitude={lng}
               name={acc.name}

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { api } from "../api/client";
-import { unwrapList } from "../api/unwrap";
-import { fetchMessageReports } from "../api/messaging";
+import {
+  fetchAdminDashboardBootstrap,
+  loadCachedAdminDashboardBootstrap,
+} from "../api/adminDashboardBootstrap";
 import type {
   AccommodationDetail,
   AccommodationListItem,
   Booking,
-  Paginated,
   Review,
   User,
 } from "../api/types";
@@ -24,52 +24,37 @@ export function AdminDashboardPage() {
   const [region, setRegion] = useState("all");
 
   const load = useCallback(() => {
-    setLoading(true);
-    Promise.all([
-      api.get<Paginated<Booking> | Booking[]>("/reservas/"),
-      api.get<Paginated<AccommodationListItem> | AccommodationListItem[]>(
-        "/hospedajes/?ordenar=-rating",
-        false,
-      ),
-      api.get<AccommodationDetail[] | Paginated<AccommodationDetail>>(
-        "/hospedajes/pendientes/",
-      ),
-      api.get<User[] | Paginated<User>>("/auth/propietarios-pendientes/"),
-      fetchMessageReports("pendiente").catch(() => []),
-    ])
-      .then(async ([b, acc, pend, owners, reports]) => {
-        setBookings(unwrapList(b));
-        const accList = unwrapList(acc);
-        setAccommodations(accList);
-        const approvedTotal =
-          acc && typeof acc === "object" && "count" in acc && typeof acc.count === "number"
-            ? acc.count
-            : accList.length;
-        setApprovedCount(approvedTotal);
-        setPendingAccommodations(unwrapList(pend));
-        setPendingOwners(unwrapList(owners));
-        setPendingReports(reports.length);
+    const apply = (data: {
+      reservas: Booking[];
+      hospedajes: AccommodationListItem[];
+      hospedajes_aprobados_total: number;
+      pendientes: AccommodationDetail[];
+      propietarios_pendientes: User[];
+      reportes_chat_pendientes: number;
+      resenas: Review[];
+    }) => {
+      setBookings(data.reservas);
+      setAccommodations(data.hospedajes);
+      setApprovedCount(data.hospedajes_aprobados_total);
+      setPendingAccommodations(data.pendientes);
+      setPendingOwners(data.propietarios_pendientes);
+      setPendingReports(data.reportes_chat_pendientes);
+      setReviews(data.resenas.slice(0, 20));
+      setLoading(false);
+    };
 
-        const reviewBatches = await Promise.all(
-          accList.slice(0, 12).map((p) =>
-            api
-              .get<Review[] | Paginated<Review>>(`/hospedajes/${p.id}/resenas/`, false)
-              .then((data) => unwrapList(data))
-              .catch(() => [] as Review[]),
-          ),
-        );
-        setReviews(
-          reviewBatches
-            .flat()
-            .sort((a, c) => {
-              const da = new Date(a.created_at).getTime();
-              const dc = new Date(c.created_at).getTime();
-              return dc - da;
-            })
-            .slice(0, 20),
-        );
-      })
-      .finally(() => setLoading(false));
+    const cached = loadCachedAdminDashboardBootstrap();
+    if (cached) {
+      apply(cached);
+    } else {
+      setLoading(true);
+    }
+
+    fetchAdminDashboardBootstrap()
+      .then(apply)
+      .catch(() => {
+        if (!cached) setLoading(false);
+      });
   }, []);
 
   useEffect(() => {

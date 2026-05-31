@@ -104,6 +104,8 @@ def invalidate_accommodation_cache(accommodation_id: int | None = None) -> None:
             cache.delete_pattern("hospy:integracion:*")
         elif accommodation_id:
             cache.delete(f"hospy:acc:{accommodation_id}")
+            cache.delete(f"hospy:detalle_bootstrap:{accommodation_id}")
+            cache.delete("hospy:admin_dashboard")
     except Exception:
         pass
 

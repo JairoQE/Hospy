@@ -123,6 +123,53 @@ def test_filtro_zona_costa(api_client, hospedaje_aprobado):
 
 
 @pytest.mark.django_db
+def test_owner_panel_bootstrap(api_client, propietario, hospedaje_aprobado):
+    acc, _room = hospedaje_aprobado
+    api_client.force_authenticate(user=propietario)
+    response = api_client.get("/api/v1/propietario/panel-bootstrap/")
+    assert response.status_code == 200
+    assert any(h["id"] == acc.id for h in response.data["hospedajes"])
+    assert "reservas" in response.data
+    assert "resenas" in response.data
+    assert "servicios" in response.data
+
+
+@pytest.mark.django_db
+def test_admin_dashboard_bootstrap(api_client, admin_user, hospedaje_aprobado):
+    api_client.force_authenticate(user=admin_user)
+    response = api_client.get("/api/v1/admin/dashboard-bootstrap/")
+    assert response.status_code == 200
+    assert "reservas" in response.data
+    assert "hospedajes_aprobados_total" in response.data
+    assert response.data["hospedajes_aprobados_total"] >= 1
+
+
+@pytest.mark.django_db
+def test_detalle_bootstrap_agrupa_datos(api_client, hospedaje_aprobado):
+    acc, room = hospedaje_aprobado
+    response = api_client.get(f"/api/v1/hospedajes/{acc.id}/detalle-bootstrap/")
+    assert response.status_code == 200
+    assert response.data["hospedaje"]["id"] == acc.id
+    assert len(response.data["habitaciones"]) >= 1
+    assert response.data["habitaciones"][0]["id"] == room.id
+    assert "resenas" in response.data
+
+
+@pytest.mark.django_db
+def test_cotizacion_habitaciones(api_client, hospedaje_aprobado):
+    acc, _room = hospedaje_aprobado
+    response = api_client.get(
+        f"/api/v1/hospedajes/{acc.id}/cotizacion/",
+        {"entrada": "2026-06-01", "salida": "2026-06-03"},
+    )
+    assert response.status_code == 200
+    assert len(response.data["cotizaciones"]) >= 1
+    quote = response.data["cotizaciones"][0]
+    assert quote["room_id"] is not None
+    assert quote["noches"] == 2
+
+
+@pytest.mark.django_db
 def test_hospedajes_cercanos(api_client, hospedaje_aprobado):
     response = api_client.get(
         "/api/v1/hospedajes/cercanos/",

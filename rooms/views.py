@@ -20,11 +20,10 @@ from .serializers import (
     RoomSerializer,
     SeasonRateSerializer,
 )
-from bookings.services import is_room_available
-
 from .services import (
     block_room_dates,
     build_monthly_calendar,
+    build_room_price_response,
     public_accommodation_for_rooms,
 )
 
@@ -169,13 +168,7 @@ class RoomViewSet(viewsets.ModelViewSet):
         query.is_valid(raise_exception=True)
         check_in = query.validated_data["entrada"]
         check_out = query.validated_data["salida"]
-        data = query.to_representation(query.validated_data)
-        available, message = is_room_available(room, check_in, check_out)
-        data["available"] = available
-        if not available:
-            data["availability_message"] = message
-        data["room_id"] = room.id
-        return Response(data)
+        return Response(build_room_price_response(room, check_in, check_out))
 
     @action(detail=True, methods=["get"], url_path="disponibilidad")
     def disponibilidad(self, request, pk=None):
@@ -253,10 +246,8 @@ class RoomViewSet(viewsets.ModelViewSet):
         serializer = RoomPhotoUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         photo = serializer.save(room=room)
-
-        from .tasks import process_room_photo_task
-
-        process_room_photo_task.delay(photo.pk)
+        # La subida ya convierte a WebP en el serializer; no reprocesar con Celery
+        # (en Render free Celery es eager y un fallo ahí devolvía 500 tras guardar bien).
         return Response(
             RoomPhotoSerializer(photo, context={"request": request}).data,
             status=status.HTTP_201_CREATED,

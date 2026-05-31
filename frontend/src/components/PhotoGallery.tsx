@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { AccommodationPhoto } from "../api/types";
 import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
 import { resolveMediaUrl } from "../utils/media";
+import { PrimeIcon } from "./PrimeIcon";
 
 interface Props {
   fotos: AccommodationPhoto[];
@@ -27,7 +28,8 @@ export function PhotoGallery({ fotos, name }: Props) {
 
   if (urls.length === 0) {
     return (
-      <div className="property-gallery property-gallery--empty">
+      <div className="property-gallery property-gallery--empty" role="img" aria-label={t("detail.galleryNoPhotos")}>
+        <PrimeIcon name="pi-image" size={40} className="property-gallery-empty-icon" />
         <span>{t("detail.galleryNoPhotos")}</span>
       </div>
     );
