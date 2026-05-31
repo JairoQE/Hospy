@@ -148,7 +148,9 @@ export function AccommodationDetailPage() {
         if (cached) return;
         if (e instanceof ApiError && e.status === 404) {
           setError(
-            "Este hospedaje no está disponible públicamente. Si eres el propietario, inicia sesión para verlo en borrador hasta que un admin lo apruebe.",
+            user?.role === "propietario"
+              ? t("detail.notPublicOwner")
+              : t("detail.notPublicGuest"),
           );
         } else {
           setError(e instanceof Error ? e.message : "Error");
@@ -159,7 +161,7 @@ export function AccommodationDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, user?.role, t]);
 
   useEffect(() => {
     if (!acc || !user?.id) return;

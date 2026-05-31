@@ -82,6 +82,9 @@ class ServiceViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+_PUBLIC_DETAIL_ACTIONS = ("retrieve", "detalle_bootstrap", "cotizacion")
+
+
 class AccommodationViewSet(viewsets.ModelViewSet):
     """
     Flujo hospedajes (Fase 1):
@@ -147,7 +150,7 @@ class AccommodationViewSet(viewsets.ModelViewSet):
         pk = self.kwargs.get("pk")
         user = self.request.user
 
-        if self.action in ("retrieve",) and (
+        if self.action in _PUBLIC_DETAIL_ACTIONS and (
             not user.is_authenticated
             or user.role not in (user.Role.ADMINISTRADOR, user.Role.PROPIETARIO)
         ):
@@ -168,7 +171,7 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             return accommodation
 
         if (
-            self.action in ("retrieve",)
+            self.action in _PUBLIC_DETAIL_ACTIONS
             and accommodation.status == Accommodation.Status.APROBADO
             and accommodation.is_active
         ):

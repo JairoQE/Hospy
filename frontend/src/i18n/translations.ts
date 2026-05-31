@@ -175,6 +175,10 @@ export const translations = {
     detail: {
       loading: "Cargando hospedaje…",
       notFound: "No encontrado",
+      notPublicGuest:
+        "Este alojamiento no está disponible en este momento. Puede haber sido retirado o aún está en revisión.",
+      notPublicOwner:
+        "Este hospedaje no está publicado. Inicia sesión para verlo en borrador hasta que un administrador lo apruebe.",
       home: "Inicio",
       locationExcellent: "Ubicación excelente — Ver mapa",
       map: "Mapa",
@@ -538,6 +542,10 @@ export const translations = {
     detail: {
       loading: "Loading property…",
       notFound: "Not found",
+      notPublicGuest:
+        "This property is not available right now. It may have been removed or is still under review.",
+      notPublicOwner:
+        "This listing is not published. Sign in to view it as a draft until an administrator approves it.",
       home: "Home",
       locationExcellent: "Excellent location — View map",
       map: "Map",

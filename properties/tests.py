@@ -145,6 +145,15 @@ def test_admin_dashboard_bootstrap(api_client, admin_user, hospedaje_aprobado):
 
 
 @pytest.mark.django_db
+def test_detalle_bootstrap_publico_sin_login(api_client, hospedaje_aprobado):
+    """Huésped anónimo debe poder abrir la ficha (regresión: antes devolvía 404)."""
+    acc, _room = hospedaje_aprobado
+    response = api_client.get(f"/api/v1/hospedajes/{acc.id}/detalle-bootstrap/")
+    assert response.status_code == 200
+    assert response.data["hospedaje"]["id"] == acc.id
+
+
+@pytest.mark.django_db
 def test_detalle_bootstrap_agrupa_datos(api_client, hospedaje_aprobado):
     acc, room = hospedaje_aprobado
     response = api_client.get(f"/api/v1/hospedajes/{acc.id}/detalle-bootstrap/")
