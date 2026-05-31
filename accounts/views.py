@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -17,14 +19,26 @@ from sponsors.serializers import RegisterPatrocinadorSerializer, SponsorApproval
 
 from accounts.follows import toggle_follow
 
+from audit.services import log_action
+
+from .captcha import captcha_public_config
+
+from .facebook_auth import resolve_facebook_user, verify_facebook_access_token
+from .google_auth import resolve_google_user, verify_google_credential
 from .serializers import (
+    ChangeEmailSerializer,
+    ChangePasswordSerializer,
     CustomTokenObtainPairSerializer,
+    FacebookAuthSerializer,
+    GoogleAuthSerializer,
     OwnerApprovalSerializer,
     OwnerPublicProfileSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     PublicUserProfileSerializer,
     RegisterPropietarioSerializer,
+    AdminAssignAdministratorSerializer,
+    AdminUserListSerializer,
     RegisterSerializer,
     UserSerializer,
 )
@@ -79,6 +93,66 @@ class PerfilView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+    def perform_update(self, serializer):
+        user = serializer.save()
+        fields = list(serializer.validated_data.keys())
+        log_action(
+            actor=self.request.user,
+            action="profile.update",
+            target_type="User",
+            target_id=user.pk,
+            target_label=user.email,
+            metadata={"fields": fields},
+            request=self.request,
+        )
+
+
+class ChangeEmailView(APIView):
+    """POST /api/v1/auth/perfil/cambiar-email/"""
+
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        serializer = ChangeEmailSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        old_email = request.user.email
+        user = serializer.save()
+        log_action(
+            actor=request.user,
+            action="profile.change_email",
+            target_type="User",
+            target_id=user.pk,
+            target_label=user.email,
+            metadata={"from": old_email, "to": user.email},
+            request=request,
+        )
+        return Response(
+            {
+                "detail": "Correo actualizado correctamente.",
+                "user": UserSerializer(user, context={"request": request}).data,
+            }
+        )
+
+
+class ChangePasswordView(APIView):
+    """POST /api/v1/auth/perfil/cambiar-contrasena/"""
+
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        log_action(
+            actor=request.user,
+            action="profile.change_password",
+            target_type="User",
+            target_id=request.user.pk,
+            target_label=request.user.email,
+            request=request,
+        )
+        return Response({"detail": "Contraseña actualizada correctamente."})
 
 
 class PublicUserProfileView(generics.RetrieveAPIView):
@@ -168,6 +242,142 @@ class LoginView(TokenObtainPairView):
     throttle_classes = (AuthEndpointThrottle,)
 
 
+class CaptchaConfigView(APIView):
+    """GET /api/v1/auth/captcha/ — clave pública y estado (sin secretos)."""
+
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request):
+        return Response(captcha_public_config())
+
+
+def _social_auth_response(user, created: bool) -> Response:
+    if created and user.role == User.Role.PROPIETARIO:
+        notify_owner_registration_submitted(user)
+    refresh = CustomTokenObtainPairSerializer.get_token(user)
+    status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+    return Response(
+        {
+            "user": UserSerializer(user).data,
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "created": created,
+        },
+        status=status_code,
+    )
+
+
+class GoogleAuthView(APIView):
+    """POST /api/v1/auth/google/ — login o registro con token de Google."""
+
+    permission_classes = (permissions.AllowAny,)
+    throttle_classes = (AuthEndpointThrottle,)
+
+    def post(self, request):
+        serializer = GoogleAuthSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        credential = serializer.validated_data["credential"]
+        role_intent = serializer.validated_data.get("role") or "huesped"
+        idinfo = verify_google_credential(credential)
+        user, created = resolve_google_user(idinfo, role_intent)
+        return _social_auth_response(user, created)
+
+
+class FacebookAuthView(APIView):
+    """POST /api/v1/auth/facebook/ — login o registro con Facebook Login."""
+
+    permission_classes = (permissions.AllowAny,)
+    throttle_classes = (AuthEndpointThrottle,)
+
+    def post(self, request):
+        serializer = FacebookAuthSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        access_token = serializer.validated_data["access_token"]
+        role_intent = serializer.validated_data.get("role") or "huesped"
+        profile = verify_facebook_access_token(access_token)
+        user, created = resolve_facebook_user(profile, role_intent)
+        return _social_auth_response(user, created)
+
+
+class AdminUsersPagination(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = "page_size"
+    max_page_size = 200
+
+
+class AdminUsersListView(generics.ListAPIView):
+    """GET /api/v1/auth/admin-usuarios/ — listado de todos los usuarios (admin)."""
+
+    serializer_class = AdminUserListSerializer
+    permission_classes = (IsAdministrador,)
+    pagination_class = AdminUsersPagination
+
+    def get_queryset(self):
+        qs = User.objects.annotate(
+            bookings_count=Count("reservas", distinct=True),
+            hospedajes_count=Count("hospedajes", distinct=True),
+        ).order_by("-date_joined")
+        role = (self.request.query_params.get("role") or "").strip()
+        if role:
+            qs = qs.filter(role=role)
+        q = (self.request.query_params.get("q") or "").strip()
+        if q:
+            qs = qs.filter(
+                Q(email__icontains=q)
+                | Q(first_name__icontains=q)
+                | Q(last_name__icontains=q)
+                | Q(username__icontains=q)
+            )
+        return qs
+
+
+class AdminAssignAdministratorView(APIView):
+    """POST /api/v1/auth/admin-usuarios/<pk>/administrador/ — asignar o quitar rol admin."""
+
+    permission_classes = (IsAdministrador,)
+
+    def post(self, request, pk):
+        target = get_object_or_404(User, pk=pk, is_active=True)
+        serializer = AdminAssignAdministratorSerializer(
+            data=request.data,
+            context={"request": request, "target": target},
+        )
+        serializer.is_valid(raise_exception=True)
+        make_admin = serializer.validated_data["admin"]
+
+        if make_admin:
+            target.role = User.Role.ADMINISTRADOR
+            target.is_staff = True
+            target.save(update_fields=["role", "is_staff"])
+            detail = f"{target.get_full_name() or target.email} ahora es administrador."
+        else:
+            target.role = User.Role.HUESPED
+            target.is_staff = False
+            target.save(update_fields=["role", "is_staff"])
+            detail = f"Se quitó el rol de administrador a {target.get_full_name() or target.email}."
+
+        log_action(
+            actor=request.user,
+            action="user.assign_admin" if make_admin else "user.revoke_admin",
+            target_type="User",
+            target_id=target.pk,
+            target_label=target.email,
+            request=request,
+        )
+
+        return Response(
+            {
+                "detail": detail,
+                "user": AdminUserListSerializer(
+                    User.objects.annotate(
+                        bookings_count=Count("reservas", distinct=True),
+                        hospedajes_count=Count("hospedajes", distinct=True),
+                    ).get(pk=target.pk),
+                ).data,
+            }
+        )
+
+
 class PropietariosPendientesView(generics.ListAPIView):
     """GET /api/v1/auth/propietarios-pendientes/ — cola de moderación de cuentas."""
 
@@ -214,6 +424,15 @@ class PropietarioAprobarView(APIView):
             update_fields=["owner_status", "owner_rejection_reason"],
         )
         notify_owner_registration_moderated(owner, aprobado, motivo)
+        log_action(
+            actor=request.user,
+            action="user.owner.approve" if aprobado else "user.owner.reject",
+            target_type="User",
+            target_id=owner.pk,
+            target_label=owner.email,
+            metadata={"motivo": motivo} if not aprobado else {},
+            request=request,
+        )
 
         return Response(UserSerializer(owner).data)
 
@@ -257,4 +476,13 @@ class PatrocinadorAprobarView(APIView):
             sponsor.sponsor_rejection_reason = motivo
 
         sponsor.save(update_fields=["sponsor_status", "sponsor_rejection_reason"])
+        log_action(
+            actor=request.user,
+            action="user.sponsor.approve" if aprobado else "user.sponsor.reject",
+            target_type="User",
+            target_id=sponsor.pk,
+            target_label=sponsor.email,
+            metadata={"motivo": motivo} if not aprobado else {},
+            request=request,
+        )
         return Response(UserSerializer(sponsor).data)

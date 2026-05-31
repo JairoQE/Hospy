@@ -6,6 +6,7 @@ from .ubigeo_loader import (
     distrito_nombres_provincia,
     resolve_departamento,
     resolve_provincia,
+    search_places,
 )
 
 # Ciudades representativas por zona natural (coinciden con campo city del hospedaje)
@@ -75,3 +76,73 @@ def get_provincia_cities(provincia: str, departamento: str | None = None) -> lis
 def get_distrito_search_names(distrito: str) -> list[str]:
     name = (distrito or "").strip()
     return [name] if name else []
+
+
+def district_name_variants(names: list[str]) -> list[str]:
+    """Incluye guión/espacio (ej. Rupa Rupa vs Rupa-Rupa) para coincidir con `Accommodation.city`."""
+    out: set[str] = set()
+    for n in names:
+        if not n:
+            continue
+        s = n.strip()
+        out.add(s)
+        out.add(s.replace(" ", "-"))
+        out.add(s.replace("-", " "))
+    return list(out)
+
+
+def expand_free_text_location_to_cities(text: str) -> list[str] | None:
+    """
+    Si el texto coincide con un departamento o provincia UBIGEO, devuelve nombres de distrito
+    para filtrar `Accommodation.city` (búsqueda libre sin elegir del autocompletado).
+    """
+    raw = (text or "").strip()
+    if not raw:
+        return None
+
+    # Caso: "ciudades capital" (ej. Tingo María) usadas por Hospy como `city`.
+    # En UBIGEO normalmente no aparecen como distrito; por eso mapeamos el texto
+    # libre a su distrito representativo.
+    def _norm_local(value: str) -> str:
+        import unicodedata
+
+        s = (value or "").strip().lower()
+        s = unicodedata.normalize("NFD", s)
+        return "".join(c for c in s if unicodedata.category(c) != "Mn")
+
+    norm_raw = _norm_local(raw)
+    try:
+        suggestions = search_places(raw, limit=20)
+    except Exception:
+        suggestions = []
+    if suggestions:
+        exact = next(
+            (
+                s
+                for s in suggestions
+                if _norm_local(s.get("nombre") or "") == norm_raw
+                and s.get("tipo") == "distrito"
+            ),
+            None,
+        )
+        if exact:
+            mapped_city = exact.get("ciudad") or exact.get("distrito") or exact.get("nombre")
+            if mapped_city:
+                return district_name_variants([mapped_city])
+
+    depto = resolve_departamento(raw)
+    if depto:
+        names = distrito_nombres_departamento(raw)
+        if names:
+            return district_name_variants(names)
+
+    prov = resolve_provincia(raw, None)
+    if prov:
+        names = distrito_nombres_provincia(
+            prov["nombre"],
+            prov.get("departamento_nombre"),
+        )
+        if names:
+            return district_name_variants(names)
+
+    return None

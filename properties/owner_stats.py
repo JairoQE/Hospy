@@ -57,6 +57,6 @@ def owner_recent_reviews(owner_id: int, limit: int = 6):
             accommodation_id__in=acc_ids,
             status=Review.Status.APROBADA,
         )
-        .select_related("author", "accommodation")
+        .select_related("author", "accommodation", "booking", "booking__room")
         .order_by("-created_at")[:limit]
     )

@@ -82,6 +82,7 @@ def calculate_stay_total(room: Room, check_in: date, check_out: date) -> dict:
         "check_in": check_in.isoformat(),
         "check_out": check_out.isoformat(),
         "nights_count": len(nights),
+        "noches": len(nights),
         "nights": nights,
         "total": total,
     }

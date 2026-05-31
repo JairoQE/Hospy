@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .images import validate_uploaded_image
+from .images import normalize_uploaded_image
 from .media_urls import media_public_path
 from .models import Accommodation, BrowseTile
 
@@ -28,6 +28,7 @@ class BrowseTilePublicSerializer(serializers.ModelSerializer):
 
 class BrowseTileAdminSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
+    clicks_30d = serializers.IntegerField(read_only=True, default=0)
 
     class Meta:
         model = BrowseTile
@@ -43,17 +44,18 @@ class BrowseTileAdminSerializer(serializers.ModelSerializer):
             "gradient_css",
             "order",
             "is_active",
+            "clicks_30d",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "created_at", "updated_at", "image_url")
+        read_only_fields = ("id", "created_at", "updated_at", "image_url", "clicks_30d")
 
     def get_image_url(self, obj):
         return media_public_path(obj.image) if obj.image else None
 
     def validate_image(self, value):
         if value:
-            validate_uploaded_image(value)
+            return normalize_uploaded_image(value)
         return value
 
     def validate_filter_value(self, value):

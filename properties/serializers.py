@@ -160,10 +160,9 @@ class AccommodationPhotoUploadSerializer(serializers.ModelSerializer):
         fields = ("image", "is_primary", "order")
 
     def validate_image(self, value):
-        from .images import validate_uploaded_image
+        from .images import normalize_uploaded_image
 
-        validate_uploaded_image(value)
-        return value
+        return normalize_uploaded_image(value)
 
 
 class AccommodationListSerializer(serializers.ModelSerializer):
@@ -398,6 +397,30 @@ class AccommodationWriteSerializer(serializers.ModelSerializer):
             "service_ids",
             "faqs",
         )
+
+    def validate_city(self, value: str):
+        """
+        En Hospy, `city` debe guardar el **distrito** (UBIGEO) para que la búsqueda sea consistente.
+        Si el usuario escribe una "ciudad capital" (ej. Tingo María), la normalizamos al distrito real.
+        """
+        from .geography import expand_free_text_location_to_cities
+
+        raw = (value or "").strip()
+        if not raw:
+            raise serializers.ValidationError("Indica el distrito (no vacío).")
+
+        expanded = expand_free_text_location_to_cities(raw)
+        # Si el texto libre mapea a un distrito específico (ej. Tingo María → Rupa Rupa),
+        # usamos ese distrito como valor canónico.
+        if expanded:
+            # Preferimos el primer nombre "con espacio" si existe (más típico UBIGEO),
+            # y caemos al primero disponible.
+            spaced = next((n for n in expanded if " " in n and "-" not in n), None)
+            return spaced or expanded[0]
+
+        # Si no se pudo resolver, aceptamos el texto (para no bloquear registros legacy),
+        # pero la búsqueda podría no funcionar si no es distrito.
+        return raw
 
     def validate_type(self, value):
         valid = {c[0] for c in Accommodation.Type.choices}

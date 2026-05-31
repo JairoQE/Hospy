@@ -73,6 +73,7 @@ class ConversationSerializer(serializers.ModelSerializer):
     owner_name = serializers.SerializerMethodField()
     owner_photo_url = serializers.SerializerMethodField()
     last_message_preview = serializers.SerializerMethodField()
+    message_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
@@ -88,6 +89,7 @@ class ConversationSerializer(serializers.ModelSerializer):
             "owner_photo_url",
             "last_message_at",
             "last_message_preview",
+            "message_count",
             "created_at",
         )
         read_only_fields = fields
@@ -109,6 +111,12 @@ class ConversationSerializer(serializers.ModelSerializer):
         if not last:
             return ""
         return (last.body or "")[:120]
+
+    def get_message_count(self, obj):
+        annotated = getattr(obj, "message_count", None)
+        if annotated is not None:
+            return annotated
+        return obj.messages.count()
 
 
 class ConversationCreateSerializer(serializers.Serializer):
@@ -168,6 +176,9 @@ class MessageReportAdminSerializer(serializers.ModelSerializer):
     accommodation_name = serializers.CharField(
         source="message.conversation.accommodation.name", read_only=True
     )
+    conversation_id = serializers.IntegerField(
+        source="message.conversation_id", read_only=True
+    )
     reason_label = serializers.CharField(source="get_reason_display", read_only=True)
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     reviewed_by_name = serializers.SerializerMethodField()
@@ -186,6 +197,7 @@ class MessageReportAdminSerializer(serializers.ModelSerializer):
             "reporter_email",
             "accommodation_id",
             "accommodation_name",
+            "conversation_id",
             "reason",
             "reason_label",
             "detail",

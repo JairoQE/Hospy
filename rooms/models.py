@@ -1,6 +1,6 @@
 from django.db import models
 
-from properties.models import Accommodation, TimeStampedModel
+from properties.models import Accommodation, Service, TimeStampedModel
 
 
 class Room(TimeStampedModel):
@@ -22,6 +22,12 @@ class Room(TimeStampedModel):
     description = models.TextField(blank=True)
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
     is_active = models.BooleanField(default=True)
+    services = models.ManyToManyField(
+        Service,
+        related_name="habitaciones",
+        blank=True,
+        help_text="Servicios incluidos en esta habitación (ej. jacuzzi, minibar).",
+    )
 
     class Meta:
         verbose_name = "habitación"

@@ -12,6 +12,7 @@ from hospix.faq_data import FAQ_ENTRIES
 from bookings.models import Booking
 from properties.media_urls import media_public_path
 from properties.models import Accommodation
+from properties.geography import expand_free_text_location_to_cities
 from rooms.models import Room
 
 
@@ -89,12 +90,18 @@ TYPE_LABELS = {
     Accommodation.Type.HOTEL: "Hotel",
     Accommodation.Type.HOSTAL: "Hostal",
     Accommodation.Type.HOSPEDAJE: "Hospedaje",
+    Accommodation.Type.CASA_DEPARTAMENTO: "Casa o departamento",
 }
 
 
 def extract_stay_types(text: str) -> list[str] | None:
-    """Filtra por tipo si el usuario lo pide (hospedaje, hostal, hotel)."""
+    """Filtra por tipo si el usuario lo pide (hospedaje, hostal, hotel, casa…)."""
     lower = (text or "").lower()
+    if re.search(
+        r"\b(casa(s)?\s+(o|/)\s+departamento(s)?|departamento(s)?\s+entero(s)?|casa(s)?\s+completa(s)?)\b",
+        lower,
+    ):
+        return [Accommodation.Type.CASA_DEPARTAMENTO]
     if re.search(r"\bhospedaj(es)?\b", lower):
         return [Accommodation.Type.HOSPEDAJE]
     if re.search(r"\bhostal(es)?\b", lower):
@@ -113,6 +120,8 @@ def stay_types_phrase(types: list[str] | None) -> str:
         return "hostales"
     if types == [Accommodation.Type.HOTEL]:
         return "hoteles"
+    if types == [Accommodation.Type.CASA_DEPARTAMENTO]:
+        return "casas o departamentos"
     return "alojamientos"
 
 
@@ -145,10 +154,25 @@ def search_stays(city: str, limit: int = 3, message: str = "") -> list[dict]:
             .order_by("-average_rating", "name")[:limit]
         )
     else:
-        qs = (
-            base_qs.filter(
-                Q(city__icontains=q) | Q(region__icontains=q) | Q(name__icontains=q)
+        # Algunas ubicaciones (p. ej. "Tingo María") se guardan como distrito
+        # en `Accommodation.city` (p. ej. "Rupa Rupa"). Expandimos texto libre
+        # usando el mapeo UBIGEO para que Hospix encuentre resultados.
+        mapped = expand_free_text_location_to_cities(city) or []
+        candidates = [q, *mapped]
+
+        place_q = Q()
+        for cand in candidates:
+            cand = (cand or "").strip()
+            if not cand:
+                continue
+            place_q |= (
+                Q(city__icontains=cand)
+                | Q(region__icontains=cand)
+                | Q(name__icontains=cand)
             )
+
+        qs = (
+            base_qs.filter(place_q)
             .prefetch_related("fotos")
             .distinct()[:limit]
         )

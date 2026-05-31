@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from accounts.auth_throttle import AuthEndpointThrottle
 from accounts.permissions import IsAdministrador
 from accounts.platform_contact import build_platform_contact_payload
+from audit.services import log_action
 from sponsors.models import SponsorAd, SponsorAdReport
 from sponsors.permissions import IsPatrocinador
 from sponsors.serializers import (
@@ -65,12 +66,20 @@ class MySponsorAdsView(generics.ListCreateAPIView):
         return SponsorAd.objects.filter(sponsor=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(
+        ad = serializer.save(
             sponsor=self.request.user,
             status=SponsorAd.Status.APROBADO,
             is_active=True,
             rejection_reason="",
             takedown_reason="",
+        )
+        log_action(
+            actor=self.request.user,
+            action="sponsor_ad.create",
+            target_type="SponsorAd",
+            target_id=ad.pk,
+            target_label=ad.title or f"Anuncio #{ad.pk}",
+            request=self.request,
         )
 
 
@@ -96,7 +105,29 @@ class MySponsorAdDetailView(generics.RetrieveUpdateDestroyAPIView):
         elif self.get_object().status == SponsorAd.Status.BAJA:
             extra["status"] = SponsorAd.Status.APROBADO
             extra["takedown_reason"] = ""
-        serializer.save(**extra)
+        ad = serializer.save(**extra)
+        log_action(
+            actor=self.request.user,
+            action="sponsor_ad.update",
+            target_type="SponsorAd",
+            target_id=ad.pk,
+            target_label=ad.title or f"Anuncio #{ad.pk}",
+            metadata={"fields": list(validated.keys())},
+            request=self.request,
+        )
+
+    def perform_destroy(self, instance):
+        ad_id = instance.pk
+        label = instance.title
+        instance.delete()
+        log_action(
+            actor=self.request.user,
+            action="sponsor_ad.delete",
+            target_type="SponsorAd",
+            target_id=ad_id,
+            target_label=label,
+            request=self.request,
+        )
 
 
 class SponsorAdReportView(APIView):
@@ -170,6 +201,15 @@ class SponsorAdReportResolveView(APIView):
         if data["accion"] == "descartar":
             report.status = SponsorAdReport.Status.DESCARTADO
             report.save()
+            log_action(
+                actor=request.user,
+                action="sponsor_report.resolve",
+                target_type="SponsorAdReport",
+                target_id=report.pk,
+                target_label=report.ad.title,
+                metadata={"accion": "descartar"},
+                request=request,
+            )
             return Response(SponsorAdReportAdminSerializer(report).data)
 
         warning = data["warning"].strip()
@@ -187,5 +227,15 @@ class SponsorAdReportResolveView(APIView):
         sponsor.sponsor_warning_message = warning
         sponsor.sponsor_warning_at = now
         sponsor.save(update_fields=["sponsor_warning_message", "sponsor_warning_at"])
+
+        log_action(
+            actor=request.user,
+            action="sponsor_report.resolve",
+            target_type="SponsorAdReport",
+            target_id=report.pk,
+            target_label=ad.title,
+            metadata={"accion": "baja_anuncio", "warning": warning},
+            request=request,
+        )
 
         return Response(SponsorAdReportAdminSerializer(report).data)

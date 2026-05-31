@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from accounts.permissions import IsAdministrador, IsHuesped
+from audit.services import log_action
 
 from .models import Review
 from .serializers import (
@@ -19,7 +20,12 @@ class ReviewViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """Reseñas: huésped crea; admin modera; público ve aprobadas."""
 
     def get_queryset(self):
-        return Review.objects.select_related("accommodation", "author")
+        return Review.objects.select_related(
+            "accommodation",
+            "author",
+            "booking",
+            "booking__room",
+        )
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -45,6 +51,15 @@ class ReviewViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
         )
         serializer.is_valid(raise_exception=True)
         review = serializer.save()
+        log_action(
+            actor=request.user,
+            action="review.create",
+            target_type="Review",
+            target_id=review.pk,
+            target_label=review.accommodation.name,
+            metadata={"rating": review.rating},
+            request=request,
+        )
         return Response(
             ReviewDetailSerializer(review).data,
             status=201,
@@ -81,6 +96,15 @@ class ReviewViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             review = moderate_review(review, serializer.validated_data["aprobada"])
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)})
+        approved = serializer.validated_data["aprobada"]
+        log_action(
+            actor=request.user,
+            action="review.moderate_approve" if approved else "review.moderate_reject",
+            target_type="Review",
+            target_id=review.pk,
+            target_label=review.accommodation.name,
+            request=request,
+        )
         return Response(ReviewDetailSerializer(review).data)
 
 
@@ -96,6 +120,6 @@ class AccommodationReviewListView(generics.ListAPIView):
                 accommodation_id=self.kwargs["hospedaje_pk"],
                 status=Review.Status.APROBADA,
             )
-            .select_related("author")
+            .select_related("author", "booking", "booking__room")
             .order_by("-created_at")
         )

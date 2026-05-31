@@ -17,7 +17,8 @@ def test_crear_resena_requiere_estadia(api_client, huesped, hospedaje_aprobado):
 
 
 @pytest.mark.django_db
-def test_flujo_resena(api_client, huesped, admin_user, hospedaje_aprobado):
+def test_flujo_resena(api_client, huesped, admin_user, hospedaje_aprobado, settings):
+    settings.REVIEWS_AUTO_APPROVE = False
     from datetime import date, timedelta
 
     acc, room = hospedaje_aprobado

@@ -18,14 +18,37 @@ urlpatterns = [
         name="registro-patrocinador",
     ),
     path("login/", views.LoginView.as_view(), name="login"),
+    path("captcha/", views.CaptchaConfigView.as_view(), name="captcha"),
+    path("google/", views.GoogleAuthView.as_view(), name="google"),
+    path("facebook/", views.FacebookAuthView.as_view(), name="facebook"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     path("perfil/", views.PerfilView.as_view(), name="perfil"),
+    path(
+        "perfil/cambiar-email/",
+        views.ChangeEmailView.as_view(),
+        name="perfil-cambiar-email",
+    ),
+    path(
+        "perfil/cambiar-contrasena/",
+        views.ChangePasswordView.as_view(),
+        name="perfil-cambiar-contrasena",
+    ),
     path("usuarios/<int:pk>/", views.PublicUserProfileView.as_view(), name="usuario-publico"),
     path("usuarios/<int:pk>/seguir/", views.FollowUserView.as_view(), name="usuario-seguir"),
     path(
         "anfitriones/<int:pk>/",
         views.OwnerStoreView.as_view(),
         name="anfitrion-tienda",
+    ),
+    path(
+        "admin-usuarios/",
+        views.AdminUsersListView.as_view(),
+        name="admin-usuarios",
+    ),
+    path(
+        "admin-usuarios/<int:pk>/administrador/",
+        views.AdminAssignAdministratorView.as_view(),
+        name="admin-usuario-administrador",
     ),
     path(
         "propietarios-pendientes/",

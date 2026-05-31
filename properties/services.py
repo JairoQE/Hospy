@@ -2,6 +2,8 @@ import hashlib
 import json
 import math
 from datetime import date
+from functools import reduce
+from operator import or_
 
 from django.conf import settings
 from django.core.cache import cache
@@ -134,20 +136,53 @@ def apply_accommodation_search_params(queryset, params):
     from django.db.models import Q
 
     from .geography import (
+        district_name_variants,
+        expand_free_text_location_to_cities,
         get_departamento_cities,
         get_distrito_search_names,
         get_provincia_cities,
         get_zona_cities,
     )
 
-    ciudad = params.get("ciudad") or params.get("city")
+    ciudad_raw = params.get("ciudad") or params.get("city")
+    ciudad = (
+        str(ciudad_raw).strip()
+        if ciudad_raw is not None and str(ciudad_raw).strip()
+        else None
+    )
     distrito = params.get("distrito")
     departamento = params.get("departamento")
     provincia = params.get("provincia")
     zona = params.get("zona")
 
     if ciudad:
-        queryset = queryset.filter(city__iexact=ciudad)
+        expanded = expand_free_text_location_to_cities(ciudad)
+        if expanded:
+            queryset = queryset.filter(
+                reduce(
+                    or_,
+                    (
+                        Q(city__iexact=n)
+                        | Q(city__icontains=n)
+                        | Q(address__icontains=n)
+                        for n in expanded
+                    ),
+                )
+            )
+        else:
+            variants = [v for v in district_name_variants([ciudad]) if v]
+            if variants:
+                queryset = queryset.filter(
+                    reduce(
+                        or_,
+                        (
+                            Q(city__iexact=v)
+                            | Q(city__icontains=v)
+                            | Q(address__icontains=v)
+                            for v in variants
+                        ),
+                    )
+                )
     elif distrito:
         names = get_distrito_search_names(distrito)
         if not names:
@@ -162,16 +197,21 @@ def apply_accommodation_search_params(queryset, params):
         if departamento:
             dept_cities = get_departamento_cities(departamento)
             if dept_cities:
-                queryset = queryset.filter(city__in=dept_cities)
+                queryset = queryset.filter(
+                    city__in=district_name_variants(dept_cities)
+                )
         if provincia:
             prov_cities = get_provincia_cities(provincia, departamento)
             if prov_cities:
-                queryset = queryset.filter(city__in=prov_cities)
+                queryset = queryset.filter(
+                    city__in=district_name_variants(prov_cities)
+                )
     elif provincia and not zona:
         cities = get_provincia_cities(provincia, departamento)
         if cities:
+            cities_v = district_name_variants(cities)
             queryset = queryset.filter(
-                Q(city__in=cities) | Q(region__iexact=provincia)
+                Q(city__in=cities_v) | Q(region__iexact=provincia)
             )
         else:
             queryset = queryset.filter(
@@ -180,19 +220,21 @@ def apply_accommodation_search_params(queryset, params):
     elif departamento and not zona:
         cities = get_departamento_cities(departamento)
         if cities:
-            queryset = queryset.filter(city__in=cities)
+            queryset = queryset.filter(city__in=district_name_variants(cities))
         else:
             queryset = queryset.none()
     elif zona:
         cities = get_zona_cities(zona, departamento)
         if cities:
-            queryset = queryset.filter(city__in=cities)
+            queryset = queryset.filter(city__in=district_name_variants(cities))
         elif departamento:
             queryset = queryset.none()
         else:
             fallback = get_zona_cities(zona)
             if fallback:
-                queryset = queryset.filter(city__in=fallback)
+                queryset = queryset.filter(
+                    city__in=district_name_variants(fallback)
+                )
             else:
                 queryset = queryset.none()
 

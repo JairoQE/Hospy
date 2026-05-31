@@ -1,10 +1,12 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-from .base import *  # noqa: F403
+# Cargar .env antes de base.py (DATABASES se define al importar base)
+load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
-load_dotenv(BASE_DIR / ".env")  # noqa: F405
+from .base import *  # noqa: F403
 
 DEBUG = True
 

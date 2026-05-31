@@ -85,6 +85,10 @@ class SponsorAdSerializer(serializers.ModelSerializer):
         media = attrs.get("media") or getattr(self.instance, "media", None)
         if media and "media" in attrs:
             attrs["media_type"] = validate_sponsor_media(attrs["media"])
+            if attrs["media_type"] == "image":
+                from properties.images import normalize_uploaded_image
+
+                attrs["media"] = normalize_uploaded_image(attrs["media"])
         return attrs
 
 

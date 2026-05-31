@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.db.models import Avg
 
 from bookings.models import Booking
@@ -17,6 +18,50 @@ def guest_has_completed_stay(guest, accommodation_id: int) -> bool:
     ).exists()
 
 
+def booking_for_review(review: Review) -> Booking | None:
+    """Reserva asociada a la reseña o la última completada del huésped en ese hospedaje."""
+    if review.booking_id:
+        return review.booking
+    return (
+        Booking.objects.filter(
+            guest=review.author,
+            room__accommodation_id=review.accommodation_id,
+            status=Booking.Status.COMPLETADA,
+        )
+        .select_related("room")
+        .order_by("-check_out", "-id")
+        .first()
+    )
+
+
+def resolve_review_booking(
+    guest,
+    accommodation_id: int,
+    booking_id: int | None = None,
+) -> Booking | None:
+    if booking_id:
+        return (
+            Booking.objects.filter(
+                pk=booking_id,
+                guest=guest,
+                room__accommodation_id=accommodation_id,
+                status=Booking.Status.COMPLETADA,
+            )
+            .select_related("room", "room__accommodation")
+            .first()
+        )
+    return (
+        Booking.objects.filter(
+            guest=guest,
+            room__accommodation_id=accommodation_id,
+            status=Booking.Status.COMPLETADA,
+        )
+        .select_related("room", "room__accommodation")
+        .order_by("-check_out", "-id")
+        .first()
+    )
+
+
 def guest_already_reviewed(guest, accommodation_id: int) -> bool:
     return (
         Review.objects.filter(
@@ -26,6 +71,37 @@ def guest_already_reviewed(guest, accommodation_id: int) -> bool:
         .exclude(status=Review.Status.RECHAZADA)
         .exists()
     )
+
+
+def reviews_auto_approve_enabled() -> bool:
+    return bool(getattr(settings, "REVIEWS_AUTO_APPROVE", True))
+
+
+def create_guest_review(
+    *,
+    author,
+    accommodation: Accommodation,
+    rating: int,
+    comment: str,
+    booking: Booking | None = None,
+) -> Review:
+    """Crea reseña; publica de inmediato si REVIEWS_AUTO_APPROVE está activo."""
+    status = (
+        Review.Status.APROBADA
+        if reviews_auto_approve_enabled()
+        else Review.Status.PENDIENTE
+    )
+    review = Review.objects.create(
+        author=author,
+        accommodation=accommodation,
+        booking=booking,
+        rating=rating,
+        comment=comment,
+        status=status,
+    )
+    if status == Review.Status.APROBADA:
+        recalculate_accommodation_rating(accommodation)
+    return review
 
 
 def recalculate_accommodation_rating(accommodation: Accommodation) -> None:

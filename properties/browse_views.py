@@ -1,11 +1,18 @@
+from datetime import timedelta
+
+from django.db.models import Count, Q
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
 
 from accounts.permissions import IsAdministrador
+from audit.services import log_action
 
 from .browse_serializers import BrowseTileAdminSerializer, BrowseTilePublicSerializer
-from .models import BrowseTile
+from .models import BrowseTile, BrowseTileClick
 
 
 class BrowseTileViewSet(viewsets.ModelViewSet):
@@ -21,16 +28,16 @@ class BrowseTileViewSet(viewsets.ModelViewSet):
     filterset_fields = ("group", "is_active")
     http_method_names = ["get", "post", "patch", "delete", "head", "options"]
 
+    def get_permissions(self):
+        if self.action in ("list", "retrieve", "registrar_clic"):
+            return [permissions.AllowAny()]
+        return [IsAdministrador()]
+
     def get_serializer_class(self):
         user = self.request.user
         if user.is_authenticated and user.role == user.Role.ADMINISTRADOR:
             return BrowseTileAdminSerializer
         return BrowseTilePublicSerializer
-
-    def get_permissions(self):
-        if self.action in ("list", "retrieve"):
-            return [permissions.AllowAny()]
-        return [IsAdministrador()]
 
     def get_queryset(self):
         qs = BrowseTile.objects.all()
@@ -38,6 +45,16 @@ class BrowseTileViewSet(viewsets.ModelViewSet):
         is_admin = (
             user.is_authenticated and user.role == user.Role.ADMINISTRADOR
         )
+        if self.action == "registrar_clic":
+            return qs.filter(is_active=True)
+        if is_admin and self.action == "list":
+            since = timezone.now() - timedelta(days=30)
+            qs = qs.annotate(
+                clicks_30d=Count(
+                    "clicks",
+                    filter=Q(clicks__created_at__gte=since),
+                )
+            )
         if self.action in ("list", "retrieve") and not is_admin:
             qs = qs.filter(is_active=True)
         group = self.request.query_params.get("group")
@@ -53,7 +70,47 @@ class BrowseTileViewSet(viewsets.ModelViewSet):
                 )
         return qs
 
+    @action(detail=True, methods=["post"], url_path="registrar-clic")
+    def registrar_clic(self, request, pk=None):
+        """Registra un clic en una tarjeta activa del home (público)."""
+        tile = self.get_object()
+        BrowseTileClick.objects.create(tile=tile)
+        return Response({"ok": True}, status=status.HTTP_201_CREATED)
+
     def perform_destroy(self, instance):
+        label = instance.title
+        tile_id = instance.pk
         if instance.image:
             instance.image.delete(save=False)
         instance.delete()
+        log_action(
+            actor=self.request.user,
+            action="browse_tile.delete",
+            target_type="BrowseTile",
+            target_id=tile_id,
+            target_label=label,
+            request=self.request,
+        )
+
+    def perform_create(self, serializer):
+        tile = serializer.save()
+        log_action(
+            actor=self.request.user,
+            action="browse_tile.create",
+            target_type="BrowseTile",
+            target_id=tile.pk,
+            target_label=tile.title,
+            request=self.request,
+        )
+
+    def perform_update(self, serializer):
+        tile = serializer.save()
+        log_action(
+            actor=self.request.user,
+            action="browse_tile.update",
+            target_type="BrowseTile",
+            target_id=tile.pk,
+            target_label=tile.title,
+            metadata={"fields": list(serializer.validated_data.keys())},
+            request=self.request,
+        )

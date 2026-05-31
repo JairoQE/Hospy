@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from django.urls import reverse
 
@@ -81,6 +83,24 @@ def test_propietario_pendiente_no_crea_hospedaje(api_client):
         },
         format="json",
     )
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_admin_lista_todos_usuarios(api_client, admin_user, huesped, propietario):
+    api_client.force_authenticate(user=admin_user)
+    response = api_client.get("/api/v1/auth/admin-usuarios/")
+    assert response.status_code == 200
+    assert response.data["count"] >= 2
+    emails = {row["email"] for row in response.data["results"]}
+    assert huesped.email in emails
+    assert propietario.email in emails
+
+
+@pytest.mark.django_db
+def test_lista_usuarios_solo_admin(api_client, huesped):
+    api_client.force_authenticate(user=huesped)
+    response = api_client.get("/api/v1/auth/admin-usuarios/")
     assert response.status_code == 403
 
 
@@ -189,6 +209,69 @@ def test_login(api_client, huesped):
 
 
 @pytest.mark.django_db
+def test_captcha_config_disabled(api_client):
+    response = api_client.get("/api/v1/auth/captcha/")
+    assert response.status_code == 200
+    assert response.data["enabled"] is False
+
+
+@pytest.mark.django_db
+@patch("accounts.captcha.requests.post")
+def test_login_requiere_captcha_cuando_activo(mock_post, api_client, huesped, settings):
+    settings.TURNSTILE_SECRET_KEY = "test-secret"
+    settings.TURNSTILE_SITE_KEY = "test-site"
+
+    response = api_client.post(
+        "/api/v1/auth/login/",
+        {"email": huesped.email, "password": "Testpass123!"},
+        format="json",
+    )
+    assert response.status_code == 400
+    assert "captcha_token" in response.data.get("errors", response.data)
+
+    mock_post.return_value.json.return_value = {"success": True}
+    mock_post.return_value.raise_for_status = lambda: None
+
+    response = api_client.post(
+        "/api/v1/auth/login/",
+        {
+            "email": huesped.email,
+            "password": "Testpass123!",
+            "captcha_token": "valid-token",
+        },
+        format="json",
+    )
+    assert response.status_code == 200
+    assert "access" in response.data
+
+
+@pytest.mark.django_db
+@patch("accounts.captcha.requests.post")
+def test_registro_requiere_captcha_cuando_activo(mock_post, api_client, settings):
+    settings.TURNSTILE_SECRET_KEY = "test-secret"
+    settings.TURNSTILE_SITE_KEY = "test-site"
+
+    payload = {
+        "email": "captcha@hospy.local",
+        "first_name": "Cap",
+        "last_name": "Tcha",
+        "password": "Nuevopass123!",
+    }
+    response = api_client.post("/api/v1/auth/registro/", payload, format="json")
+    assert response.status_code == 400
+
+    mock_post.return_value.json.return_value = {"success": True}
+    mock_post.return_value.raise_for_status = lambda: None
+
+    response = api_client.post(
+        "/api/v1/auth/registro/",
+        {**payload, "captcha_token": "valid-token"},
+        format="json",
+    )
+    assert response.status_code == 201
+
+
+@pytest.mark.django_db
 def test_config_contacto_usa_datos_administrador(api_client, admin_user):
     from django.contrib.auth import get_user_model
 
@@ -208,3 +291,192 @@ def test_config_contacto_usa_datos_administrador(api_client, admin_user):
     assert response.data["admin_email"] == admin_user.email
     assert "902" in response.data["admin_phone"]
     assert response.data["admin_whatsapp_url"].startswith("https://wa.me/")
+
+
+@pytest.mark.django_db
+@patch("accounts.views.verify_google_credential")
+def test_google_auth_registro(mock_verify, api_client):
+    mock_verify.return_value = {
+        "sub": "google-sub-123",
+        "email": "google.user@hospy.local",
+        "email_verified": True,
+        "given_name": "Google",
+        "family_name": "User",
+        "iss": "accounts.google.com",
+    }
+    response = api_client.post(
+        "/api/v1/auth/google/",
+        {"credential": "fake-jwt", "role": "huesped"},
+        format="json",
+    )
+    assert response.status_code == 201
+    assert response.data["created"] is True
+    assert response.data["user"]["email"] == "google.user@hospy.local"
+    assert "access" in response.data
+
+
+@pytest.mark.django_db
+@patch("accounts.views.verify_google_credential")
+def test_google_auth_login_sin_cuenta(mock_verify, api_client):
+    mock_verify.return_value = {
+        "sub": "google-sub-999",
+        "email": "nuevo.google@hospy.local",
+        "email_verified": True,
+        "given_name": "Nuevo",
+        "family_name": "Google",
+        "iss": "accounts.google.com",
+    }
+    response = api_client.post(
+        "/api/v1/auth/google/",
+        {"credential": "fake-jwt", "role": "login"},
+        format="json",
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+@patch("accounts.views.verify_facebook_access_token")
+def test_facebook_auth_registro(mock_verify, api_client):
+    mock_verify.return_value = {
+        "id": "fb-123",
+        "email": "fb.user@hospy.local",
+        "first_name": "Fb",
+        "last_name": "User",
+    }
+    response = api_client.post(
+        "/api/v1/auth/facebook/",
+        {"access_token": "fake-token", "role": "huesped"},
+        format="json",
+    )
+    assert response.status_code == 201
+    assert response.data["created"] is True
+    assert response.data["user"]["email"] == "fb.user@hospy.local"
+
+
+@pytest.mark.django_db
+def test_cambiar_email_con_contrasena(api_client, admin_user):
+    api_client.force_authenticate(user=admin_user)
+    response = api_client.post(
+        "/api/v1/auth/perfil/cambiar-email/",
+        {
+            "email": "admin_nuevo@hospy.local",
+            "current_password": "Testpass123!",
+        },
+        format="json",
+    )
+    assert response.status_code == 200
+    admin_user.refresh_from_db()
+    assert admin_user.email == "admin_nuevo@hospy.local"
+    assert response.data["user"]["email"] == "admin_nuevo@hospy.local"
+
+
+@pytest.mark.django_db
+def test_cambiar_email_contrasena_incorrecta(api_client, admin_user):
+    api_client.force_authenticate(user=admin_user)
+    response = api_client.post(
+        "/api/v1/auth/perfil/cambiar-email/",
+        {
+            "email": "otro@hospy.local",
+            "current_password": "Malapass!",
+        },
+        format="json",
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_perfil_no_permite_cambiar_email_directo(api_client, admin_user):
+    api_client.force_authenticate(user=admin_user)
+    response = api_client.patch(
+        "/api/v1/auth/perfil/",
+        {"email": "hack@hospy.local"},
+        format="json",
+    )
+    assert response.status_code == 200
+    admin_user.refresh_from_db()
+    assert admin_user.email != "hack@hospy.local"
+
+
+@pytest.mark.django_db
+def test_cambiar_contrasena(api_client, admin_user):
+    api_client.force_authenticate(user=admin_user)
+    response = api_client.post(
+        "/api/v1/auth/perfil/cambiar-contrasena/",
+        {
+            "current_password": "Testpass123!",
+            "new_password": "Nuevopass456!",
+            "new_password2": "Nuevopass456!",
+        },
+        format="json",
+    )
+    assert response.status_code == 200
+    admin_user.refresh_from_db()
+    assert admin_user.check_password("Nuevopass456!")
+
+
+@pytest.mark.django_db
+def test_cambiar_contrasena_sin_coincidencia(api_client, admin_user):
+    api_client.force_authenticate(user=admin_user)
+    response = api_client.post(
+        "/api/v1/auth/perfil/cambiar-contrasena/",
+        {
+            "current_password": "Testpass123!",
+            "new_password": "Nuevopass456!",
+            "new_password2": "Distinta789!",
+        },
+        format="json",
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_admin_asigna_administrador(api_client, admin_user, huesped):
+    api_client.force_authenticate(user=admin_user)
+    response = api_client.post(
+        f"/api/v1/auth/admin-usuarios/{huesped.id}/administrador/",
+        {"admin": True},
+        format="json",
+    )
+    assert response.status_code == 200
+    huesped.refresh_from_db()
+    assert huesped.role == "administrador"
+    assert huesped.is_staff is True
+
+
+@pytest.mark.django_db
+def test_admin_quita_administrador(api_client, admin_user, huesped):
+    huesped.role = huesped.Role.ADMINISTRADOR
+    huesped.is_staff = True
+    huesped.save(update_fields=["role", "is_staff"])
+    api_client.force_authenticate(user=admin_user)
+    response = api_client.post(
+        f"/api/v1/auth/admin-usuarios/{huesped.id}/administrador/",
+        {"admin": False},
+        format="json",
+    )
+    assert response.status_code == 200
+    huesped.refresh_from_db()
+    assert huesped.role == "huesped"
+    assert huesped.is_staff is False
+
+
+@pytest.mark.django_db
+def test_no_quitar_ultimo_administrador(api_client, admin_user):
+    api_client.force_authenticate(user=admin_user)
+    response = api_client.post(
+        f"/api/v1/auth/admin-usuarios/{admin_user.id}/administrador/",
+        {"admin": False},
+        format="json",
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_solo_admin_asigna_administrador(api_client, huesped, propietario):
+    api_client.force_authenticate(user=huesped)
+    response = api_client.post(
+        f"/api/v1/auth/admin-usuarios/{propietario.id}/administrador/",
+        {"admin": True},
+        format="json",
+    )
+    assert response.status_code == 403

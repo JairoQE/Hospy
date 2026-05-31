@@ -18,4 +18,6 @@ urlpatterns = [
     path("hospix/", include("hospix.urls")),
     path("anuncios/", include("sponsors.urls")),
     path("mis-anuncios/", include(urlpatterns_mine)),
+    path("", include("site_ui.urls")),
+    path("", include("audit.urls")),
 ]

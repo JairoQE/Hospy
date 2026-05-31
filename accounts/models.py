@@ -21,6 +21,20 @@ class User(AbstractUser):
         RECHAZADO = "rechazado", "Rechazado"
 
     email = models.EmailField("correo electrónico", unique=True)
+    google_id = models.CharField(
+        "ID de Google",
+        max_length=255,
+        blank=True,
+        null=True,
+        unique=True,
+    )
+    facebook_id = models.CharField(
+        "ID de Facebook",
+        max_length=255,
+        blank=True,
+        null=True,
+        unique=True,
+    )
     role = models.CharField(
         max_length=20,
         choices=Role.choices,

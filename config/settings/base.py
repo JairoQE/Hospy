@@ -12,30 +12,42 @@ ALLOWED_HOSTS = [
     if h.strip()
 ]
 
+_USE_CLOUDINARY = os.environ.get("USE_CLOUDINARY", "").lower() in ("true", "1", "yes")
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "django.contrib.staticfiles",
-    # Terceros
-    "rest_framework",
-    "rest_framework_simplejwt",
-    "django_filters",
-    "corsheaders",
-    "drf_spectacular",
-    # Apps Hospy
-    "accounts",
-    "properties",
-    "rooms",
-    "bookings",
-    "reviews",
-    "notifications",
-    "messaging",
-    "hospix",
-    "sponsors",
 ]
+if _USE_CLOUDINARY:
+    INSTALLED_APPS.append("cloudinary_storage")
+INSTALLED_APPS.append("django.contrib.staticfiles")
+if _USE_CLOUDINARY:
+    INSTALLED_APPS.append("cloudinary")
+INSTALLED_APPS.extend(
+    [
+        # Terceros
+        "rest_framework",
+        "rest_framework_simplejwt",
+        "django_filters",
+        "corsheaders",
+        "drf_spectacular",
+        # Apps Hospy
+        "accounts",
+        "properties",
+        "rooms",
+        "bookings",
+        "reviews",
+        "notifications",
+        "messaging",
+        "hospix",
+        "sponsors",
+        "site_ui",
+        "audit",
+    ]
+)
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -69,6 +81,8 @@ TEMPLATES = [
     },
 ]
 
+_db_sslmode = os.environ.get("POSTGRES_SSLMODE", "prefer").strip()
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -77,6 +91,7 @@ DATABASES = {
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "hospy_secret"),
         "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
         "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+        "OPTIONS": {"sslmode": _db_sslmode} if _db_sslmode else {},
     }
 }
 
@@ -103,8 +118,17 @@ from config.storage import build_storages  # noqa: E402
 
 STORAGES = build_storages(MEDIA_ROOT, MEDIA_URL)
 
+if _USE_CLOUDINARY:
+    CLOUDINARY_STORAGE = {
+        "CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME", ""),
+        "API_KEY": os.environ.get("CLOUDINARY_API_KEY", ""),
+        "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET", ""),
+        "SECURE": True,
+    }
+
 # Límites de imágenes (RF-11, RF-22)
 MAX_UPLOAD_IMAGE_SIZE_MB = int(os.environ.get("MAX_UPLOAD_IMAGE_SIZE_MB", "5"))
+IMAGE_WEBP_QUALITY = int(os.environ.get("IMAGE_WEBP_QUALITY", "85"))
 MAX_UPLOAD_VIDEO_SIZE_MB = int(os.environ.get("MAX_UPLOAD_VIDEO_SIZE_MB", "15"))
 MAX_SPONSOR_AD_DURATION_SEC = int(os.environ.get("MAX_SPONSOR_AD_DURATION_SEC", "10"))
 HOSPY_ADMIN_WHATSAPP = os.environ.get("HOSPY_ADMIN_WHATSAPP", "51123456789")
@@ -202,7 +226,31 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=3, minute=0),
         "options": {"expires": 3600},
     },
+    "audit-retention-daily": {
+        "task": "audit.run_retention_cycle",
+        "schedule": crontab(hour=4, minute=0),
+        "options": {"expires": 3600},
+    },
 }
+
+# --- Auditoría ---
+# Días en tabla activa antes de archivar (0 = no archivar automáticamente)
+AUDIT_LOG_RETENTION_DAYS = int(os.environ.get("AUDIT_LOG_RETENTION_DAYS", "90"))
+# Días que se conservan archivados antes de eliminar (0 = conservar indefinidamente)
+AUDIT_LOG_PURGE_ARCHIVED_DAYS = int(os.environ.get("AUDIT_LOG_PURGE_ARCHIVED_DAYS", "365"))
+
+# --- CAPTCHA (Cloudflare Turnstile) — login y registro ---
+# Si TURNSTILE_SECRET_KEY está vacío, el CAPTCHA queda desactivado (útil en desarrollo).
+TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "")
+TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY", "")
+
+# --- Reseñas ---
+# true = publicar al enviar (recomendado en local). false = moderación admin en /api/v1/resenas/pendientes/
+REVIEWS_AUTO_APPROVE = os.environ.get("REVIEWS_AUTO_APPROVE", "true").lower() in (
+    "true",
+    "1",
+    "yes",
+)
 
 # --- Integración SIST ---
 HOSPY_INTEGRATION_API_KEY = os.environ.get("HOSPY_INTEGRATION_API_KEY", "")

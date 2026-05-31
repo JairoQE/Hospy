@@ -1,6 +1,6 @@
 import pytest
 
-from properties.models import Accommodation
+from properties.models import Accommodation, Service
 from rooms.models import Room
 
 
@@ -105,3 +105,48 @@ def test_publico_lista_habitaciones_incluye_fotos(api_client, hospedaje_aprobado
     assert row is not None
     assert "fotos" in row
     assert row["fotos"] == []
+
+
+@pytest.mark.django_db
+def test_habitacion_servicios_por_habitacion(api_client, propietario, hospedaje_aprobado):
+    acc, _ = hospedaje_aprobado
+    jacuzzi, _ = Service.objects.get_or_create(
+        slug="jacuzzi-test",
+        defaults={"name": "Jacuzzi", "icon": "jacuzzi"},
+    )
+    wifi, _ = Service.objects.get_or_create(
+        slug="wifi-test-room",
+        defaults={"name": "WiFi", "icon": "wifi"},
+    )
+    api_client.force_authenticate(user=propietario)
+
+    create = api_client.post(
+        f"/api/v1/hospedajes/{acc.id}/habitaciones/",
+        {
+            "number": "Suite 1",
+            "type": Room.Type.SUITE,
+            "capacity": 2,
+            "floor": 1,
+            "description": "Con jacuzzi",
+            "base_price": "320.00",
+            "service_ids": [jacuzzi.id, wifi.id],
+        },
+        format="json",
+    )
+    assert create.status_code == 201
+    room_id = create.data["id"]
+    assert {s["slug"] for s in create.data["services"]} == {"jacuzzi-test", "wifi-test-room"}
+
+    public = api_client.get(f"/api/v1/hospedajes/{acc.id}/habitaciones/")
+    assert public.status_code == 200
+    results = public.data.get("results", public.data)
+    row = next(r for r in results if r["id"] == room_id)
+    assert {s["slug"] for s in row["services"]} == {"jacuzzi-test", "wifi-test-room"}
+
+    patch = api_client.patch(
+        f"/api/v1/habitaciones/{room_id}/",
+        {"service_ids": [wifi.id]},
+        format="json",
+    )
+    assert patch.status_code == 200
+    assert [s["slug"] for s in patch.data["services"]] == ["wifi-test-room"]

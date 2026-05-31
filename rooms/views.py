@@ -20,6 +20,8 @@ from .serializers import (
     RoomSerializer,
     SeasonRateSerializer,
 )
+from bookings.services import is_room_available
+
 from .services import (
     block_room_dates,
     build_monthly_calendar,
@@ -56,7 +58,8 @@ class RoomViewSet(viewsets.ModelViewSet):
                     Prefetch(
                         "fotos",
                         queryset=RoomPhoto.objects.order_by("order", "id"),
-                    )
+                    ),
+                    "services",
                 )
             )
 
@@ -81,7 +84,7 @@ class RoomViewSet(viewsets.ModelViewSet):
                 acc_id = self.request.query_params.get("accommodation")
                 if acc_id:
                     qs = qs.filter(accommodation_id=acc_id)
-            return qs
+            return qs.prefetch_related("services")
 
         if user.is_authenticated and user.role == user.Role.ADMINISTRADOR:
             return qs
@@ -159,9 +162,18 @@ class RoomViewSet(viewsets.ModelViewSet):
             except Accommodation.DoesNotExist:
                 raise NotFound()
 
-        query = PriceQuerySerializer(data=request.query_params)
+        query = PriceQuerySerializer(
+            data=request.query_params,
+            context={"room": room},
+        )
         query.is_valid(raise_exception=True)
+        check_in = query.validated_data["entrada"]
+        check_out = query.validated_data["salida"]
         data = query.to_representation(query.validated_data)
+        available, message = is_room_available(room, check_in, check_out)
+        data["available"] = available
+        if not available:
+            data["availability_message"] = message
         data["room_id"] = room.id
         return Response(data)
 

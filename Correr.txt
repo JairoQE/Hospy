@@ -1,4 +1,5 @@
 source .venv/Scripts/activate
-# En .env: HOSPIX_LLM_ENABLED=true, GEMINI_API_KEY=tu-clave (Google AI Studio)
-python manage.py runserver
+pip install -r requirements.txt
+# En .env: GEMINI_API_KEY, GOOGLE_OAUTH_CLIENT_ID (mismo que VITE_GOOGLE_CLIENT_ID en frontend/.env.local)
 python manage.py migrate
+python manage.py runserver

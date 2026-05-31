@@ -4,13 +4,20 @@ from rooms.models import Room
 from rooms.services import calculate_stay_total
 
 from .models import Booking
-from .services import create_booking, is_room_available
+from .services import booking_cancellation_status, create_booking, is_room_available
 
 
 class BookingListSerializer(serializers.ModelSerializer):
     hospedaje = serializers.CharField(source="room.accommodation.name", read_only=True)
     habitacion = serializers.CharField(source="room.number", read_only=True)
     ciudad = serializers.CharField(source="room.accommodation.city", read_only=True)
+    accommodation_id = serializers.IntegerField(
+        source="room.accommodation_id", read_only=True
+    )
+    can_leave_review = serializers.SerializerMethodField()
+    has_review = serializers.SerializerMethodField()
+    can_cancel = serializers.SerializerMethodField()
+    cancel_reason = serializers.SerializerMethodField()
     huesped = serializers.SerializerMethodField()
 
     class Meta:
@@ -20,13 +27,44 @@ class BookingListSerializer(serializers.ModelSerializer):
             "hospedaje",
             "habitacion",
             "ciudad",
+            "accommodation_id",
             "huesped",
             "check_in",
             "check_out",
             "total_amount",
             "status",
             "created_at",
+            "can_leave_review",
+            "has_review",
+            "can_cancel",
+            "cancel_reason",
         )
+
+    def get_can_leave_review(self, obj):
+        if obj.status != Booking.Status.COMPLETADA:
+            return False
+        from reviews.services import guest_already_reviewed
+
+        return not guest_already_reviewed(obj.guest, obj.room.accommodation_id)
+
+    def get_has_review(self, obj):
+        from reviews.services import guest_already_reviewed
+
+        return guest_already_reviewed(obj.guest, obj.room.accommodation_id)
+
+    def _cancellation_for_viewer(self, obj) -> tuple[bool, str | None]:
+        request = self.context.get("request")
+        if not request or not getattr(request.user, "is_authenticated", False):
+            return False, None
+        return booking_cancellation_status(obj, request.user)
+
+    def get_can_cancel(self, obj):
+        allowed, _ = self._cancellation_for_viewer(obj)
+        return allowed
+
+    def get_cancel_reason(self, obj):
+        allowed, reason = self._cancellation_for_viewer(obj)
+        return None if allowed else reason
 
     def get_huesped(self, obj):
         return {

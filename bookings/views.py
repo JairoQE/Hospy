@@ -6,6 +6,8 @@ from rest_framework.views import APIView
 
 from accounts.permissions import IsAdministrador, IsHuesped, IsPropietario
 
+from audit.services import log_action
+
 from .models import Booking
 from .permissions import CanCancelBooking, IsBookingPropertyOwner
 from .serializers import (
@@ -105,6 +107,19 @@ class BookingViewSet(viewsets.GenericViewSet):
         )
         serializer.is_valid(raise_exception=True)
         booking = serializer.save()
+        log_action(
+            actor=request.user,
+            action="booking.create",
+            target_type="Booking",
+            target_id=booking.pk,
+            target_label=f"Reserva #{booking.pk} · {booking.room.accommodation.name}",
+            metadata={
+                "check_in": str(booking.check_in),
+                "check_out": str(booking.check_out),
+                "total_amount": str(booking.total_amount),
+            },
+            request=request,
+        )
         return Response(
             BookingDetailSerializer(booking).data,
             status=status.HTTP_201_CREATED,
@@ -143,6 +158,14 @@ class BookingViewSet(viewsets.GenericViewSet):
             confirm_booking(booking)
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)})
+        log_action(
+            actor=request.user,
+            action="booking.confirm",
+            target_type="Booking",
+            target_id=booking.pk,
+            target_label=f"Reserva #{booking.pk}",
+            request=request,
+        )
         return Response(BookingDetailSerializer(booking).data)
 
     @action(detail=True, methods=["post"], url_path="rechazar")
@@ -152,15 +175,31 @@ class BookingViewSet(viewsets.GenericViewSet):
             reject_booking(booking)
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)})
+        log_action(
+            actor=request.user,
+            action="booking.reject",
+            target_type="Booking",
+            target_id=booking.pk,
+            target_label=f"Reserva #{booking.pk}",
+            request=request,
+        )
         return Response(BookingDetailSerializer(booking).data)
 
     @action(detail=True, methods=["post"], url_path="cancelar")
     def cancelar(self, request, pk=None):
         booking = self.get_object()
         try:
-            cancel_booking(booking)
+            cancel_booking(booking, actor=request.user)
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)})
+        log_action(
+            actor=request.user,
+            action="booking.cancel",
+            target_type="Booking",
+            target_id=booking.pk,
+            target_label=f"Reserva #{booking.pk}",
+            request=request,
+        )
         return Response(BookingDetailSerializer(booking).data)
 
     @action(detail=True, methods=["post"], url_path="completar")
@@ -170,4 +209,12 @@ class BookingViewSet(viewsets.GenericViewSet):
             complete_booking(booking)
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)})
+        log_action(
+            actor=request.user,
+            action="booking.complete",
+            target_type="Booking",
+            target_id=booking.pk,
+            target_label=f"Reserva #{booking.pk}",
+            request=request,
+        )
         return Response(BookingDetailSerializer(booking).data)

@@ -42,6 +42,7 @@ class Accommodation(TimeStampedModel):
         HOTEL = "hotel", "Hotel"
         HOSTAL = "hostal", "Hostal"
         HOSPEDAJE = "hospedaje", "Hospedaje"
+        CASA_DEPARTAMENTO = "casa_departamento", "Casa o departamento"
 
     class Status(models.TextChoices):
         PENDIENTE = "pendiente", "Pendiente de aprobación"
@@ -191,6 +192,27 @@ class BrowseTile(TimeStampedModel):
         if not self.slug:
             self.slug = slugify(self.title) or "item"
         super().save(*args, **kwargs)
+
+
+class BrowseTileClick(models.Model):
+    """Registro de clics en tarjetas del home (tipos, regiones, departamentos)."""
+
+    tile = models.ForeignKey(
+        BrowseTile,
+        on_delete=models.CASCADE,
+        related_name="clicks",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "clic en bloque de inicio"
+        verbose_name_plural = "clics en bloques de inicio"
+        indexes = [
+            models.Index(fields=["tile", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"Clic #{self.pk} · {self.tile_id}"
 
 
 class AccommodationFAQ(TimeStampedModel):

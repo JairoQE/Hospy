@@ -1,6 +1,8 @@
-from datetime import timedelta
+import os
+from datetime import datetime, time, timedelta
 
 from django.db import transaction
+from django.utils import timezone
 
 from properties.models import Accommodation
 from rooms.models import Room
@@ -12,6 +14,54 @@ ACTIVE_BLOCKING_STATUSES = (
     Booking.Status.PENDIENTE,
     Booking.Status.CONFIRMADA,
 )
+
+CANCELLATION_HOURS_BEFORE_CHECKIN = int(
+    os.environ.get("BOOKING_CANCEL_HOURS_BEFORE_CHECKIN", "48")
+)
+
+
+def booking_cancellation_status(booking: Booking, user) -> tuple[bool, str | None]:
+    """
+    Huésped: pendiente/confirmada y al menos N h antes del check-in.
+    Propietario: pendiente/confirmada (sin límite de horas).
+    """
+    if booking.status not in (Booking.Status.PENDIENTE, Booking.Status.CONFIRMADA):
+        if booking.status == Booking.Status.COMPLETADA:
+            return False, "La estadía ya finalizó; no se puede cancelar."
+        if booking.status == Booking.Status.CANCELADA:
+            return False, "Esta reserva ya está cancelada."
+        return False, "Esta reserva no puede cancelarse."
+
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    if user.role == User.Role.ADMINISTRADOR:
+        return True, None
+
+    is_owner = booking.room.accommodation.owner_id == user.id
+    if is_owner:
+        return True, None
+
+    if booking.guest_id != user.id:
+        return False, "No tienes permiso para cancelar esta reserva."
+
+    check_in = booking.check_in
+    if isinstance(check_in, datetime):
+        check_in_date = check_in.date()
+    else:
+        check_in_date = check_in
+
+    check_in_dt = timezone.make_aware(
+        datetime.combine(check_in_date, time.min),
+        timezone.get_current_timezone(),
+    )
+    deadline = check_in_dt - timedelta(hours=CANCELLATION_HOURS_BEFORE_CHECKIN)
+    if timezone.now() > deadline:
+        return (
+            False,
+            f"Solo puedes cancelar hasta {CANCELLATION_HOURS_BEFORE_CHECKIN} horas antes del check-in.",
+        )
+    return True, None
 
 
 def is_room_available(
@@ -100,8 +150,12 @@ def reject_booking(booking: Booking) -> Booking:
     return booking
 
 
-def cancel_booking(booking: Booking) -> Booking:
-    if booking.status not in (Booking.Status.PENDIENTE, Booking.Status.CONFIRMADA):
+def cancel_booking(booking: Booking, *, actor=None) -> Booking:
+    if actor is not None:
+        allowed, reason = booking_cancellation_status(booking, actor)
+        if not allowed:
+            raise ValueError(reason or "Esta reserva no puede cancelarse.")
+    elif booking.status not in (Booking.Status.PENDIENTE, Booking.Status.CONFIRMADA):
         raise ValueError("Esta reserva no puede cancelarse.")
     booking.status = Booking.Status.CANCELADA
     booking.save(update_fields=["status", "updated_at"])

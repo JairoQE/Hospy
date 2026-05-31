@@ -266,6 +266,22 @@ def list_distritos(provincia: str, departamento: str | None = None) -> list[dict
     return _indexes()["distritos_by_prov_id"].get(prov["id"], [])
 
 
+def list_distritos_departamento(departamento: str) -> list[dict]:
+    """Todos los distritos del departamento (todas las provincias), ordenados."""
+    if not resolve_departamento(departamento):
+        return []
+    rows: list[dict] = []
+    for prov in list_provincias(departamento):
+        rows.extend(list_distritos(prov["nombre"], departamento))
+    rows.sort(
+        key=lambda d: (
+            (d.get("provincia_nombre") or "").casefold(),
+            (d.get("nombre") or "").casefold(),
+        )
+    )
+    return rows
+
+
 def distrito_nombres_departamento(departamento: str) -> list[str]:
     names: list[str] = []
     for prov in list_provincias(departamento):
@@ -301,6 +317,9 @@ _POPULAR_NORM = frozenset(
                 "Puerto Maldonado",
                 "Puno",
                 "Tacna",
+                "Tingo María",
+                "Rupa Rupa",
+                "Cerro de Pasco",
             ]
         )
         for name in names
@@ -362,6 +381,22 @@ def _flat_places() -> tuple[dict, ...]:
                 }
             )
 
+    # Ciudades capitales representativas que no están como "distrito" en UBIGEO,
+    # pero se usan en el campo `city` en Hospy.
+    # Ej: "Tingo María" (capital de Leoncio Prado) suele corresponder al distrito "Rupa Rupa".
+    places.append(
+        {
+            "tipo": "distrito",
+            "nombre": "Tingo María",
+            "subtitle": "Huánuco, Perú",
+            "ciudad": "Rupa Rupa",
+            "departamento": "Huánuco",
+            "provincia": "Leoncio Prado",
+            "distrito": "Rupa Rupa",
+            "_norm": _norm("Tingo María"),
+        }
+    )
+
     return tuple(places)
 
 
@@ -409,7 +444,12 @@ def search_places(query: str, limit: int = 8) -> list[dict]:
 
     scored = sorted(
         best_by_name.values(),
-        key=lambda x: (-x[0], -x[1], x[2]["nombre"]),
+        key=lambda x: (
+            -x[0],
+            -x[1],
+            len((x[2]["nombre"] or "").strip()),
+            x[2]["nombre"],
+        ),
     )
     out: list[dict] = []
     for _, _, place in scored[: max(1, min(limit, 20))]:

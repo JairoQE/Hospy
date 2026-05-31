@@ -8,6 +8,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied, ValidationErro
 from rest_framework.response import Response
 
 from accounts.permissions import IsAdministrador, IsPropietario, IsPropietarioOrAdministrador
+from audit.services import log_action
 from config.permissions import IsIntegrationClient
 
 from .models import Accommodation, Service
@@ -219,6 +220,14 @@ class AccommodationViewSet(viewsets.ModelViewSet):
         from notifications.services import notify_accommodation_submitted
 
         notify_accommodation_submitted(accommodation)
+        log_action(
+            actor=request.user,
+            action="accommodation.create",
+            target_type="Accommodation",
+            target_id=accommodation.pk,
+            target_label=accommodation.name,
+            request=request,
+        )
         return Response(
             AccommodationDetailSerializer(
                 accommodation, context={"request": request}
@@ -231,7 +240,27 @@ class AccommodationViewSet(viewsets.ModelViewSet):
         accommodation.is_deleted = True
         accommodation.is_active = False
         accommodation.save(update_fields=["is_deleted", "is_active", "updated_at"])
+        log_action(
+            actor=request.user,
+            action="accommodation.delete",
+            target_type="Accommodation",
+            target_id=accommodation.pk,
+            target_label=accommodation.name,
+            request=request,
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def perform_update(self, serializer):
+        accommodation = serializer.save()
+        log_action(
+            actor=self.request.user,
+            action="accommodation.update",
+            target_type="Accommodation",
+            target_id=accommodation.pk,
+            target_label=accommodation.name,
+            metadata={"fields": list(serializer.validated_data.keys())},
+            request=self.request,
+        )
 
     @action(detail=False, methods=["get"], url_path="mios")
     def mios(self, request):
@@ -305,6 +334,15 @@ class AccommodationViewSet(viewsets.ModelViewSet):
         )
         notify_owner_approval(accommodation, aprobado, motivo)
         invalidate_accommodation_cache(accommodation.id)
+        log_action(
+            actor=request.user,
+            action="accommodation.approve" if aprobado else "accommodation.reject",
+            target_type="Accommodation",
+            target_id=accommodation.pk,
+            target_label=accommodation.name,
+            metadata={"motivo": motivo} if not aprobado else {},
+            request=request,
+        )
 
         return Response(
             AccommodationDetailSerializer(
@@ -318,6 +356,14 @@ class AccommodationViewSet(viewsets.ModelViewSet):
         accommodation = self.get_object()
         accommodation.is_active = False
         accommodation.save(update_fields=["is_active", "updated_at"])
+        log_action(
+            actor=request.user,
+            action="accommodation.deactivate",
+            target_type="Accommodation",
+            target_id=accommodation.pk,
+            target_label=accommodation.name,
+            request=request,
+        )
         return Response(
             AccommodationDetailSerializer(
                 accommodation, context={"request": request}
@@ -334,6 +380,14 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             )
         accommodation.is_active = True
         accommodation.save(update_fields=["is_active", "updated_at"])
+        log_action(
+            actor=request.user,
+            action="accommodation.activate",
+            target_type="Accommodation",
+            target_id=accommodation.pk,
+            target_label=accommodation.name,
+            request=request,
+        )
         return Response(
             AccommodationDetailSerializer(
                 accommodation, context={"request": request}

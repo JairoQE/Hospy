@@ -15,6 +15,13 @@ class Review(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="resenas",
     )
+    booking = models.ForeignKey(
+        "bookings.Booking",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="resenas",
+    )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

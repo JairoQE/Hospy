@@ -1,7 +1,8 @@
 from rest_framework import serializers
 
 from properties.media_urls import media_public_path
-from properties.models import Accommodation
+from properties.models import Accommodation, Service
+from properties.serializers import ServiceSerializer
 
 from .models import Room, RoomAvailability, RoomPhoto, SeasonRate
 from .services import calculate_stay_total, rates_overlap
@@ -13,6 +14,13 @@ class RoomSerializer(serializers.ModelSerializer):
     )
     precio_base = serializers.DecimalField(
         source="base_price", max_digits=10, decimal_places=2, read_only=True
+    )
+    services = ServiceSerializer(many=True, read_only=True)
+    service_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Service.objects.filter(is_active=True),
+        many=True,
+        source="services",
+        required=False,
     )
 
     class Meta:
@@ -29,6 +37,8 @@ class RoomSerializer(serializers.ModelSerializer):
             "base_price",
             "precio_base",
             "is_active",
+            "services",
+            "service_ids",
             "created_at",
         )
         read_only_fields = ("id", "created_at")
@@ -69,6 +79,22 @@ class RoomSerializer(serializers.ModelSerializer):
                 )
         return data
 
+    def create(self, validated_data):
+        services = validated_data.pop("services", [])
+        room = Room.objects.create(**validated_data)
+        if services:
+            room.services.set(services)
+        return room
+
+    def update(self, instance, validated_data):
+        services = validated_data.pop("services", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if services is not None:
+            instance.services.set(services)
+        return instance
+
 
 class RoomPhotoSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
@@ -91,16 +117,16 @@ class RoomPhotoUploadSerializer(serializers.ModelSerializer):
         fields = ("image", "order")
 
     def validate_image(self, value):
-        from properties.images import validate_uploaded_image
+        from properties.images import normalize_uploaded_image
 
-        validate_uploaded_image(value)
-        return value
+        return normalize_uploaded_image(value)
 
 
 class RoomPublicSerializer(serializers.ModelSerializer):
     """Listado público en detalle de hospedaje."""
 
     fotos = RoomPhotoSerializer(many=True, read_only=True)
+    services = ServiceSerializer(many=True, read_only=True)
 
     class Meta:
         model = Room
@@ -113,6 +139,7 @@ class RoomPublicSerializer(serializers.ModelSerializer):
             "description",
             "base_price",
             "fotos",
+            "services",
         )
 
 

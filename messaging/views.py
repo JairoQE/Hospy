@@ -1,3 +1,4 @@
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
@@ -7,6 +8,7 @@ from rest_framework.views import APIView
 
 from accounts.models import User
 from accounts.permissions import IsAdministrador
+from audit.services import log_action
 
 from .models import Conversation, Message, MessageReport
 from .permissions import IsConversationParticipant
@@ -31,10 +33,11 @@ from .services import (
 )
 
 
-def _serialize_conversation_messages(conv, request):
-    mark_conversation_read(conversation=conv, user=request.user)
-    mark_chat_inbox_read(conversation_id=conv.pk, user=request.user)
-    conv.refresh_from_db(fields=["guest_last_read_at", "owner_last_read_at"])
+def _serialize_conversation_messages(conv, request, *, mark_read: bool = True):
+    if mark_read:
+        mark_conversation_read(conversation=conv, user=request.user)
+        mark_chat_inbox_read(conversation_id=conv.pk, user=request.user)
+        conv.refresh_from_db(fields=["guest_last_read_at", "owner_last_read_at"])
     messages = conv.messages.select_related("sender").order_by("created_at")
     return MessageSerializer(
         messages,
@@ -102,11 +105,19 @@ class ConversationViewSet(
             Conversation.objects.select_related("accommodation"),
             pk=pk,
         )
-        if request.user.id not in (conv.guest_id, conv.owner_id):
+        is_admin = request.user.role == User.Role.ADMINISTRADOR
+        if not is_admin and request.user.id not in (conv.guest_id, conv.owner_id):
             raise PermissionDenied()
 
         if request.method == "GET":
-            return Response(_serialize_conversation_messages(conv, request))
+            return Response(
+                _serialize_conversation_messages(
+                    conv, request, mark_read=not is_admin
+                )
+            )
+
+        if is_admin:
+            raise PermissionDenied("Los administradores solo pueden leer el hilo.")
 
         ser = MessageCreateSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
@@ -125,6 +136,32 @@ class ConversationViewSet(
                 msg, context={"request": request, "conversation": conv}
             ).data,
             status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=False, methods=["get"], url_path="plataforma")
+    def plataforma(self, request):
+        """Listado de todas las conversaciones (solo administradores)."""
+        if request.user.role != User.Role.ADMINISTRADOR:
+            raise PermissionDenied()
+
+        qs = (
+            Conversation.objects.select_related("accommodation", "guest", "owner")
+            .annotate(message_count=Count("messages"))
+            .order_by("-last_message_at", "-created_at")
+        )
+        q = (request.query_params.get("q") or "").strip()
+        if q:
+            qs = qs.filter(
+                Q(accommodation__name__icontains=q)
+                | Q(guest__email__icontains=q)
+                | Q(guest__first_name__icontains=q)
+                | Q(guest__last_name__icontains=q)
+                | Q(owner__email__icontains=q)
+                | Q(owner__first_name__icontains=q)
+                | Q(owner__last_name__icontains=q)
+            )
+        return Response(
+            ConversationSerializer(qs, many=True, context={"request": request}).data
         )
 
     @action(detail=True, methods=["post"], url_path="leer-bandeja")
@@ -293,4 +330,13 @@ class MessageReportAdminViewSet(viewsets.ReadOnlyModelViewSet):
             )
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)}) from exc
+        log_action(
+            actor=request.user,
+            action="message_report.resolve",
+            target_type="MessageReport",
+            target_id=updated.pk,
+            target_label=f"Reporte #{updated.pk}",
+            metadata={"status": updated.status, "admin_notes": updated.admin_notes},
+            request=request,
+        )
         return Response(MessageReportAdminSerializer(updated).data)

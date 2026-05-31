@@ -2,12 +2,22 @@ import os
 from pathlib import Path
 
 
+def _env_flag(name: str) -> bool:
+    return os.environ.get(name, "").lower() in ("true", "1", "yes")
+
+
+def use_cloudinary_storage() -> bool:
+    return _env_flag("USE_CLOUDINARY")
+
+
 def use_s3_storage() -> bool:
-    return os.environ.get("USE_S3", "").lower() in ("true", "1", "yes")
+    if use_cloudinary_storage():
+        return False
+    return _env_flag("USE_S3")
 
 
 def build_storages(media_root: Path, media_url: str) -> dict:
-    """Almacenamiento local por defecto; S3/R2 si USE_S3=true."""
+    """Local por defecto; Cloudinary o S3/R2 según variables de entorno."""
     storages = {
         "default": {
             "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -17,6 +27,12 @@ def build_storages(media_root: Path, media_url: str) -> dict:
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
+
+    if use_cloudinary_storage():
+        storages["default"] = {
+            "BACKEND": "cloudinary_storage.storage.RawMediaCloudinaryStorage",
+        }
+        return storages
 
     if not use_s3_storage():
         return storages
