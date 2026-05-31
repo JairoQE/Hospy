@@ -3,6 +3,7 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { displayName } from "../../utils/format";
 import { PrimeIcon } from "../PrimeIcon";
+import { UserAvatar } from "../UserAvatar";
 import { AuditAlertsBanner } from "./AuditAlertsBanner";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminUsersToastHost } from "./AdminUsersToast";
@@ -65,9 +66,7 @@ export function AdminLayout() {
 
           <div className="admin-topbar-user">
             <Link to="/perfil" className="admin-user-chip">
-              <span className="admin-user-avatar" aria-hidden>
-                <PrimeIcon name="pi-user" size={18} />
-              </span>
+              {user ? <UserAvatar user={user} size="sm" /> : null}
               <span className="admin-user-name">{user ? displayName(user) : "Admin"}</span>
             </Link>
             <button type="button" className="admin-logout-btn" onClick={handleLogout}>

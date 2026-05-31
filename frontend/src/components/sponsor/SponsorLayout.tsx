@@ -3,6 +3,7 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { displayName } from "../../utils/format";
 import { PrimeIcon } from "../PrimeIcon";
+import { UserAvatar } from "../UserAvatar";
 import { SponsorSidebar } from "./SponsorSidebar";
 import "../../styles/sponsor-panel.css";
 
@@ -57,9 +58,7 @@ export function SponsorLayout() {
 
           <div className="sponsor-topbar-user">
             <Link to="/perfil" className="sponsor-user-chip">
-              <span className="sponsor-user-avatar" aria-hidden>
-                <PrimeIcon name="pi-user" size={18} />
-              </span>
+              {user ? <UserAvatar user={user} size="sm" /> : null}
               <span className="sponsor-user-name">
                 {user ? displayName(user) : "Patrocinador"}
               </span>

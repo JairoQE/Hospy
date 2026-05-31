@@ -3,6 +3,7 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { displayName } from "../../utils/format";
 import { PrimeIcon } from "../PrimeIcon";
+import { UserAvatar } from "../UserAvatar";
 import { OwnerSidebar } from "./OwnerSidebar";
 import "../../styles/owner-panel.css";
 import "../../styles/shadcn.css";
@@ -60,9 +61,7 @@ export function OwnerLayout() {
 
           <div className="owner-topbar-user">
             <Link to="/perfil" className="owner-user-chip">
-              <span className="owner-user-avatar" aria-hidden>
-                <PrimeIcon name="pi-user" size={18} />
-              </span>
+              {user ? <UserAvatar user={user} size="sm" /> : null}
               <span className="owner-user-name">
                 {user ? displayName(user) : "Propietario"}
               </span>
