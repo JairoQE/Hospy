@@ -192,24 +192,55 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # --- Redis / Caché ---
-REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL,
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
-    },
-    # Hospix: solo memoria temporal (TTL), sin guardar chats en BD
-    "hospix": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "hospix-chat-sessions",
-        "OPTIONS": {"MAX_ENTRIES": 300},
-    },
-}
+# Redis solo si REDIS_URL apunta a un host real (Docker local o Upstash).
+# En Render free sin Redis: no definir REDIS_URL, o production ignora localhost.
+_redis_url = os.environ.get("REDIS_URL", "").strip()
+_is_production = os.environ.get("DJANGO_SETTINGS_MODULE", "").endswith("production")
+_use_redis = bool(
+    _redis_url
+    and (
+        not _is_production
+        or ("localhost" not in _redis_url and "127.0.0.1" not in _redis_url)
+    )
+)
+
+if _use_redis:
+    REDIS_URL = _redis_url
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+        },
+        "hospix": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "hospix-chat-sessions",
+            "OPTIONS": {"MAX_ENTRIES": 300},
+        },
+    }
+    CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", _redis_url.replace("/0", "/1"))
+    CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER_URL", _redis_url.replace("/0", "/1"))
+else:
+    REDIS_URL = ""
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "hospy-default-cache",
+        },
+        "hospix": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "hospix-chat-sessions",
+            "OPTIONS": {"MAX_ENTRIES": 300},
+        },
+    }
+    CELERY_BROKER_URL = "memory://"
+    CELERY_RESULT_BACKEND = "django-cache"
+    CELERY_TASK_ALWAYS_EAGER = os.environ.get(
+        "CELERY_TASK_ALWAYS_EAGER", "true"
+    ).lower() in ("true", "1", "yes")
+    CELERY_TASK_EAGER_PROPAGATES = True
 
 # --- Celery ---
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/1")
-CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/1")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
