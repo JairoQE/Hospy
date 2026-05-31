@@ -3,14 +3,22 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { displayName } from "../../utils/format";
 import { PrimeIcon } from "../PrimeIcon";
+import { AuditAlertsBanner } from "./AuditAlertsBanner";
 import { AdminSidebar } from "./AdminSidebar";
+import { AdminUsersToastHost } from "./AdminUsersToast";
+import { useAuditAlerts } from "../../hooks/useAuditAlerts";
 import "../../styles/admin-panel.css";
+import "../../styles/shadcn.css";
+import "../../styles/charts.css";
+import "../../styles/charts-themes.css";
 
 export function AdminLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const isAdmin = user?.role === "administrador";
+  const { pending: auditAlerts, dismiss: dismissAuditAlerts } = useAuditAlerts(Boolean(isAdmin));
 
   const handleLogout = () => {
     logout();
@@ -49,6 +57,10 @@ export function AdminLayout() {
               <PrimeIcon name="pi-bars" size={22} />
             </button>
             <span className="admin-topbar-title">Panel de administración</span>
+            <Link to="/" className="admin-topbar-home-link">
+              <PrimeIcon name="pi-home" size={16} />
+              <span>Ir al inicio</span>
+            </Link>
           </div>
 
           <div className="admin-topbar-user">
@@ -65,7 +77,13 @@ export function AdminLayout() {
         </header>
 
         <main className="admin-content">
-          <Outlet />
+          <AdminUsersToastHost />
+          {isAdmin && (
+            <AuditAlertsBanner alerts={auditAlerts} onDismiss={dismissAuditAlerts} />
+          )}
+          <div className="shadcn-dashboard min-h-full">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

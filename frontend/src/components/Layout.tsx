@@ -11,6 +11,9 @@ export function Layout() {
   const { pathname } = useLocation();
   const { language, currency } = useLocaleCurrency();
   const isAdminRoute = pathname.startsWith("/admin");
+  const isOwnerPanelRoute = pathname.startsWith("/panel");
+  const isSponsorPanelRoute = pathname.startsWith("/patrocinio");
+  const isPanelShellRoute = isAdminRoute || isOwnerPanelRoute || isSponsorPanelRoute;
   const isAuthMinimal =
     pathname === "/login" ||
     pathname.startsWith("/registro") ||
@@ -19,10 +22,10 @@ export function Layout() {
   return (
     <div
       key={`${language}-${currency}`}
-      className={`app-shell${isAdminRoute ? " app-shell--admin" : ""}`}
+      className={`app-shell${isAdminRoute ? " app-shell--admin" : ""}${isOwnerPanelRoute ? " app-shell--owner" : ""}${isSponsorPanelRoute ? " app-shell--sponsor" : ""}`}
     >
       <SessionTimeoutWatcher />
-      {!isAdminRoute && !isAuthMinimal && (
+      {!isPanelShellRoute && !isAuthMinimal && (
         <SponsorAdsProvider>
           <SiteHeader />
           <SponsorAdSlot variant="mobile-banner" />
@@ -35,16 +38,16 @@ export function Layout() {
           </div>
         </SponsorAdsProvider>
       )}
-      {(isAdminRoute || isAuthMinimal) && (
+      {(isPanelShellRoute || isAuthMinimal) && (
         <>
-          {!isAdminRoute && <SiteHeader />}
+          {!isPanelShellRoute && <SiteHeader />}
           <main className="site-main">
             <Outlet />
           </main>
         </>
       )}
-      {!isAdminRoute && <SiteFooter />}
-      {!isAdminRoute && <MobileBottomNav />}
+      {!isPanelShellRoute && <SiteFooter />}
+      {!isPanelShellRoute && <MobileBottomNav />}
     </div>
   );
 }

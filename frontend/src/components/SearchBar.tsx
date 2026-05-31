@@ -66,9 +66,10 @@ export function SearchBar({ initial, onSearch }: Props) {
           Tipo
           <select value={f.tipo} onChange={(e) => update("tipo", e.target.value)}>
             <option value="">Todos</option>
-            <option value="hotel">Hotel</option>
-            <option value="hostal">Hostal</option>
-            <option value="hospedaje">Hospedaje</option>
+          <option value="hotel">Hotel</option>
+          <option value="hostal">Hostal</option>
+          <option value="hospedaje">Hospedaje</option>
+          <option value="casa_departamento">Casa o departamento</option>
           </select>
         </label>
         <label>

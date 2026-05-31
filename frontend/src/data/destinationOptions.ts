@@ -49,6 +49,17 @@ export const TOP_DESTINATIONS: DestinationOption[] = [
     tipo: "departamento",
   },
   {
+    // "Tingo María" es una ciudad capital (no siempre figura como distrito en UBIGEO).
+    // Para filtros, se mapea al distrito donde cae (aprox. "Rupa Rupa") para mantener el buscador funcional.
+    nombre: "Tingo María",
+    subtitle: "Huánuco, Perú",
+    ciudad: "Rupa Rupa",
+    departamento: "Huánuco",
+    provincia: "Leoncio Prado",
+    distrito: "Rupa Rupa",
+    tipo: "distrito",
+  },
+  {
     nombre: "Iquitos",
     subtitle: "Loreto, Perú",
     ciudad: "Iquitos",

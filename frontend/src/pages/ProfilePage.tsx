@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError, api } from "../api/client";
 import type { PublicUserProfile, User } from "../api/types";
 import { ProfileHero } from "../components/profile/ProfileHero";
+import { PhoneInput, formatPhoneDisplay } from "../components/profile/PhoneInput";
+import { ProfileSecuritySection } from "../components/profile/ProfileSecuritySection";
 import { useAuth } from "../context/AuthContext";
 import { formatDate, profileHeading, roleLabel } from "../utils/format";
 import { formatLastAccessRelative } from "../utils/relativeTime";
@@ -265,7 +267,7 @@ export function ProfilePage() {
                   </div>
                   <div>
                     <dt>Teléfono</dt>
-                    <dd>{me?.phone?.trim() || "Sin registrar"}</dd>
+                    <dd>{formatPhoneDisplay(me?.phone)}</dd>
                   </div>
                 </dl>
               </section>
@@ -323,15 +325,14 @@ export function ProfilePage() {
                     />
                   </label>
                 </div>
-                <label>
-                  Teléfono
-                  <input
-                    type="tel"
+                <div className="profile-phone-field">
+                  <label htmlFor="profile-phone">Teléfono</label>
+                  <PhoneInput
+                    id="profile-phone"
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    placeholder="+51 999 999 999"
+                    onChange={(phone) => setForm({ ...form, phone })}
                   />
-                </label>
+                </div>
                 {msg && <p className="success-msg">{msg}</p>}
                 {error && <p className="error-msg">{error}</p>}
                 <button type="submit" className="btn btn-primary" disabled={saving}>
@@ -339,6 +340,8 @@ export function ProfilePage() {
                 </button>
               </form>
             </section>
+
+            <ProfileSecuritySection user={me!} onUpdated={refreshUser} />
           </div>
         ) : (
           <section className="card profile-public-note">

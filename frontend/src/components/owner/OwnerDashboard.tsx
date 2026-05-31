@@ -1,17 +1,34 @@
 import { useMemo, useState } from "react";
 import {
-  CartesianGrid,
+  AreaChart,
   Cell,
-  Legend,
-  Line,
-  LineChart,
-  Pie,
   PieChart,
-  ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { DashboardChartTooltipContent } from "@/components/charts/DashboardChartTooltipContent";
+import {
+  DashboardGrid,
+  DashboardPie,
+  DashboardSeries,
+  StyledChartContainer,
+  dashboardXAxisProps,
+  dashboardYAxisProps,
+} from "@/components/charts/dashboardCharts";
+import { ownerPerformanceChartConfig } from "../dashboard/dashboardChartConfig";
 import type { AccommodationListItem, Booking, Review } from "../../api/types";
 import { formatDate } from "../../utils/format";
 import {
@@ -184,118 +201,99 @@ export function OwnerDashboard({
         ))}
       </section>
 
-      <div className="owner-dashboard-main-grid">
-        <section
-          className="owner-dash-card owner-dash-card--chart"
-          aria-label="Ocupación e ingresos diarios"
-        >
-          <h3 className="owner-dash-card-title">Ocupación e ingresos diarios</h3>
-          <div
-            className="owner-chart-wrap"
-            role="img"
-            aria-label="Gráfico de líneas de ocupación e ingresos"
-          >
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={data.dailySeries} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 11, fill: "#6B7280" }}
-                  interval="preserveStartEnd"
+      <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Ocupación e ingresos diarios</CardTitle>
+            <CardDescription>{data.propertyLabel} · comparado con el período anterior</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <StyledChartContainer config={ownerPerformanceChartConfig} className="aspect-auto h-[280px] w-full">
+              <AreaChart data={data.dailySeries}>
+                <DashboardGrid />
+                <XAxis {...dashboardXAxisProps({ dataKey: "label", interval: "preserveStartEnd" })} />
+                <YAxis
+                  {...dashboardYAxisProps({
+                    yAxisId: "left",
+                    tickFormatter: (v) => `${v}%`,
+                    domain: [0, 100],
+                  })}
                 />
                 <YAxis
-                  yAxisId="left"
-                  tick={{ fontSize: 11, fill: "#6B7280" }}
-                  tickFormatter={(v) => `${v}%`}
-                  domain={[0, 100]}
+                  {...dashboardYAxisProps({
+                    yAxisId: "right",
+                    orientation: "right",
+                    tickFormatter: (v) => `S/${v}`,
+                  })}
                 />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  tick={{ fontSize: 11, fill: "#6B7280" }}
-                  tickFormatter={(v) => `S/${v}`}
+                <ChartTooltip
+                  content={
+                    <DashboardChartTooltipContent
+                      formatter={(value, name) =>
+                        name === "Ingresos"
+                          ? `S/ ${Number(value).toLocaleString("es-PE")}`
+                          : `${value}%`
+                      }
+                    />
+                  }
                 />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: 8,
-                    border: "1px solid #E5E7EB",
-                    fontSize: 13,
-                  }}
-                  formatter={(value, name) => {
-                    const n = Number(value);
-                    if (name === "Ingresos") return [`S/ ${n.toLocaleString("es-PE")}`, name];
-                    return [`${n}%`, name];
-                  }}
-                />
-                <Legend />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="occupancy"
-                  name="Ocupación"
-                  stroke="#2563EB"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 5 }}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="revenue"
-                  name="Ingresos"
-                  stroke="#10B981"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 5 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
+                <ChartLegend content={<ChartLegendContent />} />
+                <DashboardSeries yAxisId="left" dataKey="occupancy" colorKey="occupancy" name="Ocupación" />
+                <DashboardSeries yAxisId="right" dataKey="revenue" colorKey="revenue" name="Ingresos" />
+              </AreaChart>
+            </StyledChartContainer>
+          </CardContent>
+        </Card>
 
-        <aside className="owner-dashboard-side">
-          <section className="owner-dash-card" aria-label="Reservas por canal">
-            <h3 className="owner-dash-card-title">Reservas por canal</h3>
-            <p className="owner-dash-card-note">Estimación basada en reservas confirmadas</p>
-            {data.channels.length === 0 ? (
-              <p className="muted owner-dash-empty-inline">Sin reservas en el período</p>
+        <aside className="flex flex-col gap-4">
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle>Reservas por estado</CardTitle>
+              <CardDescription>Reservas creadas en el período</CardDescription>
+            </CardHeader>
+            <CardContent>
+            {data.bookingStatuses.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sin reservas en el período</p>
             ) : (
-              <div className="owner-donut-wrap">
-                <ResponsiveContainer width="100%" height={200}>
+              <>
+                <StyledChartContainer
+                  config={Object.fromEntries(
+                    data.bookingStatuses.map((s) => [
+                      s.name,
+                      { label: s.name, color: s.color },
+                    ]),
+                  ) satisfies ChartConfig}
+                  className="mx-auto aspect-square h-[200px] w-full max-w-[220px]"
+                >
                   <PieChart>
-                    <Pie
-                      data={data.channels}
+                    <ChartTooltip content={<DashboardChartTooltipContent hideLabel nameKey="name" />} />
+                    <DashboardPie
+                      data={data.bookingStatuses}
                       dataKey="count"
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      innerRadius={52}
-                      outerRadius={78}
-                      paddingAngle={2}
+                      innerRadius={54}
+                      outerRadius={80}
                     >
-                      {data.channels.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} />
+                      {data.bookingStatuses.map((entry) => (
+                        <Cell key={entry.status} fill={entry.color} />
                       ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value, _name, item) => {
-                        const payload = item?.payload as { percent: number; name: string };
-                        return [`${value} (${payload?.percent ?? 0}%)`, payload?.name];
-                      }}
-                    />
+                    </DashboardPie>
                   </PieChart>
-                </ResponsiveContainer>
-                <ul className="owner-channel-legend">
-                  {data.channels.map((c) => (
-                    <li key={c.name}>
-                      <span className="owner-channel-dot" style={{ background: c.color }} />
-                      {c.name} · {c.count} ({c.percent}%)
+                </StyledChartContainer>
+                <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+                  {data.bookingStatuses.map((s) => (
+                    <li key={s.status} className="flex items-center gap-2">
+                      <span className="size-2.5 rounded-sm" style={{ background: s.color }} />
+                      {s.name} · {s.count} ({s.percent}%)
                     </li>
                   ))}
                 </ul>
-              </div>
+              </>
             )}
-          </section>
+            </CardContent>
+          </Card>
 
           {data.alerts.length > 0 && (
             <section className="owner-dash-card owner-dash-alerts" aria-label="Alertas">

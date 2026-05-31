@@ -5,7 +5,7 @@ import { AccommodationCard } from "../AccommodationCard";
 import { SkeletonAccGrid } from "../ui/Skeleton";
 import { EmptyState } from "../ui/EmptyState";
 
-const TYPE_IDS = ["hotel", "hostal", "hospedaje"] as const;
+const TYPE_IDS = ["hotel", "hostal", "hospedaje", "casa_departamento"] as const;
 
 type Props = {
   items: AccommodationListItem[];

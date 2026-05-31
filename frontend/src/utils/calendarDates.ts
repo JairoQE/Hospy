@@ -106,3 +106,14 @@ export function formatDisplayDate(dateStr: string | null, lang: "es-PE" | "en" =
     year: "numeric",
   });
 }
+
+/** Formato corto para filtros admin: 27/05/26 */
+export function formatDisplayDateShort(dateStr: string | null): string {
+  if (!dateStr) return "";
+  const d = parseDateString(dateStr);
+  if (!d) return dateStr;
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = String(d.getFullYear()).slice(-2);
+  return `${day}/${month}/${year}`;
+}

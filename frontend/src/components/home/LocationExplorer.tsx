@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { api } from "../../api/client";
+import { recordBrowseTileClick } from "../../api/browseTiles";
 import type { BrowseTile } from "../../api/types";
 import type { LocationSearchParams } from "../../data/peruLocations";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
@@ -120,6 +121,7 @@ export function LocationExplorer({
   };
 
   const onDepartmentTile = (tile: BrowseTile) => {
+    void recordBrowseTileClick(tile.id).catch(() => {});
     const item: UbigeoItem = {
       id: tile.slug,
       codigo: tile.filter_value.length <= 2 ? tile.filter_value.padStart(2, "0") : tile.slug,

@@ -1,0 +1,344 @@
+/* —— 10 estilos oficiales de gráficos Hospy —— */
+
+/* 1. Flat Professional */
+.chart-styled.chart-style-flat-professional {
+  --chart-1: #3b82f6;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #ef4444;
+  --chart-5: #8b5cf6;
+}
+
+.chart-styled.chart-style-flat-professional::before {
+  background: none;
+  opacity: 0;
+}
+
+.chart-styled.chart-style-flat-professional .chart-grid-line {
+  stroke: #e5e7eb !important;
+}
+
+.chart-styled.chart-style-flat-professional .recharts-bar-rectangle,
+.chart-styled.chart-style-flat-professional .chart-bar-premium {
+  filter: none;
+  box-shadow: none;
+}
+
+.chart-styled.chart-style-flat-professional .chart-series-area {
+  filter: none;
+}
+
+/* 2. Glassmorphism */
+.chart-styled.chart-style-glassmorphism {
+  --chart-1: #6366f1;
+  --chart-2: #34d399;
+  --chart-3: #fb923c;
+  --chart-4: #f472b6;
+  --chart-5: #38bdf8;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.chart-styled.chart-style-glassmorphism::before {
+  background: radial-gradient(90% 70% at 30% 0%, rgba(99, 102, 241, 0.15), transparent 55%);
+  opacity: 1;
+}
+
+.chart-styled.chart-style-glassmorphism .recharts-line-curve {
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.45));
+}
+
+/* 3. Neon Cyber */
+.chart-styled.chart-style-neon-cyber {
+  --chart-1: #00f3ff;
+  --chart-2: #ff00ea;
+  --chart-3: #ffee00;
+  --chart-4: #39ff14;
+  --chart-5: #ff6b9d;
+  background: #0a0f1a;
+  border: 1px solid rgba(0, 243, 255, 0.15);
+  border-radius: 14px;
+  padding: 0.75rem 0.65rem;
+  box-shadow: 0 0 24px rgba(0, 243, 255, 0.08);
+}
+
+.chart-styled.chart-style-neon-cyber::before {
+  display: none;
+}
+
+.chart-styled.chart-style-neon-cyber .chart-axis-tick {
+  fill: #94a3b8 !important;
+}
+
+.chart-styled.chart-style-neon-cyber .chart-grid-line {
+  stroke: rgba(255, 255, 255, 0.05) !important;
+}
+
+.chart-styled.chart-style-neon-cyber .chart-bar-neon .recharts-bar-rectangle,
+.chart-styled.chart-style-neon-cyber .chart-bar-outline .recharts-bar-rectangle {
+  fill: #0a0f1a !important;
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.chart-styled.chart-style-neon-cyber .recharts-line-curve,
+.chart-styled.chart-style-neon-cyber .recharts-area-curve {
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+.chart-styled.chart-style-neon-cyber .recharts-dot circle {
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
+.chart-styled.chart-style-neon-cyber .recharts-legend-item-text {
+  color: #e2e8f0 !important;
+}
+
+/* 4. Minimalist Lines */
+.chart-styled.chart-style-minimalist-lines .chart-grid-line {
+  stroke: #d1d5db !important;
+}
+
+.chart-styled.chart-style-minimalist-lines .recharts-cartesian-grid-vertical line {
+  display: none;
+}
+
+.chart-styled.chart-style-minimalist-lines .chart-series-area {
+  filter: none;
+}
+
+.chart-styled.chart-style-minimalist-lines .recharts-line-curve {
+  stroke-linecap: round;
+}
+
+/* 5. Pastel Dreams */
+.chart-styled.chart-style-pastel-dreams {
+  --chart-1: #c5a3ff;
+  --chart-2: #a3e4d7;
+  --chart-3: #ffccb3;
+  --chart-4: #ffb7c5;
+  --chart-5: #bae6fd;
+}
+
+.chart-styled.chart-style-pastel-dreams::before {
+  background: radial-gradient(100% 80% at 80% 0%, rgba(197, 163, 255, 0.12), transparent 50%);
+  opacity: 1;
+}
+
+.chart-styled.chart-style-pastel-dreams .chart-bar-floating .recharts-bar-rectangle,
+.chart-styled.chart-style-pastel-dreams .chart-bar-premium {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.chart-styled.chart-style-pastel-dreams .chart-series-area {
+  opacity: 0.95;
+}
+
+/* 6. High Contrast */
+.chart-styled.chart-style-high-contrast {
+  --chart-1: #0000ff;
+  --chart-2: #ff0000;
+  --chart-3: #00aa00;
+  --chart-4: #ffff00;
+  --chart-5: #000000;
+}
+
+.chart-styled.chart-style-high-contrast::before {
+  display: none;
+}
+
+.chart-styled.chart-style-high-contrast .recharts-bar-rectangle {
+  stroke: #000 !important;
+  stroke-width: 2px !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+.chart-styled.chart-style-high-contrast .recharts-line-curve,
+.chart-styled.chart-style-high-contrast .recharts-area-curve {
+  stroke-width: 3px !important;
+}
+
+.chart-styled.chart-style-high-contrast .chart-grid-line {
+  stroke: #000 !important;
+  opacity: 1 !important;
+}
+
+/* 7. 3D Extruded — (capas 3D en componentes) */
+.chart-styled.chart-style-three-d-extruded {
+  padding-bottom: 0.35rem;
+}
+
+.chart-styled.chart-style-three-d-extruded .chart-pie-series {
+  filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.2));
+}
+
+/* 8. Monochrome Gradient */
+.chart-styled.chart-style-monochrome-gradient {
+  --chart-1: #0a2b4e;
+  --chart-2: #1e3a8a;
+  --chart-3: #3b82f6;
+  --chart-4: #93c5fd;
+  --chart-5: #bfdbfe;
+}
+
+.chart-styled.chart-style-monochrome-gradient::before {
+  background: linear-gradient(180deg, rgba(10, 43, 78, 0.06), transparent);
+  opacity: 1;
+}
+
+/* 9. Hand Drawn */
+.chart-styled.chart-style-hand-drawn {
+  --chart-1: #ffb347;
+  --chart-2: #6a4e9b;
+  --chart-3: #4c9a8a;
+  --chart-4: #e07a5f;
+  --chart-5: #81b29a;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.chart-styled.chart-style-hand-drawn .chart-series-hand-drawn .recharts-line-curve,
+.chart-styled.chart-style-hand-drawn .chart-series-hand-drawn .recharts-area-curve {
+  stroke-dasharray: 5 4;
+  stroke-linecap: round;
+  filter: drop-shadow(2px 2px 1px rgba(0, 0, 0, 0.1));
+}
+
+.chart-styled.chart-style-hand-drawn .chart-bar-hand-drawn .recharts-bar-rectangle,
+.chart-styled.chart-style-hand-drawn .chart-bar-premium {
+  filter: drop-shadow(2px 2px 1px rgba(0, 0, 0, 0.12));
+  stroke: rgba(0, 0, 0, 0.15);
+  stroke-width: 1.5px;
+}
+
+.chart-styled.chart-style-hand-drawn .chart-grid-line {
+  stroke-dasharray: 2 6;
+  stroke: #cbd5e1 !important;
+}
+
+/* 10. Retro Terminal */
+.chart-styled.chart-style-retro-terminal {
+  --chart-1: #00ff00;
+  --chart-2: #39ff14;
+  --chart-3: #7fff00;
+  --chart-4: #adff2f;
+  --chart-5: #ffb000;
+  background: #0a2b0a;
+  border: 1px solid rgba(0, 255, 0, 0.25);
+  border-radius: 8px;
+  font-family: "Courier New", "Fira Code", Consolas, monospace;
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-styled.chart-style-retro-terminal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.12) 2px,
+    rgba(0, 0, 0, 0.12) 4px
+  );
+  border-radius: inherit;
+}
+
+.chart-styled.chart-style-retro-terminal::before {
+  display: none;
+}
+
+.chart-styled.chart-style-retro-terminal .chart-axis-tick {
+  fill: #00ff00 !important;
+  font-family: inherit;
+}
+
+.chart-styled.chart-style-retro-terminal .chart-grid-line {
+  stroke: rgba(0, 255, 0, 0.12) !important;
+}
+
+.chart-styled.chart-style-retro-terminal .recharts-bar-rectangle {
+  fill: #00ff00 !important;
+  opacity: 0.85;
+  filter: none;
+}
+
+.chart-styled.chart-style-retro-terminal .recharts-line-curve,
+.chart-styled.chart-style-retro-terminal .recharts-area-curve {
+  stroke: #00ff00 !important;
+  filter: drop-shadow(0 0 3px rgba(0, 255, 0, 0.6));
+}
+
+.chart-styled.chart-style-retro-terminal .recharts-legend-item-text {
+  color: #7fff00 !important;
+  font-family: inherit;
+}
+
+/* Tooltips por variante */
+.chart-dashboard-tooltip.chart-tooltip--light {
+  background: #fff !important;
+  border: 1px solid #d1d5db !important;
+  color: #1f2937 !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1) !important;
+}
+
+.chart-dashboard-tooltip.chart-tooltip--light .text-muted-foreground {
+  color: #6b7280 !important;
+}
+
+.chart-dashboard-tooltip.chart-tooltip--dark {
+  background: #000 !important;
+  border: 1px solid #fff !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.chart-dashboard-tooltip.chart-tooltip--neon {
+  background: #0a0f1a !important;
+  border: 1px solid currentColor !important;
+  color: #e2e8f0 !important;
+  box-shadow: 0 0 12px rgba(0, 243, 255, 0.25) !important;
+}
+
+.chart-dashboard-tooltip.chart-tooltip--glass {
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(4px);
+  border: 0.5px solid rgba(255, 255, 255, 0.9) !important;
+  color: #1e293b !important;
+}
+
+.chart-dashboard-tooltip.chart-tooltip--minimal {
+  background: #fff !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08) !important;
+  font-size: 11px !important;
+  padding: 0.45rem 0.65rem !important;
+}
+
+.chart-dashboard-tooltip.chart-tooltip--retro {
+  background: #000 !important;
+  border: 1px solid #00ff00 !important;
+  color: #00ff00 !important;
+  font-family: "Courier New", monospace !important;
+  font-size: 11px !important;
+  text-transform: uppercase;
+  box-shadow: 0 0 8px rgba(0, 255, 0, 0.35) !important;
+}
+
+.chart-dashboard-tooltip.chart-tooltip--retro .text-muted-foreground {
+  color: #7fff00 !important;
+}
+
+/* Selector UI */
+.admin-chart-style-when {
+  display: block;
+  font-size: 0.68rem;
+  line-height: 1.3;
+  color: var(--admin-muted, #64748b);
+  font-style: italic;
+}

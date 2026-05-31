@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
-import { compareDateStr, formatDisplayDate, nightsBetween } from "../../utils/calendarDates";
+import {
+  compareDateStr,
+  formatDisplayDate,
+  formatDisplayDateShort,
+  nightsBetween,
+} from "../../utils/calendarDates";
 import { DateRangeCalendar } from "./DateRangeCalendar";
 import "../../styles/date-range-calendar.css";
 
 const POPOVER_WIDTH = 720;
+const POPOVER_WIDTH_COMPACT = 340;
 
 type Props = {
   startDate: string;
@@ -18,10 +24,15 @@ type Props = {
   showPresets?: boolean;
   marketingHint?: string;
   className?: string;
-  variant?: "default" | "hero";
-  onApply?: () => void;
+  variant?: "default" | "hero" | "admin";
+  /** Recibe las fechas confirmadas (evita leer estado React aún no actualizado). */
+  onApply?: (start: string, end: string) => void;
   applyLabel?: string;
   confirmLabel?: string;
+  /** Ancho del popover en escritorio (px). */
+  popoverWidth?: number;
+  /** Texto cuando no hay fecha (ej. dd/mm/yy). */
+  placeholder?: string;
 };
 
 type PopoverCoords = {
@@ -45,6 +56,8 @@ export function DateRangePicker({
   onApply,
   applyLabel,
   confirmLabel,
+  popoverWidth,
+  placeholder,
 }: Props) {
   const { language, t } = useLocaleCurrency();
   const [open, setOpen] = useState(false);
@@ -59,6 +72,16 @@ export function DateRangePicker({
   const fromLabel = checkInLabel ?? t("search.checkIn");
   const toLabel = checkOutLabel ?? t("search.checkOut");
   const isHero = variant === "hero";
+  const isAdmin = variant === "admin";
+  const resolvedPopoverWidth =
+    popoverWidth ?? (isAdmin ? POPOVER_WIDTH_COMPACT : POPOVER_WIDTH);
+  const emptyLabel = placeholder ?? (isAdmin ? "dd/mm/yy" : "—");
+
+  const formatValue = (dateStr: string) => {
+    if (!dateStr) return emptyLabel;
+    if (isAdmin) return formatDisplayDateShort(dateStr);
+    return formatDisplayDate(dateStr, language);
+  };
 
   useEffect(() => {
     if (open) {
@@ -78,12 +101,12 @@ export function DateRangePicker({
     }
 
     const rect = anchor.getBoundingClientRect();
-    const width = Math.min(POPOVER_WIDTH, window.innerWidth - 24);
+    const width = Math.min(resolvedPopoverWidth, window.innerWidth - 24);
     let left = rect.left + rect.width / 2 - width / 2;
     left = Math.max(12, Math.min(left, window.innerWidth - width - 12));
     const top = rect.bottom + 10;
     setCoords({ top, left, width });
-  }, []);
+  }, [resolvedPopoverWidth]);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -149,17 +172,18 @@ export function DateRangePicker({
 
   const confirmSelection = () => {
     if (!canConfirm) return;
-    onChange(draftStart, mode === "range" ? draftEnd : "");
-    onApply?.();
+    const endVal = mode === "range" ? draftEnd : "";
+    onChange(draftStart, endVal);
+    onApply?.(draftStart, endVal);
     setOpen(false);
   };
 
   const draftSummary =
     mode === "range" && draftStart && draftEnd
-      ? `${formatDisplayDate(draftStart, language)} → ${formatDisplayDate(draftEnd, language)}`
+      ? `${formatValue(draftStart)} → ${formatValue(draftEnd)}`
       : draftStart
-        ? formatDisplayDate(draftStart, language)
-        : "—";
+        ? formatValue(draftStart)
+        : emptyLabel;
 
   const nights =
     mode === "range" && draftStart && draftEnd
@@ -185,7 +209,7 @@ export function DateRangePicker({
         />
         <div
           ref={popoverRef}
-          className={`date-picker-popover date-picker-popover--portal${isHero ? " date-picker-popover--hero" : ""}`}
+          className={`date-picker-popover date-picker-popover--portal${isHero ? " date-picker-popover--hero" : ""}${isAdmin ? " date-picker-popover--admin" : ""}`}
           id={`${id}-popover`}
           role="dialog"
           aria-modal="true"
@@ -222,12 +246,14 @@ export function DateRangePicker({
             onChange={handleDraftChange}
             minDate={minDate}
             language={language}
-            showPresets={showPresets}
-            showToolbar={!isHero}
-            showFooter={!isHero}
-            marketingHint={isHero ? undefined : marketingHint}
+            showPresets={showPresets && !isAdmin}
+            showToolbar={!isHero && !isAdmin}
+            showFooter={!isHero && !isAdmin}
+            marketingHint={isHero || isAdmin ? undefined : marketingHint}
           />
-          <div className="date-picker-popover-footer">
+          <div
+            className={`date-picker-popover-footer${isAdmin && mode === "single" ? " date-picker-popover-footer--hidden" : ""}`}
+          >
             <button
               type="button"
               className="date-picker-btn-cancel"
@@ -251,14 +277,14 @@ export function DateRangePicker({
 
   const displaySummary =
     mode === "range" && startDate && endDate
-      ? `${formatDisplayDate(startDate, language)} → ${formatDisplayDate(endDate, language)}`
+      ? `${formatValue(startDate)} → ${formatValue(endDate)}`
       : startDate
-        ? formatDisplayDate(startDate, language)
-        : "—";
+        ? formatValue(startDate)
+        : emptyLabel;
 
   return (
     <div
-      className={`date-picker-wrap${open ? " is-open" : ""}${isHero ? " date-picker-wrap--hero" : ""} ${className}`.trim()}
+      className={`date-picker-wrap${open ? " is-open" : ""}${isHero ? " date-picker-wrap--hero" : ""}${isAdmin ? " date-picker-wrap--admin" : ""} ${className}`.trim()}
       ref={wrapRef}
     >
       <div className="date-picker-mobile-bar" aria-live="polite">
@@ -279,8 +305,10 @@ export function DateRangePicker({
           aria-controls={`${id}-popover`}
         >
           <span className="date-picker-trigger-label">{fromLabel}</span>
-          <span className="date-picker-trigger-value">
-            {startDate ? formatDisplayDate(startDate, language) : "—"}
+          <span
+            className={`date-picker-trigger-value${!startDate ? " is-placeholder" : ""}`}
+          >
+            {formatValue(startDate)}
           </span>
         </button>
         {mode === "range" && (
@@ -291,8 +319,10 @@ export function DateRangePicker({
             aria-expanded={open}
           >
             <span className="date-picker-trigger-label">{toLabel}</span>
-            <span className="date-picker-trigger-value">
-              {endDate ? formatDisplayDate(endDate, language) : "—"}
+            <span
+              className={`date-picker-trigger-value${!endDate ? " is-placeholder" : ""}`}
+            >
+              {formatValue(endDate)}
             </span>
           </button>
         )}

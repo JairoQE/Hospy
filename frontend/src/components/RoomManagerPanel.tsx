@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { ApiError, api } from "../api/client";
 import { formatApiError, parseFieldErrors } from "../api/errors";
 import { unwrapList } from "../api/unwrap";
-import type { Paginated, Room } from "../api/types";
+import type { Paginated, Room, Service } from "../api/types";
 import { RoomPhotoSection } from "./RoomPhotoSection";
 import { formatMoney, roomTypeLabel } from "../utils/format";
 
@@ -20,6 +20,7 @@ export interface RoomFormData {
   floor: string;
   description: string;
   base_price: string;
+  service_ids: number[];
 }
 
 const emptyRoomForm = (): RoomFormData => ({
@@ -29,17 +30,22 @@ const emptyRoomForm = (): RoomFormData => ({
   floor: "1",
   description: "",
   base_price: "",
+  service_ids: [],
 });
 
 interface Props {
   accommodationId: number;
   accommodationStatus: string;
+  services: Service[];
+  onServicesChange?: (services: Service[]) => void;
   onChanged?: () => void;
 }
 
 export function RoomManagerPanel({
   accommodationId,
   accommodationStatus,
+  services,
+  onServicesChange,
   onChanged,
 }: Props) {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -51,6 +57,9 @@ export function RoomManagerPanel({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [formHint, setFormHint] = useState("");
+  const [newServiceName, setNewServiceName] = useState("");
+  const [addingService, setAddingService] = useState(false);
+  const [serviceError, setServiceError] = useState("");
 
   const canManage = accommodationStatus === "aprobado";
 
@@ -87,6 +96,7 @@ export function RoomManagerPanel({
       floor: room.floor != null ? String(room.floor) : "1",
       description: room.description ?? "",
       base_price: String(room.base_price),
+      service_ids: room.services?.map((s) => s.id) ?? [],
     });
     setFieldErrors({});
     setFormHint("");
@@ -116,6 +126,7 @@ export function RoomManagerPanel({
       floor: Number(form.floor) || 1,
       description: form.description.trim(),
       base_price: form.base_price,
+      service_ids: form.service_ids,
     };
 
     try {
@@ -159,6 +170,34 @@ export function RoomManagerPanel({
     }
   };
 
+  const addService = async () => {
+    const name = newServiceName.trim();
+    if (name.length < 2) {
+      setServiceError("Escribe un nombre de al menos 2 caracteres.");
+      return;
+    }
+    setAddingService(true);
+    setServiceError("");
+    try {
+      const created = await api.post<Service>("/servicios/", { name });
+      const updated = [...services, created].sort((a, b) =>
+        a.name.localeCompare(b.name),
+      );
+      onServicesChange?.(updated);
+      if (!form.service_ids.includes(created.id)) {
+        setForm((prev) => ({
+          ...prev,
+          service_ids: [...prev.service_ids, created.id],
+        }));
+      }
+      setNewServiceName("");
+    } catch (err) {
+      setServiceError(err instanceof ApiError ? err.message : "No se pudo agregar");
+    } finally {
+      setAddingService(false);
+    }
+  };
+
   const toggleActive = async (room: Room) => {
     const action = room.is_active ? "desactivar" : "activar";
     try {
@@ -176,7 +215,8 @@ export function RoomManagerPanel({
         <div>
           <h2>Habitaciones</h2>
           <p className="muted">
-            Define tipos, capacidad y precio base por noche. Los huéspedes reservan por habitación.
+            Define tipos, capacidad, precio base (lo fijas tú) y servicios por habitación.
+            Los huéspedes reservan por habitación.
           </p>
         </div>
         {canManage && (
@@ -274,6 +314,61 @@ export function RoomManagerPanel({
                 placeholder="Vista, camas, baño privado…"
               />
             </label>
+            <fieldset className="full services-fieldset">
+              <legend>Servicios de esta habitación</legend>
+              {services.length > 0 ? (
+                <ul className="services-list">
+                  {services.map((s) => (
+                    <li key={s.id} className="service-list-item">
+                      <label className="checkbox-label service-check-label">
+                        <input
+                          type="checkbox"
+                          checked={form.service_ids.includes(s.id)}
+                          onChange={() => {
+                            const next = form.service_ids.includes(s.id)
+                              ? form.service_ids.filter((id) => id !== s.id)
+                              : [...form.service_ids, s.id];
+                            setForm({ ...form, service_ids: next });
+                          }}
+                        />
+                        {s.name}
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="muted services-empty">
+                  Aún no hay servicios en el catálogo. Agrega el primero abajo.
+                </p>
+              )}
+              <div className="add-service-row">
+                <input
+                  type="text"
+                  placeholder="Nuevo servicio, ej. Jacuzzi, Minibar…"
+                  value={newServiceName}
+                  onChange={(e) => setNewServiceName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void addService();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  disabled={addingService}
+                  onClick={() => void addService()}
+                >
+                  {addingService ? "Agregando…" : "+ Agregar servicio"}
+                </button>
+              </div>
+              {serviceError && <p className="field-error">{serviceError}</p>}
+              <p className="hint">
+                Marca solo lo que incluye esta habitación. El precio por noche lo defines tú
+                en «Precio base»; no se calcula solo por los servicios marcados.
+              </p>
+            </fieldset>
           </div>
 
           {editingId && <RoomPhotoSection roomId={editingId} />}
@@ -313,6 +408,7 @@ export function RoomManagerPanel({
                 <th>Cap.</th>
                 <th>Piso</th>
                 <th>Precio / noche</th>
+                <th>Servicios</th>
                 <th>Estado</th>
                 <th></th>
               </tr>
@@ -327,6 +423,21 @@ export function RoomManagerPanel({
                   <td>{r.capacity}</td>
                   <td>{r.floor ?? "—"}</td>
                   <td>{formatMoney(r.base_price)}</td>
+                  <td className="room-services-cell">
+                    {(r.services ?? []).length > 0 ? (
+                      <span className="room-services-preview" title={(r.services ?? []).map((s) => s.name).join(", ")}>
+                        {(r.services ?? [])
+                          .slice(0, 3)
+                          .map((s) => s.name)
+                          .join(" · ")}
+                        {(r.services ?? []).length > 3
+                          ? ` +${(r.services ?? []).length - 3}`
+                          : ""}
+                      </span>
+                    ) : (
+                      <span className="muted">—</span>
+                    )}
+                  </td>
                   <td>
                     <span
                       className={`room-status ${r.is_active ? "room-status-active" : "room-status-paused"}`}

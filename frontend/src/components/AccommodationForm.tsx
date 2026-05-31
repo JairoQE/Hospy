@@ -194,7 +194,13 @@ export function AccommodationForm({
           <option value="hotel">Hotel</option>
           <option value="hostal">Hostal</option>
           <option value="hospedaje">Hospedaje</option>
+          <option value="casa_departamento">Casa o departamento</option>
         </select>
+        {value.type === "casa_departamento" && (
+          <span className="muted form-hint">
+            Alquiler de casa o departamento completo, ideal para familias o grupos.
+          </span>
+        )}
       </label>
       <label className="full">
         Descripción

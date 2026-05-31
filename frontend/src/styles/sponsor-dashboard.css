@@ -1,8 +1,8 @@
 /* Panel de patrocinador — dashboard */
 .sponsor-dashboard-wrap {
-  background: #f8fafc;
-  min-height: calc(100vh - 4rem);
-  padding: 24px 16px 48px;
+  background: transparent;
+  min-height: 0;
+  padding: 0;
 }
 
 .sponsor-dashboard {

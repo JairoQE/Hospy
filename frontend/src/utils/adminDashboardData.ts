@@ -27,13 +27,25 @@ export type AdminDailyPoint = {
   date: string;
   revenue: number;
   bookings: number;
+  confirmedRevenue: number;
+  cancelledRevenue: number;
 };
 
 export type AdminTypeSlice = {
   name: string;
   count: number;
+  revenue: number;
   percent: number;
   color: string;
+};
+
+export type AdminResolvedRange = {
+  start: Date;
+  end: Date;
+  prevStart: Date;
+  prevEnd: Date;
+  days: number;
+  label: string;
 };
 
 export type AdminRegionBar = {
@@ -73,14 +85,24 @@ const TYPE_COLORS: Record<string, string> = {
   hotel: "#2563EB",
   hostal: "#8B5CF6",
   hospedaje: "#F59E0B",
+  casa_departamento: "#10B981",
   otro: "#6B7280",
 };
 
 const TYPE_LABELS: Record<string, string> = {
   hotel: "Hotel",
   hostal: "Hostal",
-  hospedaje: "Hospedaje / Casa",
+  hospedaje: "Hospedaje",
+  casa_departamento: "Casa o departamento",
   otro: "Otros",
+};
+
+export const ADMIN_PERIOD_LABELS: Record<AdminPeriod, string> = {
+  "7d": "7 días",
+  "30d": "30 días",
+  month: "Este mes",
+  quarter: "Trimestre",
+  year: "Año",
 };
 
 function startOfDay(d: Date): Date {
@@ -131,6 +153,37 @@ export function adminPeriodRange(period: AdminPeriod, ref = new Date()) {
   return { start, end, prevStart, prevEnd, days };
 }
 
+export function resolveAdminRange(
+  period: AdminPeriod,
+  customRange?: { from: string; to: string } | null,
+  ref = new Date(),
+): AdminResolvedRange {
+  const fromRaw = customRange?.from?.trim();
+  const toRaw = customRange?.to?.trim();
+  if (fromRaw && toRaw) {
+    let start = parseApiDate(fromRaw);
+    let end = parseApiDate(toRaw);
+    if (!start || !end) {
+      const fallback = adminPeriodRange(period, ref);
+      return { ...fallback, label: ADMIN_PERIOD_LABELS[period] };
+    }
+    start = startOfDay(start);
+    end = startOfDay(end);
+    if (start > end) {
+      const tmp = start;
+      start = end;
+      end = tmp;
+    }
+    const days = Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86400000) + 1);
+    const prevEnd = addDays(start, -1);
+    const prevStart = addDays(prevEnd, -(days - 1));
+    const label = `${start.toLocaleDateString("es-PE")} – ${end.toLocaleDateString("es-PE")}`;
+    return { start, end, prevStart, prevEnd, days, label };
+  }
+  const base = adminPeriodRange(period, ref);
+  return { ...base, label: ADMIN_PERIOD_LABELS[period] };
+}
+
 function bookingAmount(b: Booking): number {
   const n = typeof b.total_amount === "string" ? parseFloat(b.total_amount) : b.total_amount;
   return Number.isFinite(n) ? n : 0;
@@ -173,12 +226,17 @@ function confirmedStatus(s: string): boolean {
   return s === "confirmada" || s === "completada";
 }
 
+function cancelledStatus(s: string): boolean {
+  return s === "cancelada";
+}
+
 function activeStatus(s: string): boolean {
   return s === "confirmada" || s === "completada" || s === "pendiente";
 }
 
 export function buildAdminDashboard(params: {
   period: AdminPeriod;
+  customRange?: { from: string; to: string } | null;
   region: string;
   propertyFilter: AdminPropertyFilter;
   bookings: Booking[];
@@ -191,6 +249,7 @@ export function buildAdminDashboard(params: {
 }): AdminDashboardSnapshot {
   const {
     period,
+    customRange,
     region,
     propertyFilter,
     bookings,
@@ -202,7 +261,14 @@ export function buildAdminDashboard(params: {
     approvedCount,
   } = params;
 
-  const { start, end, prevStart, prevEnd, days } = adminPeriodRange(period);
+  const { start, end, prevStart, prevEnd, days } = resolveAdminRange(period, customRange);
+
+  const createdInRange = (b: Booking, s: Date, e: Date) => {
+    const created = parseApiDate(b.created_at);
+    if (!created) return false;
+    const d = startOfDay(created);
+    return d >= s && d <= e;
+  };
 
   const accByName = new Map<string, AccommodationListItem>();
   for (const a of accommodations) accByName.set(a.name, a);
@@ -244,11 +310,16 @@ export function buildAdminDashboard(params: {
   const curRevenue = curConfirmed.reduce((s, b) => s + bookingAmount(b), 0);
   const prevRevenue = prevConfirmed.reduce((s, b) => s + bookingAmount(b), 0);
 
+  const curCancelled = curBookings.filter((b) => cancelledStatus(b.status));
+  const prevCancelled = prevBookings.filter((b) => cancelledStatus(b.status));
+  const curCancelledRevenue = curCancelled.reduce((s, b) => s + bookingAmount(b), 0);
+  const prevCancelledRevenue = prevCancelled.reduce((s, b) => s + bookingAmount(b), 0);
+
   const curActive = curBookings.filter((b) => activeStatus(b.status)).length;
   const prevActive = prevBookings.filter((b) => activeStatus(b.status)).length;
 
-  const guestIds = new Set(curConfirmed.map((b) => b.huesped.id));
-  const prevGuestIds = new Set(prevConfirmed.map((b) => b.huesped.id));
+  const moderationQueue =
+    pendingAccommodations.length + pendingOwners.length + pendingReports;
 
   const propCount = Math.max(1, approvedCount + pendingAccommodations.length);
   const nights = curConfirmed.reduce(
@@ -308,14 +379,29 @@ export function buildAdminDashboard(params: {
       icon: "pi-calendar",
     },
     {
-      id: "guests",
-      label: "Huéspedes activos",
-      value: String(guestIds.size),
-      sublabel: "Con reserva en el período",
-      tooltip: "Usuarios únicos que reservaron al menos una vez",
-      trend: trend(guestIds.size, prevGuestIds.size).dir,
-      trendLabel: trend(guestIds.size, prevGuestIds.size).label,
-      icon: "pi-users",
+      id: "cancellations",
+      label: "Cancelaciones",
+      value: String(curCancelled.length),
+      sublabel: formatPen(curCancelledRevenue),
+      tooltip: "Reservas canceladas y monto asociado en el período",
+      trend: (() => {
+        const t = trend(curCancelled.length, prevCancelled.length);
+        if (t.dir === "up") return "down" as TrendDir;
+        if (t.dir === "down") return "up" as TrendDir;
+        return "flat" as TrendDir;
+      })(),
+      trendLabel: trend(curCancelledRevenue, prevCancelledRevenue).label,
+      icon: "pi-times-circle",
+    },
+    {
+      id: "moderation",
+      label: "Cola de moderación",
+      value: String(moderationQueue),
+      sublabel: "Pendientes de revisión",
+      tooltip: "Hospedajes, propietarios y reportes de chat sin atender",
+      trend: moderationQueue > 0 ? "down" : "flat",
+      trendLabel: moderationQueue > 0 ? "Requiere acción" : "Al día",
+      icon: "pi-shield",
     },
     {
       id: "properties",
@@ -341,29 +427,40 @@ export function buildAdminDashboard(params: {
 
   const dailySeries: AdminDailyPoint[] = [];
   for (let d = startOfDay(start); d <= end; d = addDays(d, 1)) {
-    const dayBookings = curBookings.filter(
+    const dayConfirmed = curBookings.filter(
       (b) => confirmedStatus(b.status) && overlapsRange(b.check_in, b.check_out, d, d),
     );
+    const dayCancelled = curBookings.filter(
+      (b) => cancelledStatus(b.status) && createdInRange(b, d, d),
+    );
+    const confirmedRevenue = dayConfirmed.reduce((s, b) => s + bookingAmount(b), 0);
     dailySeries.push({
       date: d.toISOString().slice(0, 10),
       label: d.toLocaleDateString("es-PE", { day: "numeric", month: "short" }),
-      revenue: dayBookings.reduce((s, b) => s + bookingAmount(b), 0),
-      bookings: dayBookings.length,
+      revenue: confirmedRevenue,
+      confirmedRevenue,
+      cancelledRevenue: dayCancelled.reduce((s, b) => s + bookingAmount(b), 0),
+      bookings: dayConfirmed.length,
     });
   }
 
-  const typeCounts: Record<string, number> = {};
+  const typeStats: Record<string, { count: number; revenue: number }> = {};
   for (const b of curConfirmed) {
     const acc = accByName.get(b.hospedaje);
     const key = acc?.type ?? "otro";
-    typeCounts[key] = (typeCounts[key] ?? 0) + 1;
+    const cur = typeStats[key] ?? { count: 0, revenue: 0 };
+    cur.count += 1;
+    cur.revenue += bookingAmount(b);
+    typeStats[key] = cur;
   }
-  const typeTotal = Object.values(typeCounts).reduce((a, c) => a + c, 0) || 1;
-  const typeDistribution: AdminTypeSlice[] = Object.entries(typeCounts).map(
-    ([key, count]) => ({
+  const typeRevenueTotal =
+    Object.values(typeStats).reduce((a, c) => a + c.revenue, 0) || 1;
+  const typeDistribution: AdminTypeSlice[] = Object.entries(typeStats).map(
+    ([key, stats]) => ({
       name: TYPE_LABELS[key] ?? key,
-      count,
-      percent: Math.round((count / typeTotal) * 100),
+      count: stats.count,
+      revenue: stats.revenue,
+      percent: Math.round((stats.revenue / typeRevenueTotal) * 100),
       color: TYPE_COLORS[key] ?? TYPE_COLORS.otro,
     }),
   );

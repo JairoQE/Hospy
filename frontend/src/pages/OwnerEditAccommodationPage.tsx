@@ -20,6 +20,7 @@ import {
 import { OwnerOffersPanel } from "../components/OwnerOffersPanel";
 import { RoomManagerPanel } from "../components/RoomManagerPanel";
 import { StatusBadge } from "../components/StatusBadge";
+import "../styles/owner-panel.css";
 
 function detailToForm(d: AccommodationDetail): AccommodationFormData {
   return {
@@ -164,43 +165,45 @@ export function OwnerEditAccommodationPage() {
 
   if (loading) {
     return (
-      <div className="container page page-loading">
-        <span className="spinner" aria-hidden />
-        Cargando hospedaje…
+      <div className="owner-panel-page">
+        <p className="owner-panel-loading">Cargando hospedaje…</p>
       </div>
     );
   }
 
   if (!detail) {
     return (
-      <div className="container page">
-        <p className="error-msg">{error || "Hospedaje no encontrado"}</p>
-        <Link to="/panel">Volver al panel</Link>
+      <div className="owner-panel-page">
+        <p className="owner-panel-msg owner-panel-msg--error">{error || "Hospedaje no encontrado"}</p>
+        <Link to="/panel?tab=hospedajes" className="owner-edit-back-link">
+          Volver al panel
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="container page">
-      <Link to="/panel" className="back-link">
-        <PrimeIcon name="pi-arrow-left" size={14} /> Volver al panel
+    <div className="owner-panel-page">
+      <Link to="/panel?tab=hospedajes" className="owner-edit-back-link">
+        <PrimeIcon name="pi-arrow-left" size={14} /> Volver a mis hospedajes
       </Link>
-      <div className="edit-header">
-        <h1>Editar: {detail.name}</h1>
+      <header className="owner-edit-header">
+        <h1 className="owner-page-title">Editar: {detail.name}</h1>
         <StatusBadge status={detail.status} />
-      </div>
+      </header>
 
       {detail.status === "rechazado" && detail.rejection_reason && (
-        <p className="error-msg rejection-box">
+        <p className="owner-panel-msg owner-panel-msg--error">
           <strong>Motivo del rechazo:</strong> {detail.rejection_reason}
           <br />
           <span className="muted">Corrige los datos y guarda para reenviar a revisión.</span>
         </p>
       )}
 
-      {msg && <p className="success-msg">{msg}</p>}
-      {error && <p className="error-msg">{error}</p>}
+      {msg && <p className="owner-panel-msg owner-panel-msg--success">{msg}</p>}
+      {error && <p className="owner-panel-msg owner-panel-msg--error">{error}</p>}
 
+      <div className="owner-panel-form-wrap">
       <AccommodationForm
         value={form}
         onChange={setForm}
@@ -210,11 +213,12 @@ export function OwnerEditAccommodationPage() {
         submitLabel="Guardar cambios"
         loading={saving}
         onSubmit={save}
-        onCancel={() => navigate("/panel")}
+        onCancel={() => navigate("/panel?tab=hospedajes")}
       />
+      </div>
 
       {detail.status === "aprobado" && (
-        <div className="card section-sm">
+        <div className="owner-edit-section">
           <h2>Visibilidad</h2>
           <p className="muted">
             {detail.is_active
@@ -230,6 +234,8 @@ export function OwnerEditAccommodationPage() {
       <RoomManagerPanel
         accommodationId={Number(id)}
         accommodationStatus={detail.status}
+        services={services}
+        onServicesChange={setServices}
       />
 
       <OwnerOffersPanel
@@ -237,7 +243,7 @@ export function OwnerEditAccommodationPage() {
         accommodationStatus={detail.status}
       />
 
-      <section className="card section-sm">
+      <section className="owner-edit-section">
         <h2>Fotos</h2>
         <p className="muted">Máximo 10 fotos. La primera puede marcarse como principal al crear.</p>
         <div className="photo-grid">

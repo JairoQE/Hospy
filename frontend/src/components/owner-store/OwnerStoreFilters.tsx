@@ -96,7 +96,7 @@ export function OwnerStoreFilters({
         <div className="owner-store-filters-panel">
           <p className="owner-store-filters-panel-label">{t("ownerStorePage.filterType")}</p>
           <div className="owner-store-filters-panel-chips">
-            {(["hotel", "hostal", "hospedaje"] as const).map((type) => (
+            {(["hotel", "hostal", "hospedaje", "casa_departamento"] as const).map((type) => (
               <button
                 key={type}
                 type="button"

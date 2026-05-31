@@ -1,3 +1,4 @@
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Layout } from "./components/Layout";
@@ -6,12 +7,14 @@ import { AuthProvider } from "./context/AuthContext";
 import { ChatDockProvider } from "./context/ChatDockContext";
 import { HospixChatProvider } from "./context/HospixChatContext";
 import { LocaleCurrencyProvider } from "./context/LocaleCurrencyContext";
+import { SiteDesignProvider } from "./context/SiteDesignContext";
 import { FloatingChatHeads } from "./components/chat/FloatingChatHeads";
 import { GlobalChatDock } from "./components/GlobalChatDock";
 import { HospixWidget } from "./components/hospix/HospixWidget";
 import { AccommodationDetailPage } from "./pages/AccommodationDetailPage";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import { AdminConsultasPage } from "./pages/AdminConsultasPage";
+import { AdminAuditLogPage } from "./pages/AdminAuditLogPage";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import { AdminHomeContentPage } from "./pages/AdminHomeContentPage";
 import { AdminModerationPage } from "./pages/AdminModerationPage";
@@ -22,18 +25,23 @@ import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MyBookingsPage } from "./pages/MyBookingsPage";
 import { OwnerEditAccommodationPage } from "./pages/OwnerEditAccommodationPage";
+import { OwnerLayout } from "./components/owner/OwnerLayout";
 import { OwnerPanelPage } from "./pages/OwnerPanelPage";
 import { InboxPage } from "./pages/InboxPage";
 import { OwnerStorePage } from "./pages/OwnerStorePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { SponsorLayout } from "./components/sponsor/SponsorLayout";
 import { SponsorPanelPage } from "./pages/SponsorPanelPage";
 import { InfoPage } from "./pages/InfoPage";
 
-export default function App() {
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ?? "";
+
+function AppTree() {
   return (
     <AuthProvider>
       <LocaleCurrencyProvider>
+      <SiteDesignProvider>
       <ChatDockProvider>
         <BrowserRouter>
         <HospixChatProvider>
@@ -70,28 +78,25 @@ export default function App() {
               path="panel"
               element={
                 <ProtectedRoute roles={["propietario"]}>
-                  <OwnerPanelPage />
+                  <OwnerLayout />
                 </ProtectedRoute>
               }
-            />
-            <Route
-              path="panel/hospedajes/:id"
-              element={
-                <ProtectedRoute roles={["propietario"]}>
-                  <OwnerEditAccommodationPage />
-                </ProtectedRoute>
-              }
-            />
+            >
+              <Route index element={<OwnerPanelPage />} />
+              <Route path="hospedajes/:id" element={<OwnerEditAccommodationPage />} />
+            </Route>
             <Route
               path="patrocinio"
               element={
                 <ProtectedRoute roles={["patrocinador"]}>
-                  <SponsorPanelPage />
+                  <SponsorLayout />
                 </ProtectedRoute>
               }
-            />
+            >
+              <Route index element={<SponsorPanelPage />} />
+            </Route>
             <Route
-              path="admin"
+              path="admin/*"
               element={
                 <ProtectedRoute roles={["administrador"]}>
                   <AdminLayout />
@@ -103,6 +108,8 @@ export default function App() {
               <Route path="moderacion" element={<AdminModerationPage />} />
               <Route path="reservas" element={<AdminReservationsPage />} />
               <Route path="consultas" element={<AdminConsultasPage />} />
+              <Route path="registro-actividad" element={<AdminAuditLogPage />} />
+              <Route path="auditoria" element={<Navigate to="/admin/registro-actividad" replace />} />
               <Route path="inicio" element={<AdminHomeContentPage />} />
             </Route>
             <Route
@@ -131,7 +138,19 @@ export default function App() {
         </HospixChatProvider>
         </BrowserRouter>
       </ChatDockProvider>
+      </SiteDesignProvider>
       </LocaleCurrencyProvider>
     </AuthProvider>
   );
+}
+
+export default function App() {
+  if (googleClientId) {
+    return (
+      <GoogleOAuthProvider clientId={googleClientId}>
+        <AppTree />
+      </GoogleOAuthProvider>
+    );
+  }
+  return <AppTree />;
 }

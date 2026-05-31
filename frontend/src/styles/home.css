@@ -111,12 +111,24 @@
     125deg,
     #0f2744 0%,
     var(--home-deep) 28%,
-    #1a5f7a 55%,
-    #1d6b5c 82%,
+    var(--home-turquoise) 55%,
+    var(--site-hero-green, #1d6b5c) 82%,
     #0d4d4a 100%
   );
   background-size: 200% 200%;
-  animation: hero-gradient 14s ease infinite;
+  animation: hero-gradient var(--hero-gradient-duration, 14s) ease infinite;
+}
+
+html[data-hero-animated="0"] .home-hero-bg {
+  animation: none;
+  background-position: 50% 50%;
+}
+
+html[data-home-entrance="0"] .fade-in,
+html[data-home-entrance="0"] .tab-panel-fade {
+  animation: none;
+  opacity: 1;
+  transform: none;
 }
 
 @keyframes hero-gradient {
@@ -835,6 +847,61 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+}
+
+.home-results-group-hint {
+  margin: -0.35rem 0 1.15rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.home-results-catalog-loading {
+  margin: -0.25rem 0 1rem;
+  font-size: 0.86rem;
+}
+
+.home-results-district-prov {
+  margin: -0.35rem 0 0.75rem;
+  font-size: 0.88rem;
+}
+
+.home-results-district-empty {
+  margin: 0 0 0.25rem;
+  padding: 0.65rem 0 0.85rem;
+  font-size: 0.9rem;
+}
+
+.home-results-by-district {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.home-results-district-block {
+  margin: 0;
+}
+
+.home-results-district-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.65rem;
+  margin: 0 0 0.85rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text, inherit);
+}
+
+.home-results-district-kind {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted, #5c6b7a);
+}
+
+.home-results-district-name {
+  font-weight: 700;
 }
 
 /* Empty state */

@@ -194,7 +194,7 @@ export function SponsorAdsDashboard({ maxDur, onRefreshUser }: Props) {
 
       <header className="sponsor-dashboard-header">
         <div>
-          <p className="sponsor-dashboard-kicker">Panel de patrocinador</p>
+          <p className="sponsor-dashboard-kicker">Publicidad en Hospy</p>
           <h1 className="sponsor-dashboard-title">Mis anuncios</h1>
           <p className="sponsor-dashboard-sub">
             Los anuncios rotan en la página de inicio de Hospy. En escritorio se ven en la barra

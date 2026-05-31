@@ -25,38 +25,40 @@ export function SponsorAdSlot({ variant, side }: Props) {
   const mediaUrl = resolveMediaUrl(current.media_url) ?? current.media_url;
   const isVideo = current.media_type === "video";
 
-  const inner = (
+  const media = isVideo ? (
+    <video
+      key={current.id}
+      className="sponsor-ad-media"
+      src={mediaUrl}
+      muted
+      playsInline
+      autoPlay
+      loop={ads.length <= 1}
+      aria-label={current.title}
+    />
+  ) : (
+    <img
+      key={current.id}
+      className="sponsor-ad-media"
+      src={mediaUrl}
+      alt={current.title}
+      loading="lazy"
+    />
+  );
+
+  const creative = (
     <>
-      <div className="sponsor-ad-top-bar">
-        <span className="sponsor-ad-label">{t("sponsor.adLabel")}</span>
-        <ReportAdButton adId={current.id} />
-      </div>
-      {isVideo ? (
-        <video
-          key={current.id}
-          className="sponsor-ad-media"
-          src={mediaUrl}
-          muted
-          playsInline
-          autoPlay
-          loop={ads.length <= 1}
-          aria-label={current.title}
-        />
-      ) : (
-        <img
-          key={current.id}
-          className="sponsor-ad-media"
-          src={mediaUrl}
-          alt={current.title}
-          loading="lazy"
-        />
-      )}
+      {media}
       {current.title && <span className="sponsor-ad-title">{current.title}</span>}
     </>
   );
 
   const content = (
     <div className="sponsor-ad-link-wrap">
+      <div className="sponsor-ad-top-bar">
+        <span className="sponsor-ad-label">{t("sponsor.adLabel")}</span>
+        <ReportAdButton adId={current.id} />
+      </div>
       {current.link_url ? (
         <a
           href={current.link_url}
@@ -64,10 +66,10 @@ export function SponsorAdSlot({ variant, side }: Props) {
           target="_blank"
           rel="noopener noreferrer sponsored"
         >
-          {inner}
+          {creative}
         </a>
       ) : (
-        <div className="sponsor-ad-link">{inner}</div>
+        <div className="sponsor-ad-link">{creative}</div>
       )}
     </div>
   );

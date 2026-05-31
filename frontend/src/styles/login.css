@@ -1,3 +1,5 @@
+@import "./auth-social.css";
+
 /* Página de inicio de sesión */
 
 .login-page {
@@ -103,9 +105,19 @@
   position: relative;
   display: flex;
   align-items: stretch;
+  width: 100%;
+}
+
+.login-password-wrap > .register-input-icon-wrap {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
 }
 
 .login-password-wrap input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   flex: 1;
   padding-right: 3rem;
 }
@@ -158,6 +170,7 @@
 .login-remember {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   margin-bottom: 1.25rem;
   font-size: 0.9rem;
@@ -263,6 +276,19 @@
   flex: 1;
   height: 1px;
   background: var(--border);
+}
+
+.login-social-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  width: 100%;
+  margin-bottom: 0.25rem;
+}
+
+.login-social-google {
+  width: 100%;
 }
 
 .login-links {
@@ -385,4 +411,31 @@
     padding: 1.5rem 1.25rem;
     border-radius: 20px;
   }
+}
+
+.auth-captcha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0.25rem 0 0.75rem;
+  text-align: center;
+}
+
+.auth-captcha-widget {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 65px;
+}
+
+.auth-captcha-widget > * {
+  margin-inline: auto;
+}
+
+.auth-captcha-hint {
+  margin: 0.35rem 0 0;
+  max-width: 18rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  text-align: center;
 }

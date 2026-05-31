@@ -65,11 +65,19 @@
 }
 
 .chat-head-bubble-wrap--hospix .chat-head-bubble {
-  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+  background: linear-gradient(
+    135deg,
+    var(--hospix-bg-start, #2563eb),
+    var(--hospix-bg-end, #1e3a8a)
+  );
 }
 
 .chat-head-bubble-wrap--hospix .chat-head-bubble:hover {
-  background: linear-gradient(135deg, #1d4ed8, #172554);
+  background: linear-gradient(
+    135deg,
+    var(--hospix-bg-end, #1e3a8a),
+    var(--hospix-bg-start, #2563eb)
+  );
 }
 
 .chat-head-bubble-badge {

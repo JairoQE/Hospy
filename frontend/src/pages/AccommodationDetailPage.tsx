@@ -1,11 +1,13 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ApiError, api } from "../api/client";
+import { formatApiError } from "../api/errors";
 import { unwrapList } from "../api/unwrap";
 import { AccommodationCard } from "../components/AccommodationCard";
 import { ContactHostSection } from "../components/ContactHostSection";
 import { OwnerStoreBanner } from "../components/owner/OwnerStoreBanner";
 import { MapModal } from "../components/MapModal";
+import { CancellationPolicySection } from "../components/bookings/CancellationPolicySection";
 import { AccommodationFaqSection } from "../components/AccommodationFaqSection";
 import { PhotoGallery } from "../components/PhotoGallery";
 import { PropertyMap } from "../components/PropertyMap";
@@ -22,10 +24,13 @@ import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
 import { DateRangePicker } from "../components/calendar/DateRangePicker";
 import { recordRecentView } from "../hooks/useRecentlyViewed";
 import { canInquireHost } from "../utils/hostChat";
+import { compareDateStr } from "../utils/calendarDates";
 import { formatDate, formatMoney, roomTypeLabel, todayPlusDays, typeLabel } from "../utils/format";
 import { resolveMediaUrl } from "../utils/media";
 import { IconCheck, IconEye, IconMapPin, IconUser } from "../components/icons";
 import { PrimeIcon } from "../components/PrimeIcon";
+import { ReviewStayMeta } from "../components/reviews/ReviewStayMeta";
+import { StarRating } from "../components/StarRating";
 import { ratingLabel, ratingStars } from "../utils/rating";
 
 const SERVICE_ICONS: Record<string, string> = {
@@ -60,6 +65,8 @@ export function AccommodationDetailPage() {
   const [rooms, setRooms] = useState<RoomPublic[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [roomQuotes, setRoomQuotes] = useState<Record<number, PriceBreakdown | null>>({});
+  const [quoteErrors, setQuoteErrors] = useState<Record<number, string>>({});
+  const [quotesLoading, setQuotesLoading] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
@@ -67,6 +74,12 @@ export function AccommodationDetailPage() {
   const [msg, setMsg] = useState("");
   const [mapOpen, setMapOpen] = useState(false);
   const [expandedRoomId, setExpandedRoomId] = useState<number | null>(null);
+  const [reservePaymentNotice, setReservePaymentNotice] = useState<{
+    roomId: number;
+    roomNumber: string;
+    checkIn: string;
+    checkOut: string;
+  } | null>(null);
 
   const [localEntrada, setLocalEntrada] = useState(entrada || todayPlusDays(7));
   const [localSalida, setLocalSalida] = useState(salida || todayPlusDays(9));
@@ -103,12 +116,9 @@ export function AccommodationDetailPage() {
     if (!id) return;
     setLoading(true);
     Promise.all([
-      api.get<AccommodationDetail>(`/hospedajes/${id}/`, false),
-      api.get<RoomPublic[] | Paginated<RoomPublic>>(
-        `/hospedajes/${id}/habitaciones/`,
-        false,
-      ),
-      api.get<Review[] | Paginated<Review>>(`/hospedajes/${id}/resenas/`, false),
+      api.get<AccommodationDetail>(`/hospedajes/${id}/`),
+      api.get<RoomPublic[] | Paginated<RoomPublic>>(`/hospedajes/${id}/habitaciones/`),
+      api.get<Review[] | Paginated<Review>>(`/hospedajes/${id}/resenas/`),
     ])
       .then(([a, r, rev]) => {
         setAcc(a);
@@ -118,7 +128,15 @@ export function AccommodationDetailPage() {
         setReviews(reviewList);
         if (roomList.length) setSelectedRoom(roomList[0].id);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Error"))
+      .catch((e) => {
+        if (e instanceof ApiError && e.status === 404) {
+          setError(
+            "Este hospedaje no está disponible públicamente. Si eres el propietario, inicia sesión para verlo en borrador hasta que un admin lo apruebe.",
+          );
+        } else {
+          setError(e instanceof Error ? e.message : "Error");
+        }
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -139,36 +157,70 @@ export function AccommodationDetailPage() {
     );
   }, [acc, user?.id]);
 
-  const hasDates = Boolean(entrada && salida);
+  const effectiveEntrada = entrada || localEntrada;
+  const effectiveSalida = salida || localSalida;
+  const hasDates = Boolean(
+    effectiveEntrada &&
+      effectiveSalida &&
+      compareDateStr(effectiveSalida, effectiveEntrada) > 0,
+  );
 
   useEffect(() => {
     if (!hasDates || rooms.length === 0) {
       setRoomQuotes({});
+      setQuoteErrors({});
+      setQuotesLoading(false);
       return;
     }
+    let cancelled = false;
+    setQuotesLoading(true);
     Promise.all(
       rooms.map((r) =>
         api
           .get<PriceBreakdown>(
-            `/habitaciones/${r.id}/precio/?entrada=${entrada}&salida=${salida}`,
+            `/habitaciones/${r.id}/precio/?entrada=${encodeURIComponent(effectiveEntrada)}&salida=${encodeURIComponent(effectiveSalida)}`,
             false,
           )
-          .then((q) => [r.id, q] as const)
-          .catch(() => [r.id, null] as const),
+          .then((q) => ({
+            id: r.id,
+            quote: q,
+            error:
+              q.available === false
+                ? (q.availability_message ?? "No disponible en esas fechas")
+                : null,
+          }))
+          .catch((e) => ({
+            id: r.id,
+            quote: null as PriceBreakdown | null,
+            error:
+              e instanceof ApiError
+                ? formatApiError(e.data)
+                : "No se pudo calcular el precio",
+          })),
       ),
-    ).then((pairs) => {
+    ).then((results) => {
+      if (cancelled) return;
       const map: Record<number, PriceBreakdown | null> = {};
-      pairs.forEach(([rid, q]) => {
-        map[rid] = q;
+      const errs: Record<number, string> = {};
+      results.forEach(({ id, quote, error }) => {
+        map[id] = quote;
+        if (error) errs[id] = error;
       });
       setRoomQuotes(map);
+      setQuoteErrors(errs);
+      setQuotesLoading(false);
     });
-  }, [entrada, salida, hasDates, rooms]);
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveEntrada, effectiveSalida, hasDates, rooms]);
 
-  const applyDates = () => {
+  const applyDates = (start: string, end: string) => {
+    setLocalEntrada(start);
+    setLocalSalida(end);
     const next = new URLSearchParams(searchParams);
-    next.set("entrada", localEntrada);
-    next.set("salida", localSalida);
+    next.set("entrada", start);
+    next.set("salida", end);
     setSearchParams(next);
   };
 
@@ -181,7 +233,7 @@ export function AccommodationDetailPage() {
   const minPrice = useMemo(() => {
     if (hasDates) {
       const totals = Object.values(roomQuotes)
-        .filter(Boolean)
+        .filter((q) => q && q.available !== false)
         .map((q) => Number(q!.total));
       return totals.length ? Math.min(...totals) : null;
     }
@@ -203,8 +255,15 @@ export function AccommodationDetailPage() {
       setError(t("detail.guestsOnly"));
       return;
     }
-    if (!room || !entrada || !salida) {
+    const bookIn = entrada || localEntrada;
+    const bookOut = salida || localSalida;
+    if (!room || !bookIn || !bookOut || compareDateStr(bookOut, bookIn) <= 0) {
       setError(t("detail.pickRoomDates"));
+      scrollTo("disponibilidad");
+      return;
+    }
+    if (quoteErrors[room]) {
+      setError(quoteErrors[room]);
       scrollTo("disponibilidad");
       return;
     }
@@ -213,11 +272,17 @@ export function AccommodationDetailPage() {
     try {
       await api.post("/reservas/", {
         room,
-        check_in: entrada,
-        check_out: salida,
+        check_in: bookIn,
+        check_out: bookOut,
+      });
+      const roomNumber = rooms.find((rr) => rr.id === room)?.number ?? "";
+      setReservePaymentNotice({
+        roomId: room,
+        roomNumber: String(roomNumber),
+        checkIn: bookIn,
+        checkOut: bookOut,
       });
       setMsg(t("detail.bookingCreated"));
-      setTimeout(() => navigate("/mis-reservas"), 1500);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t("detail.bookingFailed"));
     } finally {
@@ -390,6 +455,7 @@ export function AccommodationDetailPage() {
                   )}
                   {rooms.map((r) => {
                     const quote = roomQuotes[r.id];
+                    const unavailable = Boolean(hasDates && quoteErrors[r.id]);
                     const price = hasDates
                       ? quote?.total
                       : r.base_price;
@@ -409,6 +475,13 @@ export function AccommodationDetailPage() {
                               <li>{tVars("detail.capacity", { n: r.capacity })}</li>
                               {r.floor != null && <li>{tVars("detail.floor", { n: r.floor })}</li>}
                             </ul>
+                            {(r.services ?? []).length > 0 && (
+                              <ul className="room-services-tags" aria-label={t("detail.roomServices")}>
+                                {(r.services ?? []).map((s) => (
+                                  <li key={s.id}>{s.name}</li>
+                                ))}
+                              </ul>
+                            )}
                           </td>
                           <td className="capacity-cell">
                             <span
@@ -427,17 +500,45 @@ export function AccommodationDetailPage() {
                             </span>
                           </td>
                           <td className="price-cell">
-                            {price != null ? (
+                            {quotesLoading ? (
+                              <span className="muted">Calculando…</span>
+                            ) : price != null ? (
                               <>
-                                <span className="room-price">{formatMoney(price)}</span>
-                                {hasDates && quote && (
-                                  <small>
-                                    {quote.noches === 1
-                                      ? tVars("detail.night", { n: quote.noches })
-                                      : tVars("detail.nights", { n: quote.noches })}
+                                <span className="room-price room-price--total">
+                                  {formatMoney(price)}
+                                </span>
+                                {hasDates && unavailable && (
+                                  <small className="room-price-unavailable-hint">
+                                    {quoteErrors[r.id]}
+                                  </small>
+                                )}
+                                {hasDates && quote && !unavailable && (
+                                  <small className="room-price-nights">
+                                    {(quote.noches ??
+                                      (quote as PriceBreakdown & { nights_count?: number })
+                                        .nights_count) === 1
+                                      ? tVars("detail.night", {
+                                          n:
+                                            quote.noches ??
+                                            (quote as PriceBreakdown & { nights_count?: number })
+                                              .nights_count ??
+                                            1,
+                                        })
+                                      : tVars("detail.nights", {
+                                          n:
+                                            quote.noches ??
+                                            (quote as PriceBreakdown & { nights_count?: number })
+                                              .nights_count ??
+                                            0,
+                                        })}{" "}
+                                    · {t("detail.totalForStay")}
                                   </small>
                                 )}
                               </>
+                            ) : unavailable ? (
+                              <span className="room-price-unavailable" title={quoteErrors[r.id]}>
+                                {quoteErrors[r.id]}
+                              </span>
                             ) : (
                               <span className="muted">—</span>
                             )}
@@ -460,8 +561,19 @@ export function AccommodationDetailPage() {
                             <button
                               type="button"
                               className="btn btn-primary btn-sm"
-                              disabled={booking || !hasDates}
-                              title={!hasDates ? t("detail.pickDatesHint") : undefined}
+                              disabled={
+                                booking ||
+                                !hasDates ||
+                                unavailable ||
+                                Boolean(reservePaymentNotice)
+                              }
+                              title={
+                                !hasDates
+                                  ? t("detail.pickDatesHint")
+                                  : unavailable
+                                    ? quoteErrors[r.id]
+                                    : undefined
+                              }
                               onClick={() => {
                                 setSelectedRoom(r.id);
                                 handleBook(r.id);
@@ -510,6 +622,24 @@ export function AccommodationDetailPage() {
                                       : t("detail.noDescription")}
                                   </p>
                                 </div>
+                                {(r.services ?? []).length > 0 && (
+                                  <div className="room-detail-services">
+                                    <strong>{t("detail.roomServices")}</strong>
+                                    <ul className="services-grid room-detail-services-grid" role="list">
+                                      {(r.services ?? []).map((s) => (
+                                        <li key={s.id} className="service-item">
+                                          <PrimeIcon
+                                            name="pi-check"
+                                            className="service-check"
+                                            size={14}
+                                            aria-hidden
+                                          />
+                                          <span>{s.name}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
                                 {fotos.length > 0 ? (
                                   <div className="room-detail-photos">
                                     <strong>{t("detail.photos")}</strong>
@@ -572,6 +702,8 @@ export function AccommodationDetailPage() {
             )}
           </section>
 
+          <CancellationPolicySection />
+
           <AccommodationFaqSection
             propertyName={acc.name}
             faqs={acc.faqs ?? []}
@@ -592,8 +724,20 @@ export function AccommodationDetailPage() {
               <div className="reviews-grid">
                 {reviews.slice(0, 6).map((r) => (
                   <article key={r.id} className="review-card">
-                    <div className="review-score-pill">{r.rating}</div>
-                    <p className="review-author">{r.autor_nombre}</p>
+                    <div className="review-card-head">
+                      <p className="review-author">{r.autor_nombre}</p>
+                      <StarRating
+                        rating={Number(r.rating)}
+                        size="sm"
+                        showValue={false}
+                      />
+                    </div>
+                    <ReviewStayMeta
+                      habitacion={r.habitacion}
+                      checkIn={r.check_in}
+                      checkOut={r.check_out}
+                      totalAmount={r.total_amount}
+                    />
                     <p className="review-text">{r.comment}</p>
                     <time className="muted">{formatDate(r.created_at.slice(0, 10))}</time>
                   </article>
@@ -658,8 +802,11 @@ export function AccommodationDetailPage() {
             )}
             {topReview && (
               <blockquote className="featured-review">
-                «{topReview.comment.slice(0, 120)}
-                {topReview.comment.length > 120 ? "…" : ""}»
+                <StarRating rating={Number(topReview.rating)} size="sm" showValue={false} />
+                <p>
+                  «{topReview.comment.slice(0, 120)}
+                  {topReview.comment.length > 120 ? "…" : ""}»
+                </p>
                 <cite>— {topReview.autor_nombre}</cite>
               </blockquote>
             )}
@@ -734,7 +881,12 @@ export function AccommodationDetailPage() {
             <button
               type="button"
               className="btn btn-primary btn-block"
-              disabled={booking || !rooms.length || !hasDates}
+              disabled={
+                booking ||
+                !rooms.length ||
+                !hasDates ||
+                Boolean(reservePaymentNotice)
+              }
               title={!hasDates ? t("detail.pickDatesSidebar") : undefined}
               onClick={() => handleBook()}
             >
@@ -744,6 +896,104 @@ export function AccommodationDetailPage() {
           </div>
         </aside>
       </div>
+      {reservePaymentNotice && (
+        <>
+          <div
+            className="inbox-dropdown-backdrop"
+            role="presentation"
+            onClick={() => setReservePaymentNotice(null)}
+          />
+          <div
+            className="inbox-dropdown-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Pago pendiente"
+            style={{
+              position: "fixed",
+              top: "auto",
+              right: "1.25rem",
+              bottom: "7.25rem",
+              width: "min(22rem, calc(100vw - 1.5rem))",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="inbox-dropdown-head" style={{ paddingBottom: "0.75rem" }}>
+              <h2 style={{ marginBottom: 0 }}>Pago pendiente</h2>
+              <p className="muted" style={{ marginTop: "0.35rem" }}>
+                Para proceder con el pago (mientras no contamos con Yape), comunícate con
+                el propietario.
+              </p>
+            </div>
+
+            <div
+              className="inbox-dropdown-toolbar"
+              style={{
+                display: "grid",
+                gap: "0.6rem",
+                padding: "0 1rem 1rem",
+              }}
+            >
+              {(() => {
+                const raw = acc?.propietario_telefono?.trim() ?? "";
+                const digits = raw.replace(/\D/g, "");
+                const whatsappNumber =
+                  digits.length === 9 && !digits.startsWith("51")
+                    ? `51${digits}`
+                    : digits.startsWith("51")
+                      ? digits
+                      : digits;
+
+                const canOpenWa = Boolean(whatsappNumber);
+                const text = `Hola! Deseo proceder con el pago de la reserva en ${
+                  acc?.name ?? "Hospy"
+                }. Fechas: ${formatDate(reservePaymentNotice.checkIn)} → ${formatDate(
+                  reservePaymentNotice.checkOut
+                )}. Habitación: ${reservePaymentNotice.roomNumber}.`;
+                const href = canOpenWa
+                  ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`
+                  : null;
+
+                return (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={!href}
+                    onClick={() => {
+                      if (href) window.open(href, "_blank", "noopener,noreferrer");
+                      setReservePaymentNotice(null);
+                    }}
+                    title={
+                      href
+                        ? "Abrir WhatsApp"
+                        : "No se encontró el teléfono del propietario"
+                    }
+                  >
+                    Comunicar por WhatsApp
+                  </button>
+                );
+              })()}
+
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setReservePaymentNotice(null);
+                  if (!acc) return;
+                  openChat({
+                    mode: "guest",
+                    peerName: acc.propietario_nombre || t("detail.hostDefault"),
+                    peerPhotoUrl: acc.propietario_foto_url,
+                    hospedajeId: acc.id,
+                    hospedajeName: acc.name,
+                  });
+                }}
+              >
+                Abrir chat de Hospy
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

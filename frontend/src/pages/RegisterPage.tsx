@@ -15,7 +15,11 @@ import {
   IconUser,
   IconWarning,
 } from "../components/icons";
+import { FacebookSignInButton } from "../components/auth/FacebookSignInButton";
+import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
+import { TurnstileWidget } from "../components/auth/TurnstileWidget";
 import { useAuth } from "../context/AuthContext";
+import { useCaptchaConfig } from "../hooks/useCaptchaConfig";
 import { scorePassword } from "../utils/passwordStrength";
 import "../styles/login.css";
 import "../styles/register.css";
@@ -45,7 +49,7 @@ interface Props {
 }
 
 export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
-  const { register } = useAuth();
+  const { register, loginWithGoogle, loginWithFacebook } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     email: "",
@@ -60,9 +64,22 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [facebookLoading, setFacebookLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [sponsorConfig, setSponsorConfig] = useState<SponsorContactConfig | null>(null);
   const [sponsorAck, setSponsorAck] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const captcha = useCaptchaConfig();
+
+  const resetCaptcha = () => {
+    setCaptchaToken("");
+    setCaptchaReset((n) => n + 1);
+  };
+
+  const captchaRequired = captcha.enabled && !captcha.loading;
+  const captchaReady = !captchaRequired || Boolean(captchaToken);
 
   useEffect(() => {
     if (!asSponsor) return;
@@ -81,8 +98,12 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
 
   const clientErrors = useMemo(() => {
     const err: Record<string, string> = {};
-    if (touched.email && form.email && !EMAIL_RE.test(form.email.trim())) {
-      err.email = "Introduce un correo electrónico válido.";
+    if (touched.email) {
+      if (!form.email.trim()) {
+        err.email = "El correo electrónico es obligatorio.";
+      } else if (!EMAIL_RE.test(form.email.trim())) {
+        err.email = "Introduce un correo electrónico válido.";
+      }
     }
     if (touched.first_name && !form.first_name.trim()) {
       err.first_name = "El nombre es obligatorio.";
@@ -120,11 +141,73 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
     };
     setTouched((t) => ({ ...t, ...next }));
 
-    if (!EMAIL_RE.test(form.email.trim())) return false;
+    if (!form.email.trim() || !EMAIL_RE.test(form.email.trim())) return false;
     if (!form.first_name.trim() || !form.last_name.trim()) return false;
     if (form.password.length < 8) return false;
     if (form.password !== form.password2) return false;
     return true;
+  };
+
+  const socialBusy = loading || googleLoading || facebookLoading || success;
+
+  const handleGoogleCredential = async (credential: string) => {
+    setError("");
+    setFieldErrors({});
+    if (asSponsor && !sponsorAck) {
+      setError(
+        "Debes confirmar que contactarás al administrador por WhatsApp para el acuerdo financiero.",
+      );
+      return;
+    }
+    setGoogleLoading(true);
+    try {
+      await loginWithGoogle(credential, {
+        asOwner: asOwner && !asSponsor,
+        asSponsor,
+      });
+      setSuccess(true);
+      window.setTimeout(() => {
+        navigate(asSponsor ? "/patrocinio" : asOwner ? "/panel" : "/", { replace: true });
+      }, 900);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(formatApiError(err.data));
+      } else {
+        setError("No se pudo registrar con Google. Inténtalo de nuevo.");
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleFacebookToken = async (accessToken: string) => {
+    setError("");
+    setFieldErrors({});
+    if (asSponsor && !sponsorAck) {
+      setError(
+        "Debes confirmar que contactarás al administrador por WhatsApp para el acuerdo financiero.",
+      );
+      return;
+    }
+    setFacebookLoading(true);
+    try {
+      await loginWithFacebook(accessToken, {
+        asOwner: asOwner && !asSponsor,
+        asSponsor,
+      });
+      setSuccess(true);
+      window.setTimeout(() => {
+        navigate(asSponsor ? "/patrocinio" : asOwner ? "/panel" : "/", { replace: true });
+      }, 900);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(formatApiError(err.data));
+      } else {
+        setError("No se pudo registrar con Facebook. Inténtalo de nuevo.");
+      }
+    } finally {
+      setFacebookLoading(false);
+    }
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -148,13 +231,18 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
           last_name: form.last_name.trim(),
           password: form.password,
         },
-        { asOwner: asOwner && !asSponsor, asSponsor },
+        {
+          asOwner: asOwner && !asSponsor,
+          asSponsor,
+          captchaToken: captchaToken || undefined,
+        },
       );
       setSuccess(true);
       window.setTimeout(() => {
         navigate(asSponsor ? "/patrocinio" : asOwner ? "/panel" : "/", { replace: true });
       }, 1400);
     } catch (err) {
+      resetCaptcha();
       if (err instanceof ApiError) {
         const parsed = parseFieldErrors(err.data);
         const friendly: Record<string, string> = {};
@@ -255,6 +343,7 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
                 onChange={(e) => set("email", e.target.value)}
                 onBlur={() => touch("email")}
                 required
+                aria-required="true"
                 className={mergedErrors.email ? "login-input--error" : undefined}
                 aria-invalid={Boolean(mergedErrors.email)}
                 aria-describedby={mergedErrors.email ? "reg-email-err" : undefined}
@@ -298,35 +387,102 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
               </Field>
             </div>
 
-            <div className="login-field">
-              <label htmlFor="reg-password">Contraseña</label>
-              <div className="login-password-wrap">
-                <div className="register-input-icon-wrap">
-                  <span className="register-input-icon" aria-hidden>
-                    <IconLock size={18} />
-                  </span>
-                  <input
-                    id="reg-password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    value={form.password}
-                    onChange={(e) => set("password", e.target.value)}
-                    onBlur={() => touch("password")}
-                    required
-                    className={mergedErrors.password ? "login-input--error" : undefined}
-                    aria-invalid={Boolean(mergedErrors.password)}
-                    aria-describedby="reg-password-hint"
-                  />
+            <div className="register-password-row">
+              <div className="login-field">
+                <label htmlFor="reg-password">Contraseña</label>
+                <div className="login-password-wrap">
+                  <div className="register-input-icon-wrap">
+                    <span className="register-input-icon" aria-hidden>
+                      <IconLock size={18} />
+                    </span>
+                    <input
+                      id="reg-password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      value={form.password}
+                      onChange={(e) => set("password", e.target.value)}
+                      onBlur={() => touch("password")}
+                      required
+                      className={mergedErrors.password ? "login-input--error" : undefined}
+                      aria-invalid={Boolean(mergedErrors.password)}
+                      aria-describedby="reg-password-hint"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="login-password-toggle"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  >
+                    {showPassword ? <IconEyeOff size={20} /> : <IconEye size={20} />}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="login-password-toggle"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                >
-                  {showPassword ? <IconEyeOff size={20} /> : <IconEye size={20} />}
-                </button>
+                {mergedErrors.password && (
+                  <p className="register-field-error" role="alert">
+                    <IconWarning size={14} />
+                    {mergedErrors.password}
+                  </p>
+                )}
               </div>
+
+              <div className="login-field">
+                <label htmlFor="reg-password2">Repetir contraseña</label>
+                <div className="login-password-wrap">
+                  <div className="register-input-icon-wrap register-input-icon-wrap--confirm">
+                    <span className="register-input-icon" aria-hidden>
+                      <IconLock size={18} />
+                    </span>
+                    <input
+                      id="reg-password2"
+                      type={showPassword2 ? "text" : "password"}
+                      autoComplete="new-password"
+                      value={form.password2}
+                      onChange={(e) => set("password2", e.target.value)}
+                      onBlur={() => touch("password2")}
+                      required
+                      className={
+                        mergedErrors.password2
+                          ? "login-input--error"
+                          : passwordMatch
+                            ? "login-input--ok"
+                            : undefined
+                      }
+                      aria-invalid={Boolean(mergedErrors.password2 || passwordMismatch)}
+                    />
+                    {form.password2.length > 0 && (
+                      <span
+                        className={`register-input-status${
+                          passwordMatch
+                            ? " register-input-status--ok"
+                            : " register-input-status--err"
+                        }`}
+                        aria-hidden
+                      >
+                        {passwordMatch ? <IconCheck size={20} /> : <IconWarning size={20} />}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="login-password-toggle"
+                    onClick={() => setShowPassword2((v) => !v)}
+                    aria-label={
+                      showPassword2 ? "Ocultar repetición" : "Mostrar repetición"
+                    }
+                  >
+                    {showPassword2 ? <IconEyeOff size={20} /> : <IconEye size={20} />}
+                  </button>
+                </div>
+                {mergedErrors.password2 && (
+                  <p className="register-field-error" role="alert">
+                    <IconWarning size={14} />
+                    {mergedErrors.password2}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="register-password-meta">
               <p id="reg-password-hint" className="register-hint">
                 Usa 8+ caracteres con letras y números
               </p>
@@ -347,68 +503,6 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
                     <p className="register-strength-label">{strength.label}</p>
                   )}
                 </div>
-              )}
-              {mergedErrors.password && (
-                <p className="register-field-error" role="alert">
-                  <IconWarning size={14} />
-                  {mergedErrors.password}
-                </p>
-              )}
-            </div>
-
-            <div className="login-field">
-              <label htmlFor="reg-password2">Repetir contraseña</label>
-              <div className="login-password-wrap">
-                <div className="register-input-icon-wrap register-input-icon-wrap--confirm">
-                  <span className="register-input-icon" aria-hidden>
-                    <IconLock size={18} />
-                  </span>
-                  <input
-                    id="reg-password2"
-                    type={showPassword2 ? "text" : "password"}
-                    autoComplete="new-password"
-                    value={form.password2}
-                    onChange={(e) => set("password2", e.target.value)}
-                    onBlur={() => touch("password2")}
-                    required
-                    className={
-                      mergedErrors.password2
-                        ? "login-input--error"
-                        : passwordMatch
-                          ? "login-input--ok"
-                          : undefined
-                    }
-                    aria-invalid={Boolean(mergedErrors.password2 || passwordMismatch)}
-                  />
-                  {form.password2.length > 0 && (
-                    <span
-                      className={`register-input-status${
-                        passwordMatch
-                          ? " register-input-status--ok"
-                          : " register-input-status--err"
-                      }`}
-                      aria-hidden
-                    >
-                      {passwordMatch ? <IconCheck size={20} /> : <IconWarning size={20} />}
-                    </span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  className="login-password-toggle"
-                  onClick={() => setShowPassword2((v) => !v)}
-                  aria-label={
-                    showPassword2 ? "Ocultar repetición" : "Mostrar repetición"
-                  }
-                >
-                  {showPassword2 ? <IconEyeOff size={20} /> : <IconEye size={20} />}
-                </button>
-              </div>
-              {mergedErrors.password2 && (
-                <p className="register-field-error" role="alert">
-                  <IconWarning size={14} />
-                  {mergedErrors.password2}
-                </p>
               )}
             </div>
 
@@ -435,10 +529,20 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
               </div>
             )}
 
+            {captchaRequired && (
+              <TurnstileWidget
+                siteKey={captcha.siteKey}
+                resetSignal={captchaReset}
+                onToken={setCaptchaToken}
+                onExpire={resetCaptcha}
+                onError={resetCaptcha}
+              />
+            )}
+
             <button
               type="submit"
               className="login-submit"
-              disabled={loading}
+              disabled={loading || !captchaReady}
             >
               {loading ? (
                 <>
@@ -457,18 +561,20 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
             <div className="register-social" aria-label="Registro con redes sociales">
               <p className="register-social-title">Regístrate con</p>
               <div className="register-social-grid">
-                <button type="button" className="register-social-btn" disabled title="Próximamente">
-                  <span>G</span>
-                  Google
-                </button>
-                <button type="button" className="register-social-btn" disabled title="Próximamente">
-                  <span>f</span>
-                  Facebook
-                </button>
-                <button type="button" className="register-social-btn" disabled title="Próximamente">
-                  <span></span>
-                  Apple
-                </button>
+                <div className="register-social-google-cell">
+                  <GoogleSignInButton
+                    mode="register"
+                    disabled={socialBusy}
+                    onCredential={(credential) => void handleGoogleCredential(credential)}
+                    onError={(message) => setError(message)}
+                  />
+                </div>
+                <FacebookSignInButton
+                  mode="register"
+                  disabled={socialBusy}
+                  onAccessToken={(token) => void handleFacebookToken(token)}
+                  onError={(message) => setError(message)}
+                />
               </div>
             </div>
 

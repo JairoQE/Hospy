@@ -1,11 +1,14 @@
 import { useState } from "react";
 import type { DestinationOption } from "../../data/destinationOptions";
+import { TOP_DESTINATIONS } from "../../data/destinationOptions";
+import { api } from "../../api/client";
 import { PrimeIcon } from "../PrimeIcon";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { DateRangePicker } from "../calendar/DateRangePicker";
 import { todayPlusDays } from "../../utils/format";
 import type { SearchFilters } from "../SearchBar";
 import { DestinationAutocomplete } from "./DestinationAutocomplete";
+import { normalizePlaceText } from "../../utils/normalizePlaceText";
 
 interface Props {
   onSearch: (filters: SearchFilters) => void;
@@ -18,7 +21,37 @@ export function HomeHeroSearch({ onSearch }: Props) {
   const [entrada, setEntrada] = useState(todayPlusDays(7));
   const [salida, setSalida] = useState(todayPlusDays(9));
 
-  const submit = (e: React.FormEvent) => {
+  const resolveFreeTextDestination = async (
+    query: string,
+  ): Promise<DestinationOption | null> => {
+    const q = query.trim();
+    if (q.length < 2) return null;
+
+    const target = normalizePlaceText(q);
+
+    // 1) Match rápido con sugerencias locales (incluye "Tingo María")
+    const localExact =
+      TOP_DESTINATIONS.find((d) => normalizePlaceText(d.nombre) === target) ?? null;
+    if (localExact) return localExact;
+
+    // 2) Pregunta al backend UBIGEO y toma mejor match exacto
+    try {
+      const data = await api.get<DestinationOption[]>(
+        `/ubigeo/buscar/?q=${encodeURIComponent(q)}&limit=20`,
+        false,
+      );
+      const rows = Array.isArray(data) ? data : [];
+      const exact =
+        rows.find((d) => normalizePlaceText(d.nombre) === target) ??
+        rows.find((d) => normalizePlaceText(d.ciudad) === target) ??
+        null;
+      return exact;
+    } catch {
+      return null;
+    }
+  };
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const base: SearchFilters = {
       ciudad: "",
@@ -30,34 +63,41 @@ export function HomeHeroSearch({ onSearch }: Props) {
       ordenar: "-rating",
     };
 
-    if (!destination) {
+    let dest = destination;
+    if (!dest) {
+      // Si el usuario escribe pero no selecciona, resolvemos a UBIGEO para enviar provincia/departamento/distrito correctos.
+      dest = await resolveFreeTextDestination(ciudad);
+      if (dest) setDestination(dest);
+    }
+
+    if (!dest) {
       onSearch({ ...base, ciudad: ciudad.trim() });
       return;
     }
 
-    if (destination.tipo === "departamento") {
+    if (dest.tipo === "departamento") {
       onSearch({
         ...base,
-        departamento: destination.departamento ?? destination.nombre,
+        departamento: dest.departamento ?? dest.nombre,
       });
       return;
     }
 
-    if (destination.tipo === "provincia") {
+    if (dest.tipo === "provincia") {
       onSearch({
         ...base,
-        departamento: destination.departamento ?? undefined,
-        provincia: destination.provincia ?? destination.nombre,
+        departamento: dest.departamento ?? undefined,
+        provincia: dest.provincia ?? dest.nombre,
       });
       return;
     }
 
     onSearch({
       ...base,
-      ciudad: destination.ciudad,
-      departamento: destination.departamento ?? undefined,
-      provincia: destination.provincia ?? undefined,
-      distrito: destination.distrito ?? destination.nombre,
+      ciudad: dest.ciudad,
+      departamento: dest.departamento ?? undefined,
+      provincia: dest.provincia ?? undefined,
+      distrito: dest.distrito ?? dest.nombre,
     });
   };
 

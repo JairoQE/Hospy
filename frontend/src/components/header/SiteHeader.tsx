@@ -113,18 +113,9 @@ export function SiteHeader() {
     }
     if (isRole("administrador")) {
       return (
-        <>
-          <NavLink to="/admin" className={navClassName} onClick={() => setMobileOpen(false)}>
-            {t("nav.panel")}
-          </NavLink>
-          <NavLink
-            to="/admin/inicio"
-            className={navClassName}
-            onClick={() => setMobileOpen(false)}
-          >
-            {t("nav.homeAdmin")}
-          </NavLink>
-        </>
+        <NavLink to="/admin" className={navClassName} onClick={() => setMobileOpen(false)}>
+          {t("nav.panel")}
+        </NavLink>
       );
     }
     return null;

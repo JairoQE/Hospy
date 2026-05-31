@@ -40,10 +40,27 @@ export function DestinationAutocomplete({
     setLoading(true);
     try {
       const data = await api.get<DestinationOption[]>(
-        `/ubigeo/buscar/?q=${encodeURIComponent(q)}&limit=8`,
+        `/ubigeo/buscar/?q=${encodeURIComponent(q)}&limit=16`,
         false,
       );
-      setSuggestions(Array.isArray(data) ? data : []);
+      const apiSuggestions = Array.isArray(data) ? data : [];
+
+      // Garantiza que sugerencias frecuentes como "Tingo María" aparezcan aunque
+      // el backend aún esté recalculando o en caso de ordenación por ranking.
+      const localMatches = TOP_DESTINATIONS.filter((d) =>
+        d.nombre.toLowerCase().includes(q.toLowerCase()),
+      );
+
+      const merged = [...apiSuggestions, ...localMatches];
+      const seen = new Set<string>();
+      const unique = merged.filter((d) => {
+        const k = `${d.tipo}-${d.nombre}-${d.departamento ?? ""}-${d.provincia ?? ""}-${d.distrito ?? ""}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+
+      setSuggestions(unique.slice(0, 16));
     } catch {
       setSuggestions(
         TOP_DESTINATIONS.filter((d) =>

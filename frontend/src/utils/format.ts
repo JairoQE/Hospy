@@ -181,6 +181,7 @@ export function typeLabel(type: string, opts?: Pick<FormatOptions, "language">):
     hotel: "Hotel",
     hostal: "Hostal",
     hospedaje: "Hospedaje",
+    casa_departamento: "Casa o departamento",
   };
   return fallback[type] ?? type;
 }

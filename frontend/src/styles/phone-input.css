@@ -1,0 +1,147 @@
+.phone-input {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 12px;
+  background: #fff;
+  overflow: visible;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.phone-input:focus-within {
+  border-color: var(--primary, #0d6e6e);
+  box-shadow: 0 0 0 3px rgba(13, 110, 110, 0.16);
+}
+
+.phone-input--disabled {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.phone-input-country-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.phone-input-country {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 100%;
+  min-height: 46px;
+  padding: 0 0.65rem 0 0.75rem;
+  border: none;
+  border-right: 1px solid var(--border, #e2e8f0);
+  border-radius: 11px 0 0 11px;
+  background: #f8fafc;
+  cursor: pointer;
+  font: inherit;
+}
+
+.phone-input-country:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.phone-input-flag {
+  display: block;
+  width: 24px;
+  height: 18px;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
+  flex-shrink: 0;
+}
+
+.phone-input-flag-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 18px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #334155;
+  background: #e2e8f0;
+  border-radius: 2px;
+}
+
+.phone-input-caret {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--muted, #64748b);
+}
+
+.phone-input-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 0.35rem 0 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted, #64748b);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.phone-input-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0 0.85rem 0 0.25rem;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text, #1a2332);
+  outline: none;
+}
+
+.phone-input-field::placeholder {
+  color: #94a3b8;
+}
+
+.phone-input-dropdown {
+  position: fixed;
+  min-width: 260px;
+  max-height: 280px;
+  margin: 0;
+  padding: 0.35rem 0;
+  list-style: none;
+  overflow-y: auto;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+}
+
+.phone-input-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.phone-input-dropdown-item:hover {
+  background: rgba(13, 110, 110, 0.08);
+}
+
+.phone-input-dropdown-name {
+  flex: 1 1 auto;
+  font-size: 0.9rem;
+}
+
+.phone-input-dropdown-dial {
+  font-size: 0.85rem;
+  color: var(--muted, #64748b);
+}

@@ -28,7 +28,7 @@ import { SearchResultsSection } from "../components/home/SearchResultsSection";
 
 import { ScrollToTopButton } from "../components/ui/ScrollToTopButton";
 
-import { mergeDepartmentTiles } from "../utils/departmentTiles";
+import { recordBrowseTileClick } from "../api/browseTiles";
 
 import type { SearchFilters } from "../components/SearchBar";
 
@@ -39,6 +39,8 @@ import { useGeolocation } from "../hooks/useGeolocation";
 import { useRecentlyViewed } from "../hooks/useRecentlyViewed";
 import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
 import { translateBrowseTiles } from "../utils/browseTileI18n";
+import { mergeDepartmentTiles } from "../utils/departmentTiles";
+import { fetchDistrictCatalogForSearch } from "../utils/fetchDistrictCatalog";
 
 
 
@@ -95,6 +97,10 @@ export function HomePage() {
 
   const [filters, setFilters] = useState<SearchFilters | null>(null);
 
+  const [districtCatalog, setDistrictCatalog] = useState<UbigeoItem[] | undefined>(undefined);
+
+  const [districtCatalogLoading, setDistrictCatalogLoading] = useState(false);
+
   const [browse, setBrowse] = useState<BrowseMeta | null>(null);
 
   const [resultsTitle, setResultsTitle] = useState<string | null>(null);
@@ -133,6 +139,8 @@ export function HomePage() {
       setError("");
 
       setResultsTitle(title);
+
+      setItems([]);
 
       try {
 
@@ -334,6 +342,7 @@ export function HomePage() {
 
 
   const onBrowseTile = (tile: BrowseTile) => {
+    void recordBrowseTileClick(tile.id).catch(() => {});
 
     if (tile.group === "tipo") {
 
@@ -399,6 +408,10 @@ export function HomePage() {
 
     setError("");
 
+    setDistrictCatalog(undefined);
+
+    setDistrictCatalogLoading(false);
+
     lastQueryRef.current = null;
 
   };
@@ -428,6 +441,47 @@ export function HomePage() {
     () => new URLSearchParams(location.search).get("ofertas") === "1",
     [location.search],
   );
+
+  /** Departamento, provincia o destino amplio: mostrar resultados por distrito (campo city / UBIGEO). */
+  const groupResultsByDistrito = useMemo(() => {
+    if (!filters) return false;
+    if ((filters.distrito ?? "").trim()) return false;
+    return !!(
+      filters.departamento?.trim() ||
+      filters.provincia?.trim() ||
+      filters.ciudad?.trim()
+    );
+  }, [filters]);
+
+  useEffect(() => {
+    if (!groupResultsByDistrito || !filters) {
+      setDistrictCatalog(undefined);
+      setDistrictCatalogLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setDistrictCatalog(undefined);
+    setDistrictCatalogLoading(true);
+    fetchDistrictCatalogForSearch(filters)
+      .then((rows) => {
+        if (!cancelled) setDistrictCatalog(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => {
+        if (!cancelled) setDistrictCatalog([]);
+      })
+      .finally(() => {
+        if (!cancelled) setDistrictCatalogLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    groupResultsByDistrito,
+    filters?.departamento,
+    filters?.provincia,
+    filters?.ciudad,
+    filters?.distrito,
+  ]);
 
   const backToHome = () => {
     clearResults();
@@ -536,6 +590,12 @@ export function HomePage() {
             filters={filters}
 
             hasBrowse={Boolean(browse)}
+
+            groupByDistrito={groupResultsByDistrito}
+
+            districtCatalog={districtCatalog}
+
+            districtCatalogLoading={districtCatalogLoading}
 
             showBackToHome={isOfertasView}
 

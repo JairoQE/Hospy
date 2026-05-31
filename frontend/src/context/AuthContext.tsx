@@ -16,7 +16,7 @@ interface AuthState {
   login: (
     email: string,
     password: string,
-    options?: { remember?: boolean },
+    options?: { remember?: boolean; captchaToken?: string },
   ) => Promise<void>;
   register: (
     data: {
@@ -26,8 +26,26 @@ interface AuthState {
       password: string;
       username?: string;
     },
-    options?: { asOwner?: boolean; asSponsor?: boolean },
+    options?: { asOwner?: boolean; asSponsor?: boolean; captchaToken?: string },
   ) => Promise<void>;
+  loginWithGoogle: (
+    credential: string,
+    options?: {
+      loginOnly?: boolean;
+      asOwner?: boolean;
+      asSponsor?: boolean;
+      remember?: boolean;
+    },
+  ) => Promise<{ created: boolean }>;
+  loginWithFacebook: (
+    accessToken: string,
+    options?: {
+      loginOnly?: boolean;
+      asOwner?: boolean;
+      asSponsor?: boolean;
+      remember?: boolean;
+    },
+  ) => Promise<{ created: boolean }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   isRole: (...roles: UserRole[]) => boolean;
@@ -74,10 +92,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(
-    async (email: string, password: string, options?: { remember?: boolean }) => {
+    async (
+      email: string,
+      password: string,
+      options?: { remember?: boolean; captchaToken?: string },
+    ) => {
+      const body: Record<string, string> = { email, password };
+      if (options?.captchaToken) body.captcha_token = options.captchaToken;
       const tokens = await api.post<{ access: string; refresh: string }>(
         "/auth/login/",
-        { email, password },
+        body,
         false,
       );
       setTokens(tokens.access, tokens.refresh, options?.remember !== false);
@@ -95,18 +119,86 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password: string;
         username?: string;
       },
-      options?: { asOwner?: boolean; asSponsor?: boolean },
+      options?: { asOwner?: boolean; asSponsor?: boolean; captchaToken?: string },
     ) => {
       const path = options?.asSponsor
         ? "/auth/registro-patrocinador/"
         : options?.asOwner
           ? "/auth/registro-propietario/"
           : "/auth/registro/";
-      const res = await api.post<RegisterResponse>(path, data, false);
+      const payload: Record<string, string> = { ...data };
+      if (options?.captchaToken) payload.captcha_token = options.captchaToken;
+      const res = await api.post<RegisterResponse>(path, payload, false);
       setTokens(res.access, res.refresh);
       setUser(res.user);
     },
     [],
+  );
+
+  const postSocialAuth = useCallback(
+    async (
+      path: "/auth/google/" | "/auth/facebook/",
+      body: Record<string, string>,
+      remember?: boolean,
+    ) => {
+      const res = await api.post<RegisterResponse & { created?: boolean }>(path, body, false);
+      setTokens(res.access, res.refresh, remember !== false);
+      setUser(res.user);
+      return { created: Boolean(res.created) };
+    },
+    [],
+  );
+
+  const loginWithGoogle = useCallback(
+    async (
+      credential: string,
+      options?: {
+        loginOnly?: boolean;
+        asOwner?: boolean;
+        asSponsor?: boolean;
+        remember?: boolean;
+      },
+    ) => {
+      const role = options?.loginOnly
+        ? "login"
+        : options?.asSponsor
+          ? "patrocinador"
+          : options?.asOwner
+            ? "propietario"
+            : "huesped";
+      return postSocialAuth(
+        "/auth/google/",
+        { credential, role },
+        options?.remember,
+      );
+    },
+    [postSocialAuth],
+  );
+
+  const loginWithFacebook = useCallback(
+    async (
+      accessToken: string,
+      options?: {
+        loginOnly?: boolean;
+        asOwner?: boolean;
+        asSponsor?: boolean;
+        remember?: boolean;
+      },
+    ) => {
+      const role = options?.loginOnly
+        ? "login"
+        : options?.asSponsor
+          ? "patrocinador"
+          : options?.asOwner
+            ? "propietario"
+            : "huesped";
+      return postSocialAuth(
+        "/auth/facebook/",
+        { access_token: accessToken, role },
+        options?.remember,
+      );
+    },
+    [postSocialAuth],
   );
 
   const logout = useCallback(() => {
@@ -138,6 +230,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       login,
       register,
+      loginWithGoogle,
+      loginWithFacebook,
       logout,
       refreshUser,
       isRole,
@@ -149,6 +243,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       login,
       register,
+      loginWithGoogle,
+      loginWithFacebook,
       logout,
       refreshUser,
       isRole,

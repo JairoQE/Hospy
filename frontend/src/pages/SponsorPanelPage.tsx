@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { SponsorContactConfig } from "../api/types";
 import { useAuth } from "../context/AuthContext";
@@ -7,6 +6,7 @@ import { PrimeIcon } from "../components/PrimeIcon";
 import { SponsorAdsDashboard } from "../components/sponsor/SponsorAdsDashboard";
 import "../styles/ads.css";
 import "../styles/sponsor-dashboard.css";
+import "../styles/sponsor-panel.css";
 
 export function SponsorPanelPage() {
   const { user, isSponsorApproved, refreshUser } = useAuth();
@@ -25,16 +25,19 @@ export function SponsorPanelPage() {
   }, []);
 
   return (
-    <div className="sponsor-dashboard-wrap">
+    <div className="sponsor-panel-page">
       {user?.sponsor_warning_message && (
-        <div className="container login-alert login-alert--error" role="alert">
-          <strong>Advertencia del administrador</strong>
-          <p>{user.sponsor_warning_message}</p>
+        <div className="sponsor-panel-alert sponsor-panel-alert--error" role="alert">
+          <PrimeIcon name="pi-exclamation-triangle" size={24} />
+          <div>
+            <strong>Advertencia del administrador</strong>
+            <p>{user.sponsor_warning_message}</p>
+          </div>
         </div>
       )}
 
       {sponsorPending && (
-        <div className="container sponsor-panel-card sponsor-panel-card--info">
+        <div className="sponsor-panel-alert sponsor-panel-alert--info" role="status">
           <PrimeIcon name="pi-clock" size={28} />
           <div>
             <strong>Cuenta en revisión</strong>
@@ -57,17 +60,16 @@ export function SponsorPanelPage() {
       )}
 
       {sponsorRejected && (
-        <div className="container login-alert login-alert--error" role="alert">
-          <strong>Cuenta rechazada</strong>
-          <p>{user?.sponsor_rejection_reason || "Contacta al administrador."}</p>
+        <div className="sponsor-panel-alert sponsor-panel-alert--error" role="alert">
+          <PrimeIcon name="pi-times-circle" size={24} />
+          <div>
+            <strong>Cuenta rechazada</strong>
+            <p>{user?.sponsor_rejection_reason || "Contacta al administrador."}</p>
+          </div>
         </div>
       )}
 
       {approved && <SponsorAdsDashboard maxDur={maxDur} onRefreshUser={refreshUser} />}
-
-      <p className="container muted sponsor-back">
-        <Link to="/">← Volver al inicio</Link>
-      </p>
     </div>
   );
 }

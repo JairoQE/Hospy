@@ -4,6 +4,7 @@ import { PrimeIcon } from "../PrimeIcon";
 import { StarRating } from "../StarRating";
 import { UserAvatar } from "../UserAvatar";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
+import { ReviewStayMeta } from "../reviews/ReviewStayMeta";
 import { formatDate } from "../../utils/format";
 
 type Props = {
@@ -49,6 +50,13 @@ export function OwnerStoreReviews({ ownerName, reviews, totalCount }: Props) {
                     <span className="muted">{formatDate(r.created_at)}</span>
                   </div>
                   <p className="owner-store-review-acc muted">{r.accommodation_name}</p>
+                  <ReviewStayMeta
+                    habitacion={r.habitacion}
+                    checkIn={r.check_in}
+                    checkOut={r.check_out}
+                    totalAmount={r.total_amount}
+                    className="owner-store-review-stay muted"
+                  />
                   <p className="owner-store-review-comment">{r.comment}</p>
                 </div>
               </li>

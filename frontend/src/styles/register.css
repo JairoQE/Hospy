@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import "./auth-social.css";
 
 /* Registro — paleta y layout (comparte utilidades con login.css) */
 
@@ -97,6 +98,47 @@
 
 .register-name-row .login-field {
   margin-bottom: 1.25rem;
+}
+
+.register-password-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+.register-password-row .login-field {
+  margin-bottom: 1.25rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+.register-password-row .login-password-wrap {
+  width: 100%;
+}
+
+.register-password-row .register-input-icon-wrap {
+  width: 100%;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.register-password-row .register-input-icon-wrap input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.register-password-meta {
+  margin: 0.35rem 0 1.25rem;
+}
+
+.register-password-meta .register-hint {
+  margin: 0 0 0.5rem;
+}
+
+.register-password-meta .register-strength {
+  margin-top: 0;
 }
 
 .register-input-icon-wrap {
@@ -231,33 +273,17 @@
 }
 
 .register-social-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-}
-
-.register-social-btn {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  min-height: 44px;
-  padding: 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: #f8fafc;
-  font-size: 0.7rem;
-  font-weight: 600;
-  font-family: inherit;
-  color: var(--muted);
-  cursor: not-allowed;
-  opacity: 0.85;
+  align-items: stretch;
+  gap: 0.75rem;
+  width: 100%;
 }
 
-.register-social-btn span:first-child {
-  font-size: 1.1rem;
-  line-height: 1;
+.register-social-grid > * {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .register-demo {

@@ -1,191 +1,91 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { ApiError, api } from "../api/client";
 import { formatApiError, parseFieldErrors } from "../api/errors";
 import type { BrowseTile } from "../api/types";
+import { AdminUsersToastHost, showAdminToast } from "../components/admin/AdminUsersToast";
+import {
+  HomeContentEditorModal,
+  emptyTileForm,
+  tileToForm,
+  type TileFormState,
+} from "../components/admin/homeContent/HomeContentEditorModal";
+import { HomeContentTileCard } from "../components/admin/homeContent/HomeContentTileCard";
+import { HomePreviewModal } from "../components/admin/homeContent/HomePreviewModal";
+import { AdminDesignPanel } from "../components/admin/homeContent/AdminDesignPanel";
 import { PrimeIcon } from "../components/PrimeIcon";
-import { resolveMediaUrl } from "../utils/media";
-
-const GROUPS = [
-  { value: "tipo", label: "Tipos de alojamiento" },
-  { value: "region", label: "Regiones naturales" },
-  { value: "departamento", label: "Departamentos" },
-] as const;
-
-const FILTER_HINT: Record<string, string> = {
-  tipo: "hotel, hostal, hospedaje",
-  region: "costa, sierra, selva",
-  departamento: "Lima, Cusco, Arequipa…",
-};
-
-type TileFormState = {
-  group: string;
-  title: string;
-  subtitle: string;
-  slug: string;
-  filter_value: string;
-  gradient_css: string;
-  order: string;
-  is_active: boolean;
-};
-
-const emptyForm = (group: string): TileFormState => ({
-  group,
-  title: "",
-  subtitle: "",
-  slug: "",
-  filter_value: "",
-  gradient_css: "linear-gradient(135deg, #0d6e6e 0%, #4db6ac 100%)",
-  order: "0",
-  is_active: true,
-});
-
-const tileToForm = (tile: BrowseTile): TileFormState => ({
-  group: tile.group,
-  title: tile.title,
-  subtitle: tile.subtitle ?? "",
-  slug: tile.slug,
-  filter_value: tile.filter_value,
-  gradient_css: tile.gradient_css,
-  order: String(tile.order ?? 0),
-  is_active: tile.is_active !== false,
-});
-
-type ExpandedPanel = { kind: "create" } | { kind: "edit"; tileId: number };
-
-interface TileFormFieldsProps {
-  activeGroup: string;
-  form: TileFormState;
-  setForm: React.Dispatch<React.SetStateAction<TileFormState>>;
-  editing: BrowseTile | null;
-  imageFile: File | null;
-  setImageFile: (file: File | null) => void;
-  fieldErrors: Record<string, string>;
-}
-
-function TileFormFields({
-  activeGroup,
-  form,
-  setForm,
-  editing,
-  imageFile,
-  setImageFile,
-  fieldErrors,
-}: TileFormFieldsProps) {
-  return (
-    <div className="form-grid">
-      <label className="full">
-        Título
-        <input
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          required
-        />
-      </label>
-      <label className="full">
-        Subtítulo (opcional)
-        <input
-          value={form.subtitle}
-          onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
-        />
-      </label>
-      <label>
-        Slug (URL interna)
-        <input
-          value={form.slug}
-          onChange={(e) => setForm({ ...form, slug: e.target.value })}
-          placeholder={
-            activeGroup === "departamento" ? "lima, cusco, la-libertad…" : "auto desde título"
-          }
-        />
-        {activeGroup === "departamento" && (
-          <span className="muted" style={{ fontSize: "0.8rem" }}>
-            Si coincide con el árbol (lima, cusco…), al pulsar se abren provincias y distritos.
-          </span>
-        )}
-      </label>
-      <label>
-        Valor de filtro
-        <input
-          value={form.filter_value}
-          onChange={(e) => setForm({ ...form, filter_value: e.target.value })}
-          placeholder={FILTER_HINT[activeGroup] ?? ""}
-          required
-        />
-        {fieldErrors.filter_value && (
-          <span className="field-error">{fieldErrors.filter_value}</span>
-        )}
-      </label>
-      <label>
-        Orden
-        <input
-          type="number"
-          min={0}
-          value={form.order}
-          onChange={(e) => setForm({ ...form, order: e.target.value })}
-        />
-      </label>
-      <label className="checkbox-label">
-        <input
-          type="checkbox"
-          checked={form.is_active}
-          onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-        />
-        Visible en el inicio
-      </label>
-      <label className="full">
-        Degradado CSS (si no hay imagen)
-        <input
-          value={form.gradient_css}
-          onChange={(e) => setForm({ ...form, gradient_css: e.target.value })}
-        />
-      </label>
-      <label className="full">
-        Imagen
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-        />
-        {editing?.image_url && !imageFile && (
-          <img
-            className="browse-admin-preview"
-            src={resolveMediaUrl(editing.image_url)}
-            alt=""
-          />
-        )}
-      </label>
-    </div>
-  );
-}
+import {
+  ADMIN_CONFIG_TABS,
+  HOME_CONTENT_GROUPS,
+  filterHomeTiles,
+  reorderTiles,
+  type AdminConfigTab,
+  type HomeContentGroup,
+  type HomeContentStatusFilter,
+} from "../utils/adminHomeContentData";
 
 export function AdminHomeContentPage() {
-  const [activeGroup, setActiveGroup] = useState<string>("tipo");
+  const [activeTab, setActiveTab] = useState<AdminConfigTab>("tipo");
   const [tiles, setTiles] = useState<BrowseTile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState<ExpandedPanel | null>(null);
+
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<HomeContentStatusFilter>("all");
+
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [reordering, setReordering] = useState(false);
+
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState<"create" | "edit">("create");
   const [editing, setEditing] = useState<BrowseTile | null>(null);
-  const [form, setForm] = useState<TileFormState>(emptyForm("tipo"));
+  const [form, setForm] = useState<TileFormState>(emptyTileForm("tipo"));
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
+
+  const isDesignTab = activeTab === "diseno";
+  const contentGroup = (isDesignTab ? "tipo" : activeTab) as HomeContentGroup;
+
   const load = useCallback(() => {
+    if (isDesignTab) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     api
-      .get<BrowseTile[]>(`/inicio-bloques/?group=${activeGroup}`)
+      .get<BrowseTile[]>(`/inicio-bloques/?group=${activeTab}`)
       .then((data) => setTiles(Array.isArray(data) ? data : []))
-      .catch(() => setTiles([]))
+      .catch(() => {
+        setTiles([]);
+        showAdminToast("No se pudieron cargar las tarjetas.", "error");
+      })
       .finally(() => setLoading(false));
-  }, [activeGroup]);
+  }, [activeTab, isDesignTab]);
 
   useEffect(() => {
     load();
+    setSelected(new Set());
   }, [load]);
 
-  const closePanel = () => {
-    setExpanded(null);
+  const filteredTiles = useMemo(
+    () => filterHomeTiles(tiles, { search, status: statusFilter }),
+    [tiles, search, statusFilter],
+  );
+
+  const metrics = useMemo(() => {
+    const active = tiles.filter((t) => t.is_active !== false).length;
+    return { total: tiles.length, active, inactive: tiles.length - active };
+  }, [tiles]);
+
+  const closeEditor = () => {
+    setEditorOpen(false);
     setEditing(null);
     setImageFile(null);
     setError("");
@@ -193,29 +93,24 @@ export function AdminHomeContentPage() {
   };
 
   const openCreate = () => {
-    if (expanded?.kind === "create") {
-      closePanel();
-      return;
-    }
+    setEditorMode("create");
     setEditing(null);
-    setForm(emptyForm(activeGroup));
+    const nextOrder = tiles.length > 0 ? Math.max(...tiles.map((t) => t.order ?? 0)) + 1 : 1;
+    setForm({ ...emptyTileForm(contentGroup), order: String(nextOrder) });
     setImageFile(null);
-    setFieldErrors({});
     setError("");
-    setExpanded({ kind: "create" });
+    setFieldErrors({});
+    setEditorOpen(true);
   };
 
-  const toggleEdit = (tile: BrowseTile) => {
-    if (expanded?.kind === "edit" && expanded.tileId === tile.id) {
-      closePanel();
-      return;
-    }
+  const openEdit = (tile: BrowseTile) => {
+    setEditorMode("edit");
     setEditing(tile);
     setForm(tileToForm(tile));
     setImageFile(null);
-    setFieldErrors({});
     setError("");
-    setExpanded({ kind: "edit", tileId: tile.id });
+    setFieldErrors({});
+    setEditorOpen(true);
   };
 
   const save = async (e: FormEvent) => {
@@ -225,7 +120,7 @@ export function AdminHomeContentPage() {
     setFieldErrors({});
 
     const payload = {
-      group: activeGroup,
+      group: contentGroup,
       title: form.title.trim(),
       subtitle: form.subtitle.trim(),
       slug: form.slug.trim() || form.title.trim().toLowerCase(),
@@ -251,7 +146,11 @@ export function AdminHomeContentPage() {
       } else {
         await api.post("/inicio-bloques/", payload);
       }
-      closePanel();
+      showAdminToast(
+        editorMode === "create" ? "Tarjeta creada correctamente." : "Cambios guardados.",
+        "success",
+      );
+      closeEditor();
       load();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -269,160 +168,325 @@ export function AdminHomeContentPage() {
     if (!confirm(`¿Eliminar «${tile.title}»?`)) return;
     try {
       await api.delete(`/inicio-bloques/${tile.id}/`);
-      if (expanded?.kind === "edit" && expanded.tileId === tile.id) {
-        closePanel();
-      }
+      showAdminToast("Tarjeta eliminada.", "success");
       load();
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : "Error");
+      showAdminToast(e instanceof ApiError ? e.message : "No se pudo eliminar", "error");
     }
   };
 
-  const isCreateOpen = expanded?.kind === "create";
+  const toggleActive = async (tile: BrowseTile) => {
+    const next = tile.is_active === false;
+    try {
+      await api.patch(`/inicio-bloques/${tile.id}/`, { is_active: next });
+      setTiles((prev) =>
+        prev.map((t) => (t.id === tile.id ? { ...t, is_active: next } : t)),
+      );
+      showAdminToast(next ? "Tarjeta activada en la home." : "Tarjeta oculta en la home.", "success");
+    } catch (e) {
+      showAdminToast(e instanceof ApiError ? e.message : "Error al actualizar", "error");
+    }
+  };
+
+  const persistOrder = async (ordered: BrowseTile[]) => {
+    setReordering(true);
+    try {
+      await Promise.all(
+        ordered.map((t, i) =>
+          api.patch(`/inicio-bloques/${t.id}/`, { order: i + 1 }),
+        ),
+      );
+      setTiles(ordered);
+      showAdminToast("Orden actualizado.", "success");
+    } catch {
+      showAdminToast("No se pudo guardar el nuevo orden.", "error");
+      load();
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  const handleDrop = (targetIndex: number) => {
+    if (dragIndex === null || dragIndex === targetIndex) return;
+    const fromGlobal = filteredTiles[dragIndex];
+    const toGlobal = filteredTiles[targetIndex];
+    if (!fromGlobal || !toGlobal) return;
+
+    const fullOrder = [...tiles].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const fromIdx = fullOrder.findIndex((t) => t.id === fromGlobal.id);
+    const toIdx = fullOrder.findIndex((t) => t.id === toGlobal.id);
+    if (fromIdx < 0 || toIdx < 0) return;
+
+    void persistOrder(reorderTiles(fullOrder, fromIdx, toIdx));
+  };
+
+  const handleBulk = async (action: "activate" | "deactivate" | "delete") => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+
+    if (action === "delete" && !confirm(`¿Eliminar ${ids.length} tarjeta(s)?`)) return;
+
+    setBulkLoading(true);
+    try {
+      if (action === "delete") {
+        await Promise.all(ids.map((id) => api.delete(`/inicio-bloques/${id}/`)));
+        showAdminToast(`${ids.length} tarjeta(s) eliminada(s).`, "success");
+      } else {
+        const value = action === "activate";
+        await Promise.all(
+          ids.map((id) => api.patch(`/inicio-bloques/${id}/`, { is_active: value })),
+        );
+        showAdminToast(
+          action === "activate"
+            ? `${ids.length} tarjeta(s) activada(s).`
+            : `${ids.length} tarjeta(s) desactivada(s).`,
+          "success",
+        );
+      }
+      setSelected(new Set());
+      load();
+    } catch {
+      showAdminToast("No se completaron todas las acciones.", "error");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const toggleSelect = (id: number, checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const onSearchSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    setSearch(searchInput);
+  };
+
+  const groupLabel = HOME_CONTENT_GROUPS.find((g) => g.value === contentGroup)?.label ?? "";
 
   return (
-    <div className="admin-page">
-      <Link to="/admin" className="back-link admin-link-btn">
-        <PrimeIcon name="pi-arrow-left" size={14} /> Volver al dashboard
-      </Link>
-      <h1>Contenido del inicio</h1>
-      <p className="muted">
-        Tarjetas de tipos y regiones en la página principal. Sube imágenes o usa un degradado de
-        respaldo.
-      </p>
+    <div className="admin-page admin-home-content-page">
+      <AdminUsersToastHost />
 
-      <div className="admin-tabs">
-        {GROUPS.map((g) => (
+      <header className="admin-home-header">
+        <div>
+          <Link to="/admin" className="back-link admin-link-btn">
+            <PrimeIcon name="pi-arrow-left" size={14} /> Volver al dashboard
+          </Link>
+          <h1 className="admin-page-title">Configuración del sitio</h1>
+          <p className="admin-page-sub">
+            {isDesignTab
+              ? "Colores, hero y forma visual de la interfaz pública y del panel."
+              : "Gestiona tipos, regiones y departamentos que aparecen en la home. Arrastra para reordenar, sube imágenes y previsualiza el resultado."}
+          </p>
+        </div>
+        {!isDesignTab && (
+          <div className="admin-users-header-actions">
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setPreviewOpen(true)}
+              disabled={loading}
+            >
+              <PrimeIcon name="pi-eye" size={14} />
+              Vista previa de la home
+            </button>
+            <button type="button" className="btn btn-primary btn-sm" onClick={openCreate}>
+              <PrimeIcon name="pi-plus" size={14} />
+              Agregar nuevo
+            </button>
+          </div>
+        )}
+      </header>
+
+      {!isDesignTab && (
+        <div className="admin-users-kpi-grid admin-home-kpis">
+          <article className="admin-kpi-card">
+            <p className="admin-kpi-value">{loading ? "…" : metrics.total}</p>
+            <p className="admin-kpi-label">Tarjetas en {groupLabel}</p>
+          </article>
+          <article className="admin-kpi-card">
+            <p className="admin-kpi-value">{loading ? "…" : metrics.active}</p>
+            <p className="admin-kpi-label">Activas en home</p>
+          </article>
+          <article className="admin-kpi-card">
+            <p className="admin-kpi-value">{loading ? "…" : metrics.inactive}</p>
+            <p className="admin-kpi-label">Ocultas</p>
+          </article>
+        </div>
+      )}
+
+      <div className="admin-users-tabs" role="tablist">
+        {ADMIN_CONFIG_TABS.map((g) => (
           <button
             key={g.value}
             type="button"
-            className={`btn btn-ghost${activeGroup === g.value ? " is-active" : ""}`}
+            role="tab"
+            className={`admin-users-tab${activeTab === g.value ? " is-active" : ""}`}
             onClick={() => {
-              setActiveGroup(g.value);
-              closePanel();
+              setActiveTab(g.value);
+              setSearchInput("");
+              setSearch("");
+              setStatusFilter("all");
+              closeEditor();
             }}
           >
+            {g.icon && <PrimeIcon name={g.icon} size={14} />}
             {g.label}
           </button>
         ))}
       </div>
 
-      <div className="btn-row" style={{ marginBottom: "1rem" }}>
-        <button
-          type="button"
-          className={`btn btn-primary${isCreateOpen ? " is-active" : ""}`}
-          onClick={openCreate}
-          aria-expanded={isCreateOpen}
-        >
-          {isCreateOpen ? "Cerrar formulario" : "Añadir bloque"}
-        </button>
+      {isDesignTab ? (
+        <AdminDesignPanel />
+      ) : (
+        <>
+      <div className="admin-users-toolbar-card">
+        <form className="admin-users-toolbar" onSubmit={onSearchSubmit}>
+          <div className="admin-users-search">
+            <PrimeIcon name="pi-search" size={16} />
+            <input
+              type="search"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Buscar por nombre o filtro"
+              aria-label="Buscar tarjetas"
+            />
+          </div>
+          <button type="submit" className="btn btn-primary btn-sm">
+            Buscar
+          </button>
+        </form>
+        <div className="admin-users-toolbar-filters">
+          <label className="admin-users-filter">
+            <span>Estado</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as HomeContentStatusFilter)}
+            >
+              <option value="all">Todos</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </select>
+          </label>
+        </div>
       </div>
 
-      {isCreateOpen && (
-        <form className="card section-sm browse-admin-form" onSubmit={save}>
-          <h2>Nuevo bloque</h2>
-          {error && <p className="error-msg">{error}</p>}
-          <TileFormFields
-            activeGroup={activeGroup}
-            form={form}
-            setForm={setForm}
-            editing={editing}
-            imageFile={imageFile}
-            setImageFile={setImageFile}
-            fieldErrors={fieldErrors}
-          />
-          <div className="form-actions">
-            <button type="button" className="btn btn-ghost" onClick={closePanel}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? "Guardando…" : "Guardar"}
-            </button>
-          </div>
-        </form>
+      {selected.size > 0 && (
+        <div className="admin-consultas-bulk-bar admin-home-bulk-bar">
+          <span>{selected.size} seleccionada(s)</span>
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            disabled={bulkLoading}
+            onClick={() => void handleBulk("activate")}
+          >
+            Activar
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            disabled={bulkLoading}
+            onClick={() => void handleBulk("deactivate")}
+          >
+            Desactivar
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm admin-home-delete-btn"
+            disabled={bulkLoading}
+            onClick={() => void handleBulk("delete")}
+          >
+            Eliminar
+          </button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSelected(new Set())}>
+            Limpiar
+          </button>
+        </div>
       )}
 
-      {loading && <p className="muted">Cargando…</p>}
-      {!loading && tiles.length === 0 && (
-        <p className="muted">No hay bloques. Crea el primero.</p>
-      )}
+      {reordering && <p className="muted admin-home-reorder-hint">Guardando nuevo orden…</p>}
 
-      <ul className="browse-admin-list">
-        {tiles.map((tile) => {
-          const img = resolveMediaUrl(tile.image_url);
-          const isOpen = expanded?.kind === "edit" && expanded.tileId === tile.id;
-          return (
-            <li
+      {loading ? (
+        <p className="muted admin-home-loading">Cargando tarjetas…</p>
+      ) : filteredTiles.length === 0 ? (
+        <div className="admin-consultas-empty">
+          <PrimeIcon name="pi-images" size={44} />
+          <p className="admin-consultas-empty-title">No hay tarjetas</p>
+          <p className="muted">
+            {tiles.length === 0
+              ? `Crea la primera tarjeta de ${groupLabel.toLowerCase()}.`
+              : "Prueba otro filtro o término de búsqueda."}
+          </p>
+          {tiles.length === 0 && (
+            <button type="button" className="btn btn-primary btn-sm" onClick={openCreate}>
+              Agregar tarjeta
+            </button>
+          )}
+        </div>
+      ) : (
+        <ul
+          className="admin-home-tile-grid"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (dragOverIndex !== null) handleDrop(dragOverIndex);
+            setDragIndex(null);
+            setDragOverIndex(null);
+          }}
+        >
+          {filteredTiles.map((tile, index) => (
+            <HomeContentTileCard
               key={tile.id}
-              className={`card browse-admin-item${isOpen ? " is-expanded" : ""}`}
-            >
-              <div className="browse-admin-item-row">
-                <div
-                  className="browse-admin-thumb"
-                  style={
-                    img
-                      ? { backgroundImage: `url(${img})` }
-                      : { background: tile.gradient_css }
-                  }
-                />
-                <div className="browse-admin-meta">
-                  <strong>{tile.title}</strong>
-                  {tile.subtitle && <p className="muted">{tile.subtitle}</p>}
-                  <p className="muted">
-                    Filtro: <code>{tile.filter_value}</code> · Orden {tile.order}
-                    {!tile.is_active && " · Oculto"}
-                  </p>
-                  <div className="btn-row">
-                    <button
-                      type="button"
-                      className={`btn btn-ghost btn-sm${isOpen ? " is-active" : ""}`}
-                      onClick={() => toggleEdit(tile)}
-                      aria-expanded={isOpen}
-                    >
-                      {isOpen ? "Cerrar" : "Editar"}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm room-delete-btn"
-                      onClick={() => remove(tile)}
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-              </div>
+              tile={tile}
+              index={index}
+              selected={selected.has(tile.id)}
+              dragging={dragIndex === index}
+              dragOver={dragOverIndex === index && dragIndex !== index}
+              onSelectChange={(checked) => toggleSelect(tile.id, checked)}
+              onEdit={() => openEdit(tile)}
+              onDelete={() => void remove(tile)}
+              onToggleActive={() => void toggleActive(tile)}
+              onDragStart={(i) => setDragIndex(i)}
+              onDragEnter={(i) => setDragOverIndex(i)}
+              onDragEnd={() => {
+                setDragIndex(null);
+                setDragOverIndex(null);
+              }}
+            />
+          ))}
+        </ul>
+      )}
 
-              {isOpen && (
-                <form
-                  className="browse-admin-collapse"
-                  onSubmit={save}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <h3 className="browse-admin-collapse-title">Editar bloque</h3>
-                  {error && <p className="error-msg">{error}</p>}
-                  <TileFormFields
-                    activeGroup={activeGroup}
-                    form={form}
-                    setForm={setForm}
-                    editing={editing}
-                    imageFile={imageFile}
-                    setImageFile={setImageFile}
-                    fieldErrors={fieldErrors}
-                  />
-                  <div className="form-actions">
-                    <button type="button" className="btn btn-ghost" onClick={closePanel}>
-                      Cancelar
-                    </button>
-                    <button type="submit" className="btn btn-primary" disabled={saving}>
-                      {saving ? "Guardando…" : "Guardar cambios"}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      <HomeContentEditorModal
+        open={editorOpen}
+        mode={editorMode}
+        activeGroup={contentGroup}
+        form={form}
+        setForm={setForm}
+        editing={editing}
+        imageFile={imageFile}
+        setImageFile={setImageFile}
+        imagePreviewUrl={null}
+        fieldErrors={fieldErrors}
+        error={error}
+        saving={saving}
+        onClose={closeEditor}
+        onSubmit={save}
+      />
+
+      <HomePreviewModal
+        open={previewOpen}
+        group={contentGroup}
+        tiles={tiles}
+        onClose={() => setPreviewOpen(false)}
+      />
+        </>
+      )}
     </div>
   );
 }

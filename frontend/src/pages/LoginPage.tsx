@@ -3,7 +3,13 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { HospyBrand } from "../components/brand/HospyBrand";
 import { IconEye, IconEyeOff, IconSpinner, IconWarning } from "../components/icons";
 import { PrimeIcon } from "../components/PrimeIcon";
+import { FacebookSignInButton } from "../components/auth/FacebookSignInButton";
+import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
+import { TurnstileWidget } from "../components/auth/TurnstileWidget";
 import { useAuth } from "../context/AuthContext";
+import { useCaptchaConfig } from "../hooks/useCaptchaConfig";
+import { ApiError } from "../api/client";
+import { formatApiError } from "../api/errors";
 import "../styles/login.css";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -17,7 +23,7 @@ type LoginLocationState = {
 };
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle, loginWithFacebook } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state ?? {}) as LoginLocationState;
@@ -35,9 +41,21 @@ export function LoginPage() {
   const [emailTouched, setEmailTouched] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [facebookLoading, setFacebookLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const captcha = useCaptchaConfig();
 
   const emailInvalid = emailTouched && email.length > 0 && !EMAIL_RE.test(email.trim());
+  const captchaRequired = captcha.enabled && !captcha.loading;
+  const captchaReady = !captchaRequired || Boolean(captchaToken);
+
+  const resetCaptcha = useCallback(() => {
+    setCaptchaToken("");
+    setCaptchaReset((n) => n + 1);
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,10 +65,23 @@ export function LoginPage() {
     setLoading(true);
     setError("");
     try {
-      await login(email.trim(), password, { remember });
+      await login(email.trim(), password, {
+        remember,
+        captchaToken: captchaToken || undefined,
+      });
       navigate(from, { replace: true });
-    } catch {
-      setError("Correo o contraseña incorrectos.");
+    } catch (err) {
+      resetCaptcha();
+      if (err instanceof ApiError) {
+        const msg = formatApiError(err.data).toLowerCase();
+        if (msg.includes("verificación") || msg.includes("captcha")) {
+          setError("Completa la verificación de seguridad e inténtalo de nuevo.");
+        } else {
+          setError("Correo o contraseña incorrectos.");
+        }
+      } else {
+        setError("Correo o contraseña incorrectos.");
+      }
     } finally {
       setLoading(false);
     }
@@ -168,7 +199,21 @@ export function LoginPage() {
             </div>
           )}
 
-          <button type="submit" className="login-submit" disabled={loading || emailInvalid}>
+          {captchaRequired && (
+            <TurnstileWidget
+              siteKey={captcha.siteKey}
+              resetSignal={captchaReset}
+              onToken={setCaptchaToken}
+              onExpire={resetCaptcha}
+              onError={resetCaptcha}
+            />
+          )}
+
+          <button
+            type="submit"
+            className="login-submit"
+            disabled={loading || emailInvalid || !captchaReady}
+          >
             {loading ? (
               <>
                 <IconSpinner size={20} />
@@ -182,6 +227,53 @@ export function LoginPage() {
 
         <div className="login-divider" aria-hidden>
           <span>o</span>
+        </div>
+
+        <div className="login-social-wrap">
+          <div className="login-social-google">
+            <GoogleSignInButton
+              mode="login"
+              disabled={loading || googleLoading || facebookLoading}
+              onCredential={async (credential) => {
+                setError("");
+                setGoogleLoading(true);
+                try {
+                  await loginWithGoogle(credential, { loginOnly: true, remember });
+                  navigate(from, { replace: true });
+                } catch (err) {
+                  setError(
+                    err instanceof ApiError
+                      ? formatApiError(err.data)
+                      : "No se pudo iniciar sesión con Google.",
+                  );
+                } finally {
+                  setGoogleLoading(false);
+                }
+              }}
+              onError={(message) => setError(message)}
+            />
+          </div>
+          <FacebookSignInButton
+            mode="login"
+            disabled={loading || googleLoading || facebookLoading}
+            onAccessToken={async (accessToken) => {
+              setError("");
+              setFacebookLoading(true);
+              try {
+                await loginWithFacebook(accessToken, { loginOnly: true, remember });
+                navigate(from, { replace: true });
+              } catch (err) {
+                setError(
+                  err instanceof ApiError
+                    ? formatApiError(err.data)
+                    : "No se pudo iniciar sesión con Facebook.",
+                );
+              } finally {
+                setFacebookLoading(false);
+              }
+            }}
+            onError={(message) => setError(message)}
+          />
         </div>
 
         <div className="login-links">

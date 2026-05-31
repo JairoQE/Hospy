@@ -46,6 +46,13 @@ export function fetchMessageReports(estado: "pendiente" | "todos" = "pendiente")
   return api.get<MessageReport[]>(`/mensajes-reportados/?estado=${estado}`);
 }
 
+export function fetchPlatformConversations(q?: string) {
+  const qs = new URLSearchParams();
+  if (q?.trim()) qs.set("q", q.trim());
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return api.get<Conversation[]>(`/conversaciones/plataforma/${suffix || ""}`);
+}
+
 export function markChatInboxRead(conversationId: number) {
   return api.post(`/conversaciones/${conversationId}/leer-bandeja/`);
 }

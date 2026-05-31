@@ -22,7 +22,8 @@ export type DailyPoint = {
   revenue: number;
 };
 
-export type ChannelSlice = {
+export type BookingStatusSlice = {
+  status: string;
   name: string;
   count: number;
   percent: number;
@@ -39,7 +40,7 @@ export type DashboardAlert = {
 export type DashboardData = {
   kpis: KpiMetric[];
   dailySeries: DailyPoint[];
-  channels: ChannelSlice[];
+  bookingStatuses: BookingStatusSlice[];
   upcomingBookings: Booking[];
   recentReviews: Review[];
   alerts: DashboardAlert[];
@@ -47,15 +48,19 @@ export type DashboardData = {
   propertyLabel: string;
 };
 
-const CHANNEL_META = [
-  { name: "Directa", color: "#2563EB" },
-  { name: "Booking", color: "#F59E0B" },
-  { name: "Airbnb", color: "#EC4899" },
-  { name: "Otros", color: "#6B7280" },
+const BOOKING_STATUS_META = [
+  { status: "pendiente", name: "Pendiente", color: "#F59E0B" },
+  { status: "confirmada", name: "Confirmada", color: "#2563EB" },
+  { status: "completada", name: "Completada", color: "#10B981" },
+  { status: "cancelada", name: "Cancelada", color: "#6B7280" },
 ] as const;
 
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function endOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
 }
 
 function addDays(d: Date, n: number): Date {
@@ -134,16 +139,22 @@ function overlapsRange(
   return inD <= end && out >= start;
 }
 
-function filterBookings(
+function filterBookingsByProperty(
   bookings: Booking[],
   propertyName: string | null,
-  start: Date,
-  end: Date,
 ): Booking[] {
-  return bookings.filter((b) => {
-    if (propertyName && b.hospedaje !== propertyName) return false;
-    return overlapsRange(b.check_in, b.check_out, start, end);
-  });
+  if (!propertyName) return bookings;
+  return bookings.filter((b) => b.hospedaje === propertyName);
+}
+
+function isDateWithin(d: Date, start: Date, end: Date): boolean {
+  return d >= startOfDay(start) && d <= endOfDay(end);
+}
+
+function createdWithin(b: Booking, start: Date, end: Date): boolean {
+  const d = parseApiDate(b.created_at);
+  if (!d) return false;
+  return isDateWithin(d, start, end);
 }
 
 function confirmedStatuses(status: string): boolean {
@@ -156,24 +167,33 @@ function periodStats(
   start: Date,
   end: Date,
 ) {
-  const inRange = bookings.filter((b) => overlapsRange(b.check_in, b.check_out, start, end));
-  const confirmed = inRange.filter((b) => confirmedStatuses(b.status));
-  const cancelled = inRange.filter((b) => b.status === "cancelada" || b.status === "rechazada");
+  // En panel de propietario, "ingresos" suele entenderse como reservas creadas/confirmadas en el período
+  // (aunque el check-in sea futuro). Ocupación sigue basado en fechas de estadía.
+  const inCreatedRange = bookings.filter((b) => createdWithin(b, start, end));
+  const confirmed = inCreatedRange.filter((b) => confirmedStatuses(b.status));
+  const cancelled = inCreatedRange.filter(
+    (b) => b.status === "cancelada" || b.status === "rechazada",
+  );
   const revenue = confirmed.reduce((s, b) => s + bookingAmount(b), 0);
-  const nights = confirmed.reduce((s, b) => s + nightsBetween(b.check_in, b.check_out), 0);
+
+  const inStayRange = bookings.filter((b) => overlapsRange(b.check_in, b.check_out, start, end));
+  const stayConfirmed = inStayRange.filter((b) => confirmedStatuses(b.status));
+  const nights = stayConfirmed.reduce((s, b) => s + nightsBetween(b.check_in, b.check_out), 0);
   const periodDays =
     Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86400000) + 1);
   const capacity = Math.max(1, properties.length) * periodDays;
   const occupancy = Math.min(100, Math.round((nights / capacity) * 100));
   const cancelRate =
-    inRange.length > 0 ? Math.round((cancelled.length / inRange.length) * 100) : 0;
+    inCreatedRange.length > 0
+      ? Math.round((cancelled.length / inCreatedRange.length) * 100)
+      : 0;
 
   return {
     confirmedCount: confirmed.length,
     revenue,
     occupancy,
     cancelRate,
-    inRangeCount: inRange.length,
+    inRangeCount: inCreatedRange.length,
   };
 }
 
@@ -194,23 +214,37 @@ function formatPen(amount: number): string {
   }).format(amount);
 }
 
-/** Distribución por canal estimada (no hay campo en API; documentado como estimación). */
-function estimateChannels(bookings: Booking[]): ChannelSlice[] {
-  const confirmed = bookings.filter((b) => confirmedStatuses(b.status));
-  if (confirmed.length === 0) {
-    return CHANNEL_META.map((c) => ({ ...c, count: 0, percent: 0 }));
+/** Reservas del período agrupadas por estado real (todas vía Hospy). */
+function buildBookingStatusBreakdown(bookings: Booking[]): BookingStatusSlice[] {
+  if (bookings.length === 0) return [];
+
+  const counts = new Map<string, number>();
+  for (const b of bookings) {
+    counts.set(b.status, (counts.get(b.status) ?? 0) + 1);
   }
-  const buckets = [0, 0, 0, 0];
-  confirmed.forEach((b) => {
-    buckets[b.id % 4] += 1;
-  });
-  const total = confirmed.length;
-  return CHANNEL_META.map((c, i) => ({
-    name: c.name,
-    color: c.color,
-    count: buckets[i],
-    percent: Math.round((buckets[i] / total) * 100),
+
+  const total = bookings.length;
+  const known: BookingStatusSlice[] = BOOKING_STATUS_META.map((meta) => ({
+    status: meta.status,
+    name: meta.name,
+    color: meta.color,
+    count: counts.get(meta.status) ?? 0,
+    percent: Math.round(((counts.get(meta.status) ?? 0) / total) * 100),
   })).filter((s) => s.count > 0);
+
+  const knownTotal = known.reduce((s, x) => s + x.count, 0);
+  const otherCount = total - knownTotal;
+  if (otherCount > 0) {
+    known.push({
+      status: "otro",
+      name: "Otro estado",
+      color: "#9CA3AF",
+      count: otherCount,
+      percent: Math.round((otherCount / total) * 100),
+    });
+  }
+
+  return known;
 }
 
 function buildDailySeries(
@@ -223,17 +257,12 @@ function buildDailySeries(
   const propCount = Math.max(1, properties.length);
 
   for (let d = startOfDay(start); d <= end; d = addDays(d, 1)) {
-    const dayEnd = d;
-    const dayBookings = bookings.filter(
-      (b) =>
-        confirmedStatuses(b.status) &&
-        overlapsRange(b.check_in, b.check_out, d, dayEnd),
-    );
+    const dayBookings = bookings.filter((b) => {
+      if (!confirmedStatuses(b.status)) return false;
+      return createdWithin(b, d, d);
+    });
     const revenue = dayBookings.reduce((s, b) => s + bookingAmount(b), 0);
-    const nights = dayBookings.reduce(
-      (s, b) => s + nightsBetween(b.check_in, b.check_out),
-      0,
-    );
+    const nights = dayBookings.reduce((s, b) => s + nightsBetween(b.check_in, b.check_out), 0);
     const occupancy = Math.min(100, Math.round((nights / propCount) * 100));
     const label = d.toLocaleDateString("es-PE", { day: "numeric", month: "short" });
     points.push({
@@ -312,11 +341,10 @@ export function buildDashboardData(params: {
   const scopedProps = property ? [property] : properties;
 
   const { start, end, prevStart, prevEnd } = periodRange(period);
-  const scopedBookings = filterBookings(bookings, propertyName, start, end);
-  const prevBookings = filterBookings(bookings, propertyName, prevStart, prevEnd);
+  const propertyBookings = filterBookingsByProperty(bookings, propertyName);
 
-  const cur = periodStats(scopedBookings, scopedProps, start, end);
-  const prev = periodStats(prevBookings, scopedProps, prevStart, prevEnd);
+  const cur = periodStats(propertyBookings, scopedProps, start, end);
+  const prev = periodStats(propertyBookings, scopedProps, prevStart, prevEnd);
 
   const avgRating =
     scopedProps.length > 0
@@ -418,12 +446,14 @@ export function buildDashboardData(params: {
   return {
     kpis,
     dailySeries: buildDailySeries(
-      filterBookings(bookings, propertyName, start, end),
+      propertyBookings,
       scopedProps,
       start,
       end,
     ),
-    channels: estimateChannels(scopedBookings),
+    bookingStatuses: buildBookingStatusBreakdown(
+      propertyBookings.filter((b) => createdWithin(b, start, end)),
+    ),
     upcomingBookings,
     recentReviews,
     alerts: buildAlerts(bookings, properties, unreadMessages),

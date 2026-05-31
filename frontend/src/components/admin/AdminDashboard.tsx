@@ -1,20 +1,41 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Bar,
+  AreaChart,
   BarChart,
-  CartesianGrid,
   Cell,
-  Legend,
-  Line,
-  LineChart,
-  Pie,
   PieChart,
-  ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { DashboardChartTooltipContent } from "@/components/charts/DashboardChartTooltipContent";
+import {
+  DashboardBarSeries,
+  DashboardGrid,
+  DashboardPie,
+  DashboardSeries,
+  StyledChartContainer,
+  dashboardXAxisProps,
+  dashboardYAxisProps,
+} from "@/components/charts/dashboardCharts";
+import {
+  adminBarChartConfig,
+  adminFlowChartConfig,
+  adminRegionChartConfig,
+} from "../dashboard/dashboardChartConfig";
 import type {
   AccommodationDetail,
   AccommodationListItem,
@@ -24,6 +45,7 @@ import type {
 } from "../../api/types";
 import { formatDate, formatMoney } from "../../utils/format";
 import {
+  ADMIN_PERIOD_LABELS,
   ADMIN_REGIONS,
   type AdminDashboardSnapshot,
   type AdminKpi,
@@ -33,6 +55,7 @@ import {
   buildAdminDashboard,
   exportDashboardCsv,
 } from "../../utils/adminDashboardData";
+import { AdminDateRangeField } from "./AdminDateRangeField";
 import { PrimeIcon } from "../PrimeIcon";
 import { StatusBadge } from "../StatusBadge";
 
@@ -50,6 +73,17 @@ const PROPERTY_FILTERS: { id: AdminPropertyFilter; label: string }[] = [
   { id: "pending", label: "Pendientes" },
   { id: "suspended", label: "Suspendidos" },
 ];
+
+function formatChartTooltipValue(value: number, name?: string): string {
+  if (
+    name?.includes("Ingreso") ||
+    name?.includes("Cancelado") ||
+    name?.includes("confirmados")
+  ) {
+    return formatMoney(value);
+  }
+  return String(value);
+}
 
 type Props = {
   bookings: Booking[];
@@ -75,18 +109,55 @@ function TrendBadge({ dir, label }: { dir: TrendDir; label: string }) {
 }
 
 function KpiCard({ kpi }: { kpi: AdminKpi }) {
+  const accent =
+    kpi.id === "revenue"
+      ? "border-emerald-200 bg-emerald-50/40"
+      : kpi.id === "cancellations"
+        ? "border-rose-200 bg-rose-50/40"
+        : kpi.id === "moderation" && kpi.value !== "0"
+          ? "border-amber-200 bg-amber-50/40"
+          : "";
   return (
-    <article className="admin-kpi-card" title={kpi.tooltip} aria-label={kpi.label}>
-      <div className="admin-kpi-card-top">
-        <span className="admin-kpi-icon">
-          <PrimeIcon name={kpi.icon} size={22} />
+    <Card
+      className={`gap-3 py-4 shadow-sm transition-shadow hover:shadow-md ${accent}`.trim()}
+      title={kpi.tooltip}
+      aria-label={kpi.label}
+    >
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 px-4 pb-0">
+        <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <PrimeIcon name={kpi.icon} size={20} />
         </span>
         <TrendBadge dir={kpi.trend} label={kpi.trendLabel} />
-      </div>
-      <p className="admin-kpi-value">{kpi.value}</p>
-      <p className="admin-kpi-label">{kpi.label}</p>
-      <p className="admin-kpi-sublabel">{kpi.sublabel}</p>
-    </article>
+      </CardHeader>
+      <CardContent className="px-4 pt-2">
+        <p className="text-2xl font-bold tracking-tight">{kpi.value}</p>
+        <p className="mt-1 text-sm font-semibold">{kpi.label}</p>
+        <p className="text-xs text-muted-foreground">{kpi.sublabel}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function QuickLink({
+  to,
+  icon,
+  label,
+  hint,
+}: {
+  to: string;
+  icon: string;
+  label: string;
+  hint?: string;
+}) {
+  return (
+    <Link to={to} className="admin-dash-quick-link">
+      <PrimeIcon name={icon} size={18} />
+      <span>
+        <strong>{label}</strong>
+        {hint && <small>{hint}</small>}
+      </span>
+      <PrimeIcon name="pi-arrow-right" size={14} />
+    </Link>
   );
 }
 
@@ -103,11 +174,16 @@ export function AdminDashboard({
 }: Props) {
   const [period, setPeriod] = useState<AdminPeriod>("30d");
   const [propertyFilter, setPropertyFilter] = useState<AdminPropertyFilter>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
+  const customRange = dateFrom && dateTo ? { from: dateFrom, to: dateTo } : null;
 
   const data: AdminDashboardSnapshot = useMemo(
     () =>
       buildAdminDashboard({
         period,
+        customRange,
         region: selectedRegion,
         propertyFilter,
         bookings,
@@ -120,6 +196,7 @@ export function AdminDashboard({
       }),
     [
       period,
+      customRange,
       selectedRegion,
       propertyFilter,
       bookings,
@@ -132,15 +209,24 @@ export function AdminDashboard({
     ],
   );
 
-  const periodLabel = PERIODS.find((p) => p.id === period)?.label ?? period;
+  const periodLabel = customRange
+    ? `${dateFrom} – ${dateTo}`
+    : ADMIN_PERIOD_LABELS[period];
+
+  const clearCustomRange = () => {
+    setDateFrom("");
+    setDateTo("");
+  };
 
   return (
-    <div className="admin-dashboard">
+    <div className="admin-dashboard admin-dashboard--v2">
       <header className="admin-dashboard-header">
         <div className="admin-dashboard-head">
           <div>
-            <h1 className="admin-page-title">Resumen global</h1>
-            <p className="admin-page-sub">Período: {periodLabel}</p>
+            <h1 className="admin-page-title">Centro de operaciones</h1>
+            <p className="admin-page-sub">
+              Ingresos, reservas y moderación · Período: {periodLabel}
+            </p>
           </div>
           <button
             type="button"
@@ -152,14 +238,11 @@ export function AdminDashboard({
           </button>
         </div>
 
-        <div className="admin-filters-panel">
-          <div className="admin-filters-grid">
+        <div className="admin-filters-panel admin-filters-panel--dashboard">
+          <div className="admin-filters-grid admin-filters-grid--dashboard">
             <div className="admin-filter-group">
-              <span className="admin-filter-label" id="admin-filter-region">
-                Región
-              </span>
+              <span className="admin-filter-label">Región</span>
               <select
-                id="admin-filter-region"
                 value={selectedRegion}
                 onChange={(e) => onRegionChange(e.target.value)}
                 className="admin-select"
@@ -172,11 +255,8 @@ export function AdminDashboard({
               </select>
             </div>
             <div className="admin-filter-group">
-              <span className="admin-filter-label" id="admin-filter-status">
-                Estado hospedajes
-              </span>
+              <span className="admin-filter-label">Estado hospedajes</span>
               <select
-                id="admin-filter-status"
                 value={propertyFilter}
                 onChange={(e) => setPropertyFilter(e.target.value as AdminPropertyFilter)}
                 className="admin-select"
@@ -188,16 +268,30 @@ export function AdminDashboard({
                 ))}
               </select>
             </div>
+            <div className="admin-filter-group admin-filter-group--dates">
+              <span className="admin-filter-label">Rango de fechas</span>
+              <AdminDateRangeField
+                from={dateFrom}
+                to={dateTo}
+                onChange={(from, to) => {
+                  setDateFrom(from);
+                  setDateTo(to);
+                }}
+              />
+            </div>
             <div className="admin-filter-group admin-filter-group--period">
-              <span className="admin-filter-label">Período</span>
+              <span className="admin-filter-label">Período rápido</span>
               <div className="admin-period-toggle" role="group" aria-label="Período">
                 {PERIODS.map((p) => (
                   <button
                     key={p.id}
                     type="button"
-                    className={`admin-period-btn${period === p.id ? " is-active" : ""}`}
-                    onClick={() => setPeriod(p.id)}
-                    aria-pressed={period === p.id}
+                    className={`admin-period-btn${!customRange && period === p.id ? " is-active" : ""}`}
+                    onClick={() => {
+                      clearCustomRange();
+                      setPeriod(p.id);
+                    }}
+                    aria-pressed={!customRange && period === p.id}
                   >
                     {p.label}
                   </button>
@@ -207,6 +301,31 @@ export function AdminDashboard({
           </div>
         </div>
       </header>
+
+      <nav className="admin-dash-quick-links" aria-label="Accesos rápidos">
+        <QuickLink
+          to="/admin/moderacion"
+          icon="pi-home"
+          label="Moderar hospedajes"
+          hint={
+            pendingAccommodations.length > 0
+              ? `${pendingAccommodations.length} pendiente(s)`
+              : undefined
+          }
+        />
+        <QuickLink
+          to="/admin/reservas"
+          icon="pi-calendar"
+          label="Gestionar reservas"
+        />
+        <QuickLink
+          to="/admin/consultas"
+          icon="pi-comments"
+          label="Centro de moderación chat"
+          hint={pendingReports > 0 ? `${pendingReports} reporte(s)` : undefined}
+        />
+        <QuickLink to="/admin/inicio" icon="pi-cog" label="Contenido del inicio" />
+      </nav>
 
       {!data.hasEnoughData && (
         <div className="admin-dashboard-banner" role="status">
@@ -218,113 +337,136 @@ export function AdminDashboard({
         </div>
       )}
 
-      <section className="admin-kpi-grid" aria-label="Indicadores principales">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Indicadores principales">
         {data.kpis.map((kpi) => (
           <KpiCard key={kpi.id} kpi={kpi} />
         ))}
       </section>
 
-      <div className="admin-charts-row">
-        <section className="admin-card admin-card--wide" aria-label="Ingresos vs reservas">
-          <h2 className="admin-card-title">Ingresos vs. Reservas diarias</h2>
-          <div className="admin-chart-wrap">
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={data.dailySeries}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748B" }} />
-                <YAxis
-                  yAxisId="left"
-                  tick={{ fontSize: 11, fill: "#64748B" }}
-                  tickFormatter={(v) => `S/${v}`}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  tick={{ fontSize: 11, fill: "#64748B" }}
-                />
-                <Tooltip
-                  formatter={(value, name) => {
-                    const n = Number(value);
-                    if (name === "Ingresos") return [formatMoney(n), name];
-                    return [n, name];
-                  }}
-                />
-                <Legend />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="revenue"
-                  name="Ingresos"
-                  stroke="#10B981"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="bookings"
-                  name="Reservas"
-                  stroke="#2563EB"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle>Ingresos confirmados vs. monto cancelado</CardTitle>
+          <CardDescription>Comparativo diario en el período seleccionado</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <StyledChartContainer config={adminBarChartConfig} className="aspect-auto h-[320px] w-full">
+            <BarChart data={data.dailySeries} barGap={6} barCategoryGap="22%">
+              <DashboardGrid />
+              <XAxis {...dashboardXAxisProps({ dataKey: "label" })} />
+              <YAxis {...dashboardYAxisProps({ tickFormatter: (v) => `S/${v}` })} />
+              <ChartTooltip
+                content={
+                  <DashboardChartTooltipContent
+                    formatter={(value, name) =>
+                      formatChartTooltipValue(Number(value), String(name))
+                    }
+                  />
+                }
+              />
+              <ChartLegend content={<ChartLegendContent />} />
+              <DashboardBarSeries dataKey="confirmedRevenue" colorKey="confirmedRevenue" />
+              <DashboardBarSeries dataKey="cancelledRevenue" colorKey="cancelledRevenue" />
+            </BarChart>
+          </StyledChartContainer>
+        </CardContent>
+      </Card>
 
-        <section className="admin-card" aria-label="Reservas por tipo">
-          <h2 className="admin-card-title">Reservas por tipo de propiedad</h2>
+      <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Flujo de ingresos y reservas</CardTitle>
+            <CardDescription>Evolución diaria en el período</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <StyledChartContainer config={adminFlowChartConfig} className="aspect-auto h-[300px] w-full">
+              <AreaChart data={data.dailySeries}>
+                <DashboardGrid />
+                <XAxis {...dashboardXAxisProps({ dataKey: "label" })} />
+                <YAxis
+                  {...dashboardYAxisProps({
+                    yAxisId: "left",
+                    tickFormatter: (v) => `S/${v}`,
+                  })}
+                />
+                <YAxis
+                  {...dashboardYAxisProps({ yAxisId: "right", orientation: "right" })}
+                />
+                <ChartTooltip content={<DashboardChartTooltipContent />} />
+                <ChartLegend content={<ChartLegendContent />} />
+                <DashboardSeries yAxisId="left" dataKey="revenue" colorKey="revenue" />
+                <DashboardSeries yAxisId="right" dataKey="bookings" colorKey="bookings" />
+              </AreaChart>
+            </StyledChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Ingresos por tipo de alojamiento</CardTitle>
+          </CardHeader>
+          <CardContent>
           {data.typeDistribution.length === 0 ? (
-            <p className="muted">Sin datos en el período</p>
+            <p className="text-sm text-muted-foreground">Sin datos en el período</p>
           ) : (
-            <div className="admin-donut-wrap">
-              <ResponsiveContainer width="100%" height={220}>
+            <>
+              <StyledChartContainer
+                config={Object.fromEntries(
+                  data.typeDistribution.map((t) => [t.name, { label: t.name, color: t.color }]),
+                ) satisfies ChartConfig}
+                className="mx-auto aspect-square h-[220px] w-full max-w-[240px]"
+              >
                 <PieChart>
-                  <Pie
+                  <ChartTooltip content={<DashboardChartTooltipContent hideLabel nameKey="name" />} />
+                  <DashboardPie
                     data={data.typeDistribution}
-                    dataKey="count"
+                    dataKey="revenue"
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={78}
+                    innerRadius={56}
+                    outerRadius={84}
                   >
                     {data.typeDistribution.map((e) => (
                       <Cell key={e.name} fill={e.color} />
                     ))}
-                  </Pie>
-                  <Tooltip />
+                  </DashboardPie>
                 </PieChart>
-              </ResponsiveContainer>
-              <ul className="admin-legend-list">
+              </StyledChartContainer>
+              <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
                 {data.typeDistribution.map((t) => (
-                  <li key={t.name}>
-                    <span className="admin-legend-dot" style={{ background: t.color }} />
-                    {t.name} · {t.count} ({t.percent}%)
+                  <li key={t.name} className="flex items-center gap-2">
+                    <span className="size-2.5 shrink-0 rounded-sm" style={{ background: t.color }} />
+                    {t.name} · {formatMoney(t.revenue)} ({t.percent}%)
                   </li>
                 ))}
               </ul>
-            </div>
+            </>
           )}
-        </section>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="admin-mid-row">
-        <section className="admin-card admin-card--wide" aria-label="Rendimiento por región">
-          <h2 className="admin-card-title">Ingresos por ciudad</h2>
-          <div className="admin-chart-wrap admin-chart-wrap--bar">
-            <ResponsiveContainer width="100%" height={260}>
+      <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Ingresos por ciudad</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <StyledChartContainer config={adminRegionChartConfig} className="aspect-auto h-[260px] w-full">
               <BarChart data={data.regionBars} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                <XAxis type="number" tickFormatter={(v) => `S/${v}`} />
-                <YAxis type="category" dataKey="city" width={90} tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(v) => formatMoney(Number(v))} />
-                <Bar dataKey="revenue" name="Ingresos" fill="#2563EB" radius={[0, 4, 4, 0]} />
+                <DashboardGrid horizontal={false} />
+                <XAxis type="number" {...dashboardXAxisProps({ tickFormatter: (v) => `S/${v}` })} />
+                <YAxis type="category" {...dashboardYAxisProps({ dataKey: "city", width: 90, fontSize: 12 })} />
+                <ChartTooltip
+                  content={
+                    <DashboardChartTooltipContent formatter={(v) => formatMoney(Number(v))} />
+                  }
+                />
+                <DashboardBarSeries dataKey="revenue" colorKey="revenue" layout="vertical" />
               </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
+            </StyledChartContainer>
+          </CardContent>
+        </Card>
 
         <section className="admin-card" aria-label="Alertas del sistema">
           <h2 className="admin-card-title">Alertas del sistema</h2>

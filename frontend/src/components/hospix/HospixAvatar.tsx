@@ -45,8 +45,8 @@ export function HospixAvatar({
     >
       <defs>
         <linearGradient id={bgGrad} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#2563EB" />
-          <stop offset="100%" stopColor="#1E3A8A" />
+          <stop offset="0%" stopColor="var(--hospix-bg-start, #2563EB)" />
+          <stop offset="100%" stopColor="var(--hospix-bg-end, #1E3A8A)" />
         </linearGradient>
         <linearGradient id={robotBody} x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor="#F8FAFC" />

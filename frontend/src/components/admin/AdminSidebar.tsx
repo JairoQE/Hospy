@@ -15,6 +15,7 @@ const NAV: { to: string; label: string; icon: string; end?: boolean }[] = [
   { to: "/admin/moderacion", label: "Hospedajes", icon: "pi-home" },
   { to: "/admin/reservas", label: "Reservas", icon: "pi-calendar" },
   { to: "/admin/consultas", label: "Consultas", icon: "pi-comments" },
+  { to: "/admin/registro-actividad", label: "Auditoría", icon: "pi-list" },
   { to: "/admin/inicio", label: "Configuración", icon: "pi-cog" },
 ];
 
@@ -29,8 +30,16 @@ export function AdminSidebar({
       className={`admin-sidebar${collapsed ? " is-collapsed" : ""}`}
       aria-label="Menú de administración"
     >
+      <div className="admin-sidebar-bg" aria-hidden />
+      <div className="admin-sidebar-inner">
       <div className="admin-sidebar-brand">
-        <Link to="/admin" className="admin-sidebar-brand-link" onClick={onCloseMobile}>
+        <Link
+          to="/"
+          className="admin-sidebar-brand-link"
+          onClick={onCloseMobile}
+          aria-label="Ir al inicio de Hospy"
+          title="Ir al inicio"
+        >
           <HospyIcon size={32} className="admin-sidebar-brand-icon" />
           {!collapsed && <span className="admin-sidebar-brand-name">Hospy</span>}
         </Link>
@@ -68,6 +77,18 @@ export function AdminSidebar({
           ))}
         </ul>
       </nav>
+      <div className="admin-sidebar-footer">
+        <Link
+          to="/"
+          className="admin-sidebar-home-link"
+          onClick={onCloseMobile}
+          title="Volver al sitio público"
+        >
+          <PrimeIcon name="pi-home" size={20} />
+          <span>Ir al inicio</span>
+        </Link>
+      </div>
+      </div>
     </aside>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError, api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { unwrapList } from "../api/unwrap";
@@ -19,8 +19,8 @@ import {
 } from "../components/AccommodationForm";
 import { OwnerInquiriesPanel } from "../components/OwnerInquiriesPanel";
 import { OwnerDashboard } from "../components/owner/OwnerDashboard";
-import { OwnerPanelNav, type OwnerPanelTab } from "../components/owner/OwnerPanelNav";
 import { OwnerPropertiesList } from "../components/owner/OwnerPropertiesList";
+import { ownerTabPath, tabFromParams } from "../utils/ownerPanelRoutes";
 import { useInboxSummary } from "../hooks/useInboxSummary";
 import { StatusBadge } from "../components/StatusBadge";
 import { formatCoordinate } from "../utils/coordinates";
@@ -46,22 +46,17 @@ function formToPayload(form: AccommodationFormData) {
   };
 }
 
-function tabFromParams(searchParams: URLSearchParams): OwnerPanelTab {
-  const t = searchParams.get("tab");
-  if (t === "consultas" || t === "mensajes") return "consultas";
-  if (t === "reservas") return "reservas";
-  if (t === "nuevo") return "nuevo";
-  if (t === "hospedajes") return "hospedajes";
-  return "dashboard";
-}
-
 export function OwnerPanelPage() {
   const { user, isOwnerApproved } = useAuth();
   const ownerApproved = isOwnerApproved();
   const ownerPending = user?.owner_status === "pendiente";
   const ownerRejected = user?.owner_status === "rechazado";
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [tab, setTab] = useState<OwnerPanelTab>(() => tabFromParams(searchParams));
+  const tab = tabFromParams(searchParams);
+  const goToTab = (next: Parameters<typeof ownerTabPath>[0]) => {
+    navigate(ownerTabPath(next));
+  };
   const [mine, setMine] = useState<AccommodationListItem[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -72,10 +67,6 @@ export function OwnerPanelPage() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState(emptyAccommodationForm);
-
-  useEffect(() => {
-    setTab(tabFromParams(searchParams));
-  }, [searchParams]);
 
   const load = () => {
     if (!ownerApproved) {
@@ -130,9 +121,8 @@ export function OwnerPanelPage() {
       await api.post<AccommodationDetail>("/hospedajes/", formToPayload(form));
       setMsg("Hospedaje enviado a revisión del administrador.");
       setForm(emptyAccommodationForm());
-      setTab("dashboard");
-      load();
-    } catch (err) {
+      goToTab("dashboard");
+      load();    } catch (err) {
       if (err instanceof ApiError) {
         setError(formatApiError(err.data));
         setFieldErrors(parseFieldErrors(err.data));
@@ -142,7 +132,10 @@ export function OwnerPanelPage() {
     }
   };
 
-  const bookingAction = async (id: number, action: "confirmar" | "rechazar" | "completar") => {
+  const bookingAction = async (
+    id: number,
+    action: "confirmar" | "rechazar" | "completar" | "cancelar",
+  ) => {
     try {
       await api.post(`/reservas/${id}/${action}/`);
       load();
@@ -153,17 +146,7 @@ export function OwnerPanelPage() {
 
   return (
     <div className="owner-panel-page">
-      <div className="owner-panel-inner">
-        <header className="owner-panel-header">
-          <h1 className="owner-panel-title">Panel del propietario</h1>
-
-          {ownerApproved && (
-            <OwnerPanelNav tab={tab} onTabChange={setTab} />
-          )}
-        </header>
-
-        {ownerPending && (
-          <div className="owner-approval-banner" role="status">
+      {ownerPending && (          <div className="owner-approval-banner" role="status">
             <h2>Cuenta en revisión</h2>
             <p className="muted">
               Un administrador está validando que seas un anfitrión o empresa legítima.
@@ -200,17 +183,15 @@ export function OwnerPanelPage() {
                 bookings={bookings}
                 reviews={reviews}
                 unreadMessages={inboxSummary.mensajes}
-                onViewReservations={() => setTab("reservas")}
-                onViewConsultas={() => setTab("consultas")}
-              />
+                onViewReservations={() => goToTab("reservas")}
+                onViewConsultas={() => goToTab("consultas")}              />
             )}
 
             {tab === "hospedajes" && !loading && (
               <OwnerPropertiesList
                 properties={mine}
                 bookings={bookings}
-                onCreateNew={() => setTab("nuevo")}
-              />
+                onCreateNew={() => goToTab("nuevo")}              />
             )}
 
             {tab === "consultas" && !loading && (
@@ -235,7 +216,17 @@ export function OwnerPanelPage() {
                     <article key={b.id} className="owner-booking-card">
                       <div className="owner-booking-card-head">
                         <h3>
-                          {b.hospedaje} · Hab. {b.habitacion}
+                          {b.accommodation_id != null ? (
+                            <Link
+                              to={`/hospedajes/${b.accommodation_id}`}
+                              className="booking-item-title-link"
+                            >
+                              {b.hospedaje}
+                            </Link>
+                          ) : (
+                            b.hospedaje
+                          )}{" "}
+                          · Hab. {b.habitacion}
                         </h3>
                         <StatusBadge status={b.status} />
                       </div>
@@ -266,13 +257,33 @@ export function OwnerPanelPage() {
                           </>
                         )}
                         {b.status === "confirmada" && (
-                          <button
-                            type="button"
-                            className="btn btn-primary"
-                            onClick={() => bookingAction(b.id, "completar")}
-                          >
-                            Marcar completada
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn-primary"
+                              onClick={() => bookingAction(b.id, "completar")}
+                            >
+                              Marcar completada
+                            </button>
+                            {b.can_cancel && (
+                              <button
+                                type="button"
+                                className="btn btn-ghost"
+                                onClick={() => {
+                                  if (
+                                    !confirm(
+                                      "¿Cancelar esta reserva? El huésped será notificado.",
+                                    )
+                                  ) {
+                                    return;
+                                  }
+                                  void bookingAction(b.id, "cancelar");
+                                }}
+                              >
+                                Cancelar reserva
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </article>
@@ -291,13 +302,12 @@ export function OwnerPanelPage() {
                   fieldErrors={fieldErrors}
                   submitLabel="Enviar a revisión"
                   onSubmit={createAcc}
-                  onCancel={() => setTab("dashboard")}
+                  onCancel={() => goToTab("dashboard")}
                 />
               </div>
             )}
           </>
         )}
-      </div>
     </div>
   );
 }

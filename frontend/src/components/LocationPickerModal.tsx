@@ -4,6 +4,7 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import "leaflet/dist/leaflet.css";
+import { PrimeIcon } from "./PrimeIcon";
 import { roundCoordinate } from "../utils/coordinates";
 
 const pinIcon = L.icon({
@@ -88,13 +89,16 @@ export function LocationPickerModal({
   const [pos, setPos] = useState({ lat: latitude, lng: longitude });
   const [query, setQuery] = useState(searchHint);
   const [searching, setSearching] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [geoError, setGeoError] = useState("");
 
   useEffect(() => {
     if (open) {
       setPos({ lat: latitude, lng: longitude });
       setQuery(searchHint);
       setSearchError("");
+      setGeoError("");
     }
   }, [open, latitude, longitude, searchHint]);
 
@@ -146,9 +150,42 @@ export function LocationPickerModal({
     mapRef.current.panTo([pos.lat, pos.lng]);
   }, [pos.lat, pos.lng, open]);
 
+  const handleMyLocation = () => {
+    if (!navigator.geolocation) {
+      setGeoError("Tu navegador no permite usar la ubicación GPS.");
+      return;
+    }
+    setLocating(true);
+    setGeoError("");
+    setSearchError("");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setPos({
+          lat: roundCoordinate(position.coords.latitude),
+          lng: roundCoordinate(position.coords.longitude),
+        });
+        setLocating(false);
+      },
+      (err) => {
+        setLocating(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          setGeoError(
+            "Permite el acceso a tu ubicación en el navegador para centrar el mapa aquí.",
+          );
+        } else if (err.code === err.TIMEOUT) {
+          setGeoError("La ubicación tardó demasiado. Intenta de nuevo.");
+        } else {
+          setGeoError("No se pudo obtener tu ubicación. Intenta de nuevo.");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    );
+  };
+
   const handleSearch = async () => {
     setSearching(true);
     setSearchError("");
+    setGeoError("");
     try {
       const result = await searchPlace(query);
       if (!result) {
@@ -181,7 +218,8 @@ export function LocationPickerModal({
         <div className="map-modal-header">
           <h2>Seleccionar ubicación</h2>
           <p className="muted">
-            Busca como en Google Maps, haz clic en el mapa o arrastra el pin. Luego confirma.
+            Si el pin está lejos, usa <strong>Ir a mi ubicación</strong>, busca una dirección,
+            haz clic en el mapa o arrastra el pin. Luego confirma.
           </p>
           <button type="button" className="map-modal-close" onClick={onClose} aria-label="Cerrar">
             ×
@@ -196,11 +234,29 @@ export function LocationPickerModal({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleSearch())}
           />
-          <button type="button" className="btn btn-primary" onClick={handleSearch} disabled={searching}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleSearch}
+            disabled={searching || locating}
+          >
             {searching ? "Buscando…" : "Buscar"}
           </button>
         </div>
-        {searchError && <p className="error-msg location-search-error">{searchError}</p>}
+        <div className="location-geo-row">
+          <button
+            type="button"
+            className="btn btn-outline location-my-position-btn"
+            onClick={handleMyLocation}
+            disabled={locating || searching}
+          >
+            <PrimeIcon name="pi-map-marker" size={16} />
+            {locating ? "Obteniendo ubicación…" : "Ir a mi ubicación"}
+          </button>
+        </div>
+        {(searchError || geoError) && (
+          <p className="error-msg location-search-error">{searchError || geoError}</p>
+        )}
 
         <div ref={containerRef} className="location-picker-map" />
 

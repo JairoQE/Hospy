@@ -3,6 +3,24 @@ export type UserRole = "huesped" | "propietario" | "patrocinador" | "administrad
 export type OwnerStatus = "pendiente" | "aprobado" | "rechazado" | "";
 export type SponsorStatus = "pendiente" | "aprobado" | "rechazado" | "";
 
+export interface AdminUserListItem {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: UserRole;
+  owner_status?: OwnerStatus;
+  sponsor_status?: SponsorStatus;
+  moderation_status: string;
+  is_active: boolean;
+  phone: string;
+  photo_url?: string | null;
+  date_joined: string;
+  last_login: string | null;
+  bookings_count: number;
+  hospedajes_count: number;
+}
+
 export interface User {
   id: number;
   email: string;
@@ -30,6 +48,7 @@ export interface User {
   accommodations?: AccommodationListItem[];
   date_joined: string;
   last_login: string | null;
+  has_password?: boolean;
 }
 
 export interface PublicUserProfile {
@@ -85,6 +104,10 @@ export interface OwnerReviewPreview {
   comment: string;
   created_at: string;
   accommodation_name: string;
+  habitacion?: string | null;
+  check_in?: string | null;
+  check_out?: string | null;
+  total_amount?: string | null;
 }
 
 export interface OwnerStoreListingItem extends AccommodationListItem {
@@ -200,6 +223,8 @@ export interface BrowseTile {
   gradient_css: string;
   order: number;
   is_active?: boolean;
+  /** Clics en los últimos 30 días (solo en listado admin). */
+  clicks_30d?: number;
 }
 
 export interface RoomPhoto {
@@ -218,6 +243,7 @@ export interface RoomPublic {
   description: string;
   base_price: string | number;
   fotos?: RoomPhoto[];
+  services?: Service[];
 }
 
 /** Habitación en panel del propietario (CRUD). */
@@ -233,12 +259,17 @@ export interface Room {
   base_price: string | number;
   precio_base?: string | number;
   is_active: boolean;
+  services?: Service[];
+  service_ids?: number[];
   created_at: string;
 }
 
 export interface PriceBreakdown {
   noches: number;
+  nights_count?: number;
   total: string | number;
+  available?: boolean;
+  availability_message?: string | null;
   desglose?: {
     fecha: string;
     precio: string | number;
@@ -254,12 +285,17 @@ export interface Booking {
   hospedaje: string;
   habitacion: string;
   ciudad: string;
+  accommodation_id?: number;
   huesped: { id: number; email: string; nombre: string };
   check_in: string;
   check_out: string;
   total_amount: string | number;
   status: string;
   created_at: string;
+  can_leave_review?: boolean;
+  has_review?: boolean;
+  can_cancel?: boolean;
+  cancel_reason?: string | null;
   room_id?: number;
   desglose_precio?: PriceBreakdown | null;
   updated_at?: string;
@@ -269,6 +305,10 @@ export interface Review {
   id: number;
   accommodation: number;
   autor_nombre: string;
+  habitacion?: string | null;
+  check_in?: string | null;
+  check_out?: string | null;
+  total_amount?: string | number | null;
   rating: number;
   comment: string;
   created_at: string;
@@ -311,6 +351,7 @@ export interface Conversation {
   owner_photo_url: string | null;
   last_message_at: string | null;
   last_message_preview: string;
+  message_count?: number;
   created_at: string;
 }
 
@@ -333,6 +374,7 @@ export interface MessageReport {
   reporter_email: string;
   accommodation_id: number;
   accommodation_name: string;
+  conversation_id?: number | null;
   reason: string;
   reason_label: string;
   detail: string;

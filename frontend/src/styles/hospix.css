@@ -36,7 +36,7 @@
   border: none;
   border-radius: 50%;
   background: transparent;
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--hospix-bg-start, #2563eb) 42%, transparent);
   cursor: pointer;
   display: block;
   overflow: visible;
@@ -51,7 +51,7 @@
 
 .hospix-fab:hover {
   transform: scale(1.06);
-  box-shadow: 0 8px 26px rgba(37, 99, 235, 0.5);
+  box-shadow: 0 8px 26px color-mix(in srgb, var(--hospix-bg-start, #2563eb) 52%, transparent);
 }
 
 .hospix-fab .hospix-avatar--pulse {

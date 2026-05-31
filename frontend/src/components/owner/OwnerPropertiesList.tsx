@@ -31,10 +31,10 @@ export function OwnerPropertiesList({ properties, bookings, onCreateNew }: Props
       <div className="owner-properties-empty">
         <PrimeIcon name="pi-home" className="owner-properties-empty-icon" size={48} />
         <h2>Aún no tienes hospedajes</h2>
-        <p>Crea el primero con &ldquo;Nuevo hospedaje&rdquo; y envíalo a revisión del administrador.</p>
-        <button type="button" className="owner-panel-nav-new" onClick={onCreateNew}>
+        <p>Crea el primero con &ldquo;Nuevo local&rdquo; y envíalo a revisión del administrador.</p>
+        <button type="button" className="owner-action-btn" onClick={onCreateNew}>
           <PrimeIcon name="pi-plus" size={18} />
-          Nuevo hospedaje
+          Nuevo local
         </button>
       </div>
     );
