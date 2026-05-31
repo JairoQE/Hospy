@@ -78,6 +78,15 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
     setCaptchaReset((n) => n + 1);
   };
 
+  const onCaptchaExpire = () => {
+    setCaptchaToken("");
+    setCaptchaReset((n) => n + 1);
+  };
+
+  const onCaptchaError = () => {
+    setCaptchaToken("");
+  };
+
   const captchaRequired = captcha.enabled && !captcha.loading;
   const captchaReady = !captchaRequired || Boolean(captchaToken);
 
@@ -534,8 +543,8 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
                 siteKey={captcha.siteKey}
                 resetSignal={captchaReset}
                 onToken={setCaptchaToken}
-                onExpire={resetCaptcha}
-                onError={resetCaptcha}
+                onExpire={onCaptchaExpire}
+                onError={onCaptchaError}
               />
             )}
 

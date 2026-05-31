@@ -57,6 +57,15 @@ export function LoginPage() {
     setCaptchaReset((n) => n + 1);
   }, []);
 
+  const onCaptchaExpire = useCallback(() => {
+    setCaptchaToken("");
+    setCaptchaReset((n) => n + 1);
+  }, []);
+
+  const onCaptchaError = useCallback(() => {
+    setCaptchaToken("");
+  }, []);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailTouched(true);
@@ -204,8 +213,8 @@ export function LoginPage() {
               siteKey={captcha.siteKey}
               resetSignal={captchaReset}
               onToken={setCaptchaToken}
-              onExpire={resetCaptcha}
-              onError={resetCaptcha}
+              onExpire={onCaptchaExpire}
+              onError={onCaptchaError}
             />
           )}
 

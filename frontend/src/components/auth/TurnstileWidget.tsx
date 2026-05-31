@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { loadTurnstileScript } from "../../utils/loadTurnstile";
 
 type Props = {
@@ -19,11 +19,18 @@ export function TurnstileWidget({
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const callbacksRef = useRef({ onToken, onExpire, onError });
+  const [loadError, setLoadError] = useState(false);
 
   callbacksRef.current = { onToken, onExpire, onError };
 
   useEffect(() => {
+    if (!siteKey.trim()) {
+      setLoadError(true);
+      return;
+    }
+
     let cancelled = false;
+    setLoadError(false);
 
     loadTurnstileScript()
       .then(() => {
@@ -38,12 +45,21 @@ export function TurnstileWidget({
           sitekey: siteKey,
           theme: "light",
           size: "normal",
-          callback: (token) => callbacksRef.current.onToken(token),
+          callback: (token) => {
+            setLoadError(false);
+            callbacksRef.current.onToken(token);
+          },
           "expired-callback": () => callbacksRef.current.onExpire?.(),
-          "error-callback": () => callbacksRef.current.onError?.(),
+          "error-callback": () => {
+            setLoadError(true);
+            callbacksRef.current.onError?.();
+          },
         });
       })
-      .catch(() => callbacksRef.current.onError?.());
+      .catch(() => {
+        setLoadError(true);
+        callbacksRef.current.onError?.();
+      });
 
     return () => {
       cancelled = true;
@@ -57,6 +73,12 @@ export function TurnstileWidget({
   return (
     <div className="auth-captcha" aria-label="Verificación de seguridad">
       <div ref={containerRef} className="auth-captcha-widget" />
+      {loadError && (
+        <p className="auth-captcha-error" role="alert">
+          No se pudo cargar la verificación. Comprueba que el dominio esté autorizado en
+          Turnstile o recarga la página.
+        </p>
+      )}
       <p className="auth-captcha-hint muted">
         Verificación anti-bots para proteger tu cuenta.
       </p>

@@ -439,3 +439,12 @@
   line-height: 1.35;
   text-align: center;
 }
+
+.auth-captcha-error {
+  margin: 0.35rem 0 0;
+  max-width: 20rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  text-align: center;
+  color: #b91c1c;
+}
