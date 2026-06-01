@@ -199,6 +199,91 @@ html[data-home-entrance="0"] .tab-panel-fade {
   z-index: 0;
 }
 
+/* Buscador v2 — carrusel móvil (deslizar entre destino y fechas) */
+
+.hero-search-carousel {
+  width: 100%;
+  min-width: 0;
+}
+
+.hero-search-carousel-track {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.hero-search-slide {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.hero-search-carousel-footer {
+  display: none;
+}
+
+.hero-search-carousel-step-name {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: center;
+}
+
+.hero-search-carousel-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+}
+
+.hero-search-carousel-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition:
+    width 0.2s ease,
+    background 0.2s ease;
+}
+
+.hero-search-carousel-dot.is-active {
+  width: 1.35rem;
+  background: #fff;
+}
+
+.hero-search-carousel-dot:focus-visible {
+  outline: 2px solid #febb02;
+  outline-offset: 2px;
+}
+
+@media (min-width: 769px) {
+  .hero-search-carousel {
+    flex: 1;
+    display: flex;
+    min-width: 0;
+  }
+
+  .hero-search-carousel-track {
+    flex: 1;
+    overflow: visible;
+    gap: 0;
+  }
+
+  .hero-search-slide {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .hero-search-slide:first-child .hero-search-field-destination {
+    border-radius: 14px 0 0 14px;
+  }
+}
+
 /* Buscador v2 */
 
 .hero-search--v2 {
@@ -236,6 +321,28 @@ html[data-home-entrance="0"] .tab-panel-fade {
 
 .hero-search--v2 .hero-search-label {
   color: var(--home-deep);
+}
+
+.hero-search-field-destination .hero-search-field-hint {
+  display: block;
+  margin: 0 0 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #5c6b7a;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.hero-search-field-destination .hero-search-input-wrap input {
+  font-size: clamp(0.875rem, 2.6vw, 1.05rem);
+}
+
+.hero-search-field-destination .hero-search-input-wrap input::placeholder {
+  color: #8b95a5;
+  opacity: 1;
 }
 
 .hero-search--v2 .hero-search-field-dates {
@@ -1007,7 +1114,41 @@ html[data-home-entrance="0"] .tab-panel-fade {
     background: transparent;
     box-shadow: none;
     padding: 0;
+    gap: 0.75rem;
+  }
+
+  .hero-search-carousel {
+    overflow: visible;
+  }
+
+  .hero-search-carousel-track {
+    display: flex;
+    flex-wrap: nowrap;
     gap: 0.65rem;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0 0.35rem 0.25rem;
+    margin: 0 -0.35rem;
+  }
+
+  .hero-search-carousel-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hero-search-slide {
+    flex: 0 0 88%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    min-width: 0;
+  }
+
+  .hero-search-carousel-footer {
+    display: block;
+    margin-top: 0.35rem;
   }
 
   .hero-search--v2 .hero-search-field,
@@ -1018,6 +1159,15 @@ html[data-home-entrance="0"] .tab-panel-fade {
     border-radius: 14px !important;
     background: #fff;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  }
+
+  .hero-search-field-destination .hero-search-field-hint {
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .hero-search-field-destination .hero-search-input-wrap input {
+    font-size: 1rem;
   }
 
   .hero-search--v2 .hero-search-date-pair {

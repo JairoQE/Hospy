@@ -1037,6 +1037,13 @@ img {
 .hero-search-field-destination .hero-search-input-wrap input {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-search-field-destination .hero-search-input-wrap input:focus,
+.hero-search-field-destination .hero-search-input-wrap input:not(:placeholder-shown) {
+  text-overflow: clip;
 }
 
 .hero-search-field-icon {

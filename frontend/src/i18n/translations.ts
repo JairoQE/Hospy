@@ -54,9 +54,12 @@ export const translations = {
     search: {
       where: "¿Adónde vas?",
       destination: "Destino",
-      destinationPlaceholder: "Tu distrito o ciudad, provincia / departamento",
+      destinationHint: "Distrito, ciudad, provincia o departamento",
+      destinationPlaceholder: "Ej. Miraflores, Lima, Cusco",
       checkIn: "Desde",
       checkOut: "Hasta",
+      datesStep: "Fechas de estadía",
+      carouselLabel: "Pasos del buscador",
       searchBtn: "Buscar",
     },
     price: {
@@ -421,9 +424,12 @@ export const translations = {
     search: {
       where: "Where are you going?",
       destination: "Destination",
-      destinationPlaceholder: "Your district or city, province / department",
+      destinationHint: "District, city, province or department",
+      destinationPlaceholder: "e.g. Miraflores, Lima, Cusco",
       checkIn: "Check-in",
       checkOut: "Check-out",
+      datesStep: "Stay dates",
+      carouselLabel: "Search steps",
       searchBtn: "Search",
     },
     price: {

@@ -8,6 +8,7 @@ interface Props {
   onChange: (value: string) => void;
   onSelect: (option: DestinationOption) => void;
   placeholder: string;
+  ariaDescribedBy?: string;
 }
 
 function normalizeQuery(q: string) {
@@ -19,6 +20,7 @@ export function DestinationAutocomplete({
   onChange,
   onSelect,
   placeholder,
+  ariaDescribedBy,
 }: Props) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -139,6 +141,7 @@ export function DestinationAutocomplete({
             activeIndex >= 0 ? `${listId}-opt-${activeIndex}` : undefined
           }
           placeholder={placeholder}
+          aria-describedby={ariaDescribedBy}
           value={value}
           onChange={(e) => {
             onChange(e.target.value);
