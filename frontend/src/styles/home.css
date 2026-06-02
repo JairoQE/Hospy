@@ -289,7 +289,8 @@ html[data-home-entrance="0"] .tab-panel-fade {
 .hero-search--v2 {
   position: relative;
   z-index: 3;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) auto;
   align-items: stretch;
   max-width: 960px;
   margin-left: auto;
@@ -354,14 +355,11 @@ html[data-home-entrance="0"] .tab-panel-fade {
 }
 
 .hero-search--v2 .hero-search-carousel {
-  flex: 1 1 auto;
-  min-width: 0;
+  display: contents;
 }
 
 .hero-search--v2 .hero-search-carousel-track {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-  gap: 0.45rem;
+  display: contents;
 }
 
 .hero-search--v2 .hero-search-slide {
@@ -501,7 +499,7 @@ html[data-home-entrance="0"] .tab-panel-fade {
 }
 
 .btn-hero-search--v2 {
-  flex: 0 0 clamp(9.25rem, 16vw, 12rem);
+  width: clamp(9.25rem, 16vw, 12rem);
   align-self: stretch;
   justify-content: center;
   border-radius: 14px;
@@ -1131,6 +1129,8 @@ html[data-home-entrance="0"] .tab-panel-fade {
   }
 
   .hero-search--v2 {
+    display: flex;
+    grid-template-columns: none;
     flex-direction: column;
     background: transparent;
     box-shadow: none;
@@ -1139,6 +1139,7 @@ html[data-home-entrance="0"] .tab-panel-fade {
   }
 
   .hero-search-carousel {
+    display: block;
     overflow: visible;
   }
 
@@ -1161,6 +1162,7 @@ html[data-home-entrance="0"] .tab-panel-fade {
   }
 
   .hero-search-slide {
+    display: block;
     flex: 0 0 88%;
     scroll-snap-align: center;
     scroll-snap-stop: always;
