@@ -190,6 +190,100 @@
   }
 }
 
+/* Theme switch (oscuro / claro) */
+.theme-switch {
+  font-size: 17px;
+  position: relative;
+  display: inline-block;
+  width: 64px;
+  height: 34px;
+}
+
+.theme-switch-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #73c0fc;
+  transition: 0.4s;
+  border-radius: 30px;
+}
+
+.theme-switch-slider::before {
+  position: absolute;
+  content: "";
+  height: 30px;
+  width: 30px;
+  border-radius: 20px;
+  left: 2px;
+  bottom: 2px;
+  z-index: 2;
+  background-color: #e8e8e8;
+  transition: 0.4s;
+}
+
+.theme-switch-sun svg {
+  position: absolute;
+  top: 6px;
+  left: 36px;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  animation: theme-switch-rotate 15s linear infinite;
+}
+
+.theme-switch-moon svg {
+  fill: #73c0fc;
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  animation: theme-switch-tilt 5s linear infinite;
+}
+
+@keyframes theme-switch-rotate {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes theme-switch-tilt {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.theme-switch-input:checked + .theme-switch-slider {
+  background-color: #183153;
+}
+
+.theme-switch-input:focus + .theme-switch-slider {
+  box-shadow: 0 0 1px #183153;
+}
+
+.theme-switch-input:checked + .theme-switch-slider::before {
+  transform: translateX(30px);
+}
+
 .header-auth-desktop {
   display: none;
   align-items: center;
@@ -569,6 +663,20 @@
   margin-top: auto;
   padding: 1rem 1rem 0;
   border-top: 1px solid var(--border);
+}
+
+.header-mobile-theme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem 0;
+}
+
+.header-mobile-theme-label {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .header-mobile-user .header-user-menu {

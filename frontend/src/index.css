@@ -24,6 +24,18 @@
   line-height: 1.5;
 }
 
+:root[data-theme="dark"] {
+  --bg: #0f1722;
+  --surface: #162131;
+  --text: #e7edf7;
+  --muted: #9fb0c8;
+  --border: #2a3a50;
+  --primary: #4ecdc4;
+  --primary-hover: #42b9b0;
+  --home-deep: #dbeafe;
+  --home-turquoise: #6ec7e8;
+}
+
 *,
 *::before,
 *::after {
@@ -33,6 +45,30 @@
 body {
   margin: 0;
   min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .site-header--v2 {
+  background: rgba(22, 33, 49, 0.82);
+}
+
+:root[data-theme="dark"] .site-header--v2.is-scrolled {
+  background: var(--surface);
+  border-bottom-color: rgba(159, 176, 200, 0.16);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .header-nav-link,
+:root[data-theme="dark"] .header-link-auth,
+:root[data-theme="dark"] .hospy-brand-name {
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .header-mobile-drawer,
+:root[data-theme="dark"] .header-user-dropdown {
+  background: var(--surface);
+  border-color: var(--border);
 }
 
 a {
