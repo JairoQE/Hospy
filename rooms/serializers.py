@@ -4,7 +4,7 @@ from properties.media_urls import media_public_path
 from properties.models import Accommodation, Service
 from properties.serializers import ServiceSerializer
 
-from .models import Room, RoomAvailability, SeasonRate
+from .models import Room, RoomAvailability, RoomPhoto, SeasonRate
 from .services import calculate_stay_total, rates_overlap, sync_season_rates_from_base
 
 
