@@ -10,6 +10,7 @@ import { ChatDockProvider } from "./context/ChatDockContext";
 import { HospixChatProvider } from "./context/HospixChatContext";
 import { LocaleCurrencyProvider } from "./context/LocaleCurrencyContext";
 import { SiteDesignProvider } from "./context/SiteDesignContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { FloatingChatHeads } from "./components/chat/FloatingChatHeads";
 import { GlobalChatDock } from "./components/GlobalChatDock";
 import { HospixWidget } from "./components/hospix/HospixWidget";
@@ -42,6 +43,7 @@ const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ?? "";
 function AppTree() {
   return (
     <AuthProvider>
+      <ThemeProvider>
       <LocaleCurrencyProvider>
       <SiteDesignProvider>
       <ChatDockProvider>
@@ -142,6 +144,7 @@ function AppTree() {
       </ChatDockProvider>
       </SiteDesignProvider>
       </LocaleCurrencyProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

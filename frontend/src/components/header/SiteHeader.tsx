@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation, type Location } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
+import { useTheme } from "../../context/ThemeContext";
 import { HospyBrand } from "../brand/HospyBrand";
 import { IconClose, IconMenu } from "../icons";
 import { InboxHeaderButtons } from "../InboxHeaderButtons";
@@ -33,6 +34,7 @@ function isOfertasNavActive({ pathname, search }: Location) {
 export function SiteHeader() {
   const { user, logout, isRole } = useAuth();
   const { t } = useLocaleCurrency();
+  const { isDarkMode, toggleTheme } = useTheme();
   const location = useLocation();
 
   const navPublic = [
@@ -56,7 +58,6 @@ export function SiteHeader() {
   const menuId = useId();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -82,23 +83,6 @@ export function SiteHeader() {
       document.removeEventListener("keydown", onKey);
     };
   }, [mobileOpen]);
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem("hospy-theme");
-    const prefersDark =
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initialDark = saved ? saved === "dark" : prefersDark;
-    setIsDarkMode(initialDark);
-    document.documentElement.dataset.theme = initialDark ? "dark" : "light";
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = isDarkMode ? "dark" : "light";
-    window.localStorage.setItem("hospy-theme", isDarkMode ? "dark" : "light");
-  }, [isDarkMode]);
-
-  const toggleTheme = () => setIsDarkMode((prev) => !prev);
 
   const roleNav = useCallback(() => {
     if (!user) return null;
