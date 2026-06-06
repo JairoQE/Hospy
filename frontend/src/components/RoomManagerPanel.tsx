@@ -5,6 +5,7 @@ import { unwrapList } from "../api/unwrap";
 import type { Paginated, Room, Service } from "../api/types";
 import { RoomPhotoSection } from "./RoomPhotoSection";
 import { formatMoney, roomTypeLabel } from "../utils/format";
+import { isWholeUnitPricing } from "../utils/pricingModel";
 
 const ROOM_TYPES = [
   { value: "simple", label: "Simple" },
@@ -36,6 +37,7 @@ const emptyRoomForm = (): RoomFormData => ({
 interface Props {
   accommodationId: number;
   accommodationStatus: string;
+  accommodationType?: string;
   services: Service[];
   onServicesChange?: (services: Service[]) => void;
   onChanged?: () => void;
@@ -44,11 +46,14 @@ interface Props {
 export function RoomManagerPanel({
   accommodationId,
   accommodationStatus,
+  accommodationType,
   services,
   onServicesChange,
   onChanged,
 }: Props) {
   const [rooms, setRooms] = useState<Room[]>([]);
+  const wholeUnit = isWholeUnitPricing(accommodationType);
+  const activeRooms = rooms.filter((r) => r.is_active !== false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -81,7 +86,16 @@ export function RoomManagerPanel({
 
   const openCreate = () => {
     setEditingId(null);
-    setForm(emptyRoomForm());
+    setForm(
+      wholeUnit
+        ? {
+            ...emptyRoomForm(),
+            number: "Completo",
+            type: "familiar",
+            capacity: "6",
+          }
+        : emptyRoomForm(),
+    );
     setFieldErrors({});
     setFormHint("");
     setFormOpen(true);
@@ -213,10 +227,11 @@ export function RoomManagerPanel({
     <section className="card section-sm room-manager">
       <div className="room-manager-head">
         <div>
-          <h2>Habitaciones</h2>
+          <h2>{wholeUnit ? "Precio del alojamiento completo" : "Habitaciones"}</h2>
           <p className="muted">
-            Define tipos, capacidad, precio base (lo fijas tú) y servicios por habitación.
-            Si hay tarifas de temporada, se recalculan al guardar el precio base.
+            {wholeUnit
+              ? "Define capacidad, precio por noche del espacio completo y servicios incluidos (estilo Airbnb)."
+              : "Define tipos, capacidad, precio por habitación y servicios. Si hay tarifas de temporada, se recalculan al guardar el precio base."}
           </p>
         </div>
         {canManage && (
@@ -224,9 +239,9 @@ export function RoomManagerPanel({
             type="button"
             className="btn btn-primary"
             onClick={openCreate}
-            disabled={formOpen && !editingId}
+            disabled={(formOpen && !editingId) || (wholeUnit && activeRooms.length >= 1)}
           >
-            Añadir habitación
+            {wholeUnit ? "Configurar alojamiento" : "Añadir habitación"}
           </button>
         )}
       </div>
@@ -241,7 +256,7 @@ export function RoomManagerPanel({
 
       {formOpen && canManage && (
         <form className="room-form card-inner" onSubmit={save}>
-          <h3>{editingId ? "Editar habitación" : "Nueva habitación"}</h3>
+          <h3>{editingId ? (wholeUnit ? "Editar alojamiento" : "Editar habitación") : wholeUnit ? "Alojamiento completo" : "Nueva habitación"}</h3>
           {formHint && <p className="success-msg">{formHint}</p>}
           <div className="form-grid room-form-grid">
             <label>
@@ -292,7 +307,7 @@ export function RoomManagerPanel({
               />
             </label>
             <label className="full">
-              Precio base / noche (S/)
+              {wholeUnit ? "Precio por noche — alojamiento completo (S/)" : "Precio por noche (S/)"}
               <input
                 type="number"
                 min={0}
@@ -384,7 +399,7 @@ export function RoomManagerPanel({
               Cancelar
             </button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? "Guardando…" : editingId ? "Guardar cambios" : "Crear habitación"}
+              {saving ? "Guardando…" : editingId ? "Guardar cambios" : wholeUnit ? "Guardar alojamiento" : "Crear habitación"}
             </button>
           </div>
         </form>
@@ -395,8 +410,12 @@ export function RoomManagerPanel({
       ) : rooms.length === 0 ? (
         <p className="muted">
           {canManage
-            ? "Aún no hay habitaciones. Pulsa «Añadir habitación» para publicar la primera."
-            : "Sin habitaciones registradas."}
+            ? wholeUnit
+              ? "Configura el precio del alojamiento completo con el botón de arriba."
+              : "Aún no hay habitaciones. Pulsa «Añadir habitación» para publicar la primera."
+            : wholeUnit
+              ? "Sin precio configurado."
+              : "Sin habitaciones registradas."}
         </p>
       ) : (
         <div className="room-table-wrap">
@@ -407,7 +426,7 @@ export function RoomManagerPanel({
                 <th>Tipo</th>
                 <th>Cap.</th>
                 <th>Piso</th>
-                <th>Precio / noche</th>
+                <th>{wholeUnit ? "Precio / noche (completo)" : "Precio / noche"}</th>
                 <th>Servicios</th>
                 <th>Estado</th>
                 <th></th>

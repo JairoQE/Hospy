@@ -451,6 +451,60 @@ html[data-sidebar-animated="0"] .owner-sidebar-bg {
 }
 
 /* Formulario nuevo */
+/* Formulario propietario — contraste legible aunque el sitio esté en tema oscuro */
+
+.owner-panel-page,
+.owner-panel-form-wrap,
+.owner-panel-page .owner-edit-section,
+.owner-panel-page .room-manager {
+  --text: var(--owner-text);
+  --muted: var(--owner-text-secondary);
+  --border: var(--owner-border);
+  --bg: var(--owner-bg);
+  --surface: var(--owner-surface);
+  color: var(--owner-text);
+}
+
+.owner-panel-form-wrap label,
+.owner-panel-page .accommodation-form label,
+.owner-panel-page .room-manager label,
+.owner-panel-page .owner-edit-section label {
+  color: var(--owner-text-secondary);
+}
+
+.owner-panel-form-wrap .location-fields-label,
+.owner-panel-form-wrap .services-fieldset legend,
+.owner-panel-page .room-manager h2,
+.owner-panel-page .room-manager h3 {
+  color: var(--owner-text);
+}
+
+.owner-panel-form-wrap input,
+.owner-panel-form-wrap select,
+.owner-panel-form-wrap textarea,
+.owner-panel-page .room-manager input,
+.owner-panel-page .room-manager select,
+.owner-panel-page .room-manager textarea {
+  background: #ffffff;
+  color: var(--owner-text);
+  border-color: var(--owner-border);
+}
+
+.owner-panel-form-wrap .muted,
+.owner-panel-page .room-manager .muted,
+.owner-panel-page .owner-edit-section .muted {
+  color: var(--owner-text-muted);
+}
+
+.owner-panel-form-wrap .hint,
+.owner-panel-form-wrap .form-hint {
+  color: var(--owner-text-muted);
+}
+
+.owner-panel-form-wrap .location-fields {
+  background: var(--owner-bg);
+}
+
 .owner-panel-form-wrap {
   background: var(--owner-surface);
   border-radius: var(--owner-radius);

@@ -31,6 +31,7 @@ import { recordRecentView } from "../hooks/useRecentlyViewed";
 import { canInquireHost } from "../utils/hostChat";
 import { compareDateStr } from "../utils/calendarDates";
 import { formatDate, formatMoney, roomTypeLabel, todayPlusDays, typeLabel } from "../utils/format";
+import { isWholeUnitPricing } from "../utils/pricingModel";
 import { resolveMediaUrl } from "../utils/media";
 import { IconCheck, IconEye, IconMapPin, IconUser } from "../components/icons";
 import { PrimeIcon } from "../components/PrimeIcon";
@@ -249,6 +250,13 @@ export function AccommodationDetailPage() {
   const score = acc ? Number(acc.average_rating) : 0;
   const stars = ratingStars(score);
   const topReview = reviews[0];
+  const wholeUnit = acc ? isWholeUnitPricing(acc.type) : false;
+
+  useEffect(() => {
+    if (wholeUnit && rooms.length === 1 && selectedRoom !== rooms[0].id) {
+      setSelectedRoom(rooms[0].id);
+    }
+  }, [wholeUnit, rooms, selectedRoom]);
 
   const minPrice = useMemo(() => {
     if (hasDates) {
@@ -456,7 +464,7 @@ export function AccommodationDetailPage() {
               <table className="availability-table">
                 <thead>
                   <tr>
-                    <th>{t("detail.roomTypeCol")}</th>
+                    <th>{wholeUnit ? t("detail.wholeUnitCol") : t("detail.roomTypeCol")}</th>
                     <th>{t("detail.guests")}</th>
                     <th>{hasDates ? t("detail.priceStay") : t("detail.priceNight")}</th>
                     <th></th>
@@ -483,7 +491,9 @@ export function AccommodationDetailPage() {
                         <tr>
                           <td>
                             <strong>
-                              {t("detail.room")} {r.number} — {roomTypeLabel(r.type)}
+                              {wholeUnit
+                                ? t("detail.wholeUnitName")
+                                : `${t("detail.room")} ${r.number} — ${roomTypeLabel(r.type)}`}
                             </strong>
                             {r.description && (
                               <p className="room-desc">{r.description}</p>
@@ -621,12 +631,12 @@ export function AccommodationDetailPage() {
                                     <dd>{r.floor != null ? r.floor : "—"}</dd>
                                   </div>
                                   <div>
-                                    <dt>{t("detail.basePriceNight")}</dt>
+                                    <dt>{wholeUnit ? t("detail.priceNight") : t("detail.basePriceNight")}</dt>
                                     <dd>{formatMoney(r.base_price)}</dd>
                                   </div>
                                   {hasDates && quote && (
                                     <div>
-                                      <dt>{t("detail.stayPrice")}</dt>
+                                      <dt>{t("detail.totalForStayLabel")}</dt>
                                       <dd>{formatMoney(quote.total)}</dd>
                                     </div>
                                   )}
@@ -870,10 +880,11 @@ export function AccommodationDetailPage() {
                   {formatDate(entrada)} → {formatDate(salida)}
                 </p>
                 <label>
-                  {t("detail.roomSelect")}
+                  {wholeUnit ? t("detail.wholeUnitSelect") : t("detail.roomSelect")}
                   <select
                     value={selectedRoom ?? ""}
                     onChange={(e) => setSelectedRoom(Number(e.target.value))}
+                    disabled={wholeUnit && rooms.length <= 1}
                   >
                     {rooms.map((r) => (
                       <option key={r.id} value={r.id}>

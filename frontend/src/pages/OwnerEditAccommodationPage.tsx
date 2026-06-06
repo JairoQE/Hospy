@@ -234,6 +234,7 @@ export function OwnerEditAccommodationPage() {
       <RoomManagerPanel
         accommodationId={Number(id)}
         accommodationStatus={detail.status}
+        accommodationType={detail.type}
         services={services}
         onServicesChange={setServices}
       />

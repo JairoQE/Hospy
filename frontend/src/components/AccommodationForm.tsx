@@ -198,7 +198,12 @@ export function AccommodationForm({
         </select>
         {value.type === "casa_departamento" && (
           <span className="muted form-hint">
-            Alquiler de casa o departamento completo, ideal para familias o grupos.
+            Alquiler del espacio completo: el precio lo defines en «Precio del alojamiento completo» (no por habitación suelta).
+          </span>
+        )}
+        {(value.type === "hotel" || value.type === "hostal" || value.type === "hospedaje") && (
+          <span className="muted form-hint">
+            El precio se configura por habitación en la sección Habitaciones (no hay precio fijo del hospedaje).
           </span>
         )}
       </label>
