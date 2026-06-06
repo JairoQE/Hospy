@@ -4,8 +4,8 @@ from properties.media_urls import media_public_path
 from properties.models import Accommodation, Service
 from properties.serializers import ServiceSerializer
 
-from .models import Room, RoomAvailability, RoomPhoto, SeasonRate
-from .services import calculate_stay_total, rates_overlap
+from .models import Room, RoomAvailability, SeasonRate
+from .services import calculate_stay_total, rates_overlap, sync_season_rates_from_base
 
 
 class RoomSerializer(serializers.ModelSerializer):
@@ -88,11 +88,15 @@ class RoomSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         services = validated_data.pop("services", None)
+        old_base = instance.base_price
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
         if services is not None:
             instance.services.set(services)
+        new_base = instance.base_price
+        if new_base != old_base and instance.tarifas.exists():
+            sync_season_rates_from_base(instance)
         return instance
 
 

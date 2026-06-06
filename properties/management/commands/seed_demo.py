@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from bookings.models import Booking
 from properties.models import Accommodation, Service
 from rooms.models import Room, SeasonRate
-from rooms.services import calculate_stay_total
+from rooms.services import SEASON_PRICE_MULTIPLIERS, calculate_stay_total
 
 User = get_user_model()
 
@@ -204,9 +204,10 @@ class Command(BaseCommand):
                     start_date=alta_inicio,
                     end_date=alta_fin,
                     defaults={
-                        "price_per_night": (room.base_price * Decimal("1.25")).quantize(
-                            Decimal("0.01")
-                        ),
+                        "price_per_night": (
+                            room.base_price
+                            * SEASON_PRICE_MULTIPLIERS[SeasonRate.Season.ALTA]
+                        ).quantize(Decimal("0.01")),
                     },
                 )
                 if created:

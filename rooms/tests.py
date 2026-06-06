@@ -1,7 +1,9 @@
 import pytest
+from datetime import date
+from decimal import Decimal
 
 from properties.models import Accommodation, Service
-from rooms.models import Room
+from rooms.models import Room, SeasonRate
 
 
 @pytest.mark.django_db
@@ -150,3 +152,36 @@ def test_habitacion_servicios_por_habitacion(api_client, propietario, hospedaje_
     )
     assert patch.status_code == 200
     assert [s["slug"] for s in patch.data["services"]] == ["wifi-test-room"]
+
+
+@pytest.mark.django_db
+def test_cambiar_precio_base_sincroniza_tarifa_temporada(
+    api_client, propietario, hospedaje_aprobado
+):
+    acc, room = hospedaje_aprobado
+    SeasonRate.objects.create(
+        room=room,
+        season=SeasonRate.Season.ALTA,
+        start_date=date(2026, 6, 1),
+        end_date=date(2026, 8, 31),
+        price_per_night=Decimal("150.00"),
+    )
+
+    api_client.force_authenticate(user=propietario)
+    patch = api_client.patch(
+        f"/api/v1/habitaciones/{room.id}/",
+        {"base_price": "1.00"},
+        format="json",
+    )
+    assert patch.status_code == 200
+
+    rate = SeasonRate.objects.get(room=room)
+    assert rate.price_per_night == Decimal("1.00")
+
+    quote = api_client.get(
+        f"/api/v1/hospedajes/{acc.id}/cotizacion/",
+        {"entrada": "2026-06-10", "salida": "2026-06-12"},
+    )
+    assert quote.status_code == 200
+    row = next(q for q in quote.data["cotizaciones"] if q["room_id"] == room.id)
+    assert row["total"] == "2.00"

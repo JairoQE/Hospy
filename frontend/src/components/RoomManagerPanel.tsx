@@ -216,7 +216,7 @@ export function RoomManagerPanel({
           <h2>Habitaciones</h2>
           <p className="muted">
             Define tipos, capacidad, precio base (lo fijas tú) y servicios por habitación.
-            Los huéspedes reservan por habitación.
+            Si hay tarifas de temporada, se recalculan al guardar el precio base.
           </p>
         </div>
         {canManage && (

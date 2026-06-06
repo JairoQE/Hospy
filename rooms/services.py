@@ -11,6 +11,22 @@ BOOKING_BLOCKED_STATUSES = (
     Booking.Status.CONFIRMADA,
 )
 
+# Multiplicadores sobre precio base por temporada (ALTA=1 → mismo precio que base).
+SEASON_PRICE_MULTIPLIERS: dict[str, Decimal] = {
+    SeasonRate.Season.BAJA: Decimal("0.90"),
+    SeasonRate.Season.NORMAL: Decimal("1.00"),
+    SeasonRate.Season.ALTA: Decimal("1.00"),
+    SeasonRate.Season.FERIADO: Decimal("1.10"),
+}
+
+
+def sync_season_rates_from_base(room: Room) -> None:
+    """Recalcula tarifas de temporada cuando cambia el precio base de la habitación."""
+    for rate in room.tarifas.all():
+        mult = SEASON_PRICE_MULTIPLIERS.get(rate.season, Decimal("1.00"))
+        rate.price_per_night = (room.base_price * mult).quantize(Decimal("0.01"))
+        rate.save(update_fields=["price_per_night", "updated_at"])
+
 
 def get_nightly_price(room: Room, night: date) -> Decimal:
     """RF-26: tarifa de temporada vigente o precio base; oferta del hospedaje si aplica."""
