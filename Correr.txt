@@ -1,5 +1,6 @@
 source .venv/Scripts/activate
 pip install -r requirements.txt
 # En .env: GEMINI_API_KEY, GOOGLE_OAUTH_CLIENT_ID (mismo que VITE_GOOGLE_CLIENT_ID en frontend/.env.local)
+# Pagos curso: PAYMENTS_GATEWAY=mock (sin cuenta) o mercadopago con MP_ACCESS_TOKEN y MP_PUBLIC_KEY (TEST)
 python manage.py migrate
 python manage.py runserver

@@ -12,6 +12,7 @@ import { ContactHostSection } from "../components/ContactHostSection";
 import { OwnerStoreBanner } from "../components/owner/OwnerStoreBanner";
 import { MapModal } from "../components/MapModal";
 import { CancellationPolicySection } from "../components/bookings/CancellationPolicySection";
+import { PaymentCheckoutModal } from "../components/payments/PaymentCheckoutModal";
 import { AccommodationFaqSection } from "../components/AccommodationFaqSection";
 import { PhotoGallery } from "../components/PhotoGallery";
 import { LazyPropertyMap } from "../components/LazyPropertyMap";
@@ -20,6 +21,7 @@ import type {
   PriceBreakdown,
   Review,
   RoomPublic,
+  Booking,
 } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import { useChatDock } from "../context/ChatDockContext";
@@ -77,11 +79,9 @@ export function AccommodationDetailPage() {
   const [msg, setMsg] = useState("");
   const [mapOpen, setMapOpen] = useState(false);
   const [expandedRoomId, setExpandedRoomId] = useState<number | null>(null);
-  const [reservePaymentNotice, setReservePaymentNotice] = useState<{
-    roomId: number;
-    roomNumber: string;
-    checkIn: string;
-    checkOut: string;
+  const [checkoutBooking, setCheckoutBooking] = useState<{
+    id: number;
+    amount: string;
   } | null>(null);
 
   const [localEntrada, setLocalEntrada] = useState(entrada || todayPlusDays(7));
@@ -290,19 +290,16 @@ export function AccommodationDetailPage() {
     setBooking(true);
     setError("");
     try {
-      await api.post("/reservas/", {
+      const created = await api.post<Booking>("/reservas/", {
         room,
         check_in: bookIn,
         check_out: bookOut,
       });
-      const roomNumber = rooms.find((rr) => rr.id === room)?.number ?? "";
-      setReservePaymentNotice({
-        roomId: room,
-        roomNumber: String(roomNumber),
-        checkIn: bookIn,
-        checkOut: bookOut,
+      setCheckoutBooking({
+        id: created.id,
+        amount: String(created.total_amount),
       });
-      setMsg(t("detail.bookingCreated"));
+      setMsg("");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t("detail.bookingFailed"));
     } finally {
@@ -585,7 +582,7 @@ export function AccommodationDetailPage() {
                                 booking ||
                                 !hasDates ||
                                 unavailable ||
-                                Boolean(reservePaymentNotice)
+                                Boolean(checkoutBooking)
                               }
                               title={
                                 !hasDates
@@ -905,114 +902,31 @@ export function AccommodationDetailPage() {
                 booking ||
                 !rooms.length ||
                 !hasDates ||
-                Boolean(reservePaymentNotice)
+                Boolean(checkoutBooking)
               }
               title={!hasDates ? t("detail.pickDatesSidebar") : undefined}
               onClick={() => handleBook()}
             >
               {booking ? t("detail.booking") : t("detail.book")}
             </button>
-            <p className="book-note muted">{t("detail.noChargeYet")}</p>
+            <p className="book-note muted">
+              Al reservar podrás pagar con Yape, tarjeta u otras opciones dentro de Hospy.
+            </p>
           </div>
         </aside>
       </div>
-      {reservePaymentNotice && (
-        <>
-          <div
-            className="inbox-dropdown-backdrop"
-            role="presentation"
-            onClick={() => setReservePaymentNotice(null)}
-          />
-          <div
-            className="inbox-dropdown-panel"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Pago pendiente"
-            style={{
-              position: "fixed",
-              top: "auto",
-              right: "1.25rem",
-              bottom: "7.25rem",
-              width: "min(22rem, calc(100vw - 1.5rem))",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="inbox-dropdown-head" style={{ paddingBottom: "0.75rem" }}>
-              <h2 style={{ marginBottom: 0 }}>Pago pendiente</h2>
-              <p className="muted" style={{ marginTop: "0.35rem" }}>
-                Para proceder con el pago (mientras no contamos con Yape), comunícate con
-                el propietario.
-              </p>
-            </div>
-
-            <div
-              className="inbox-dropdown-toolbar"
-              style={{
-                display: "grid",
-                gap: "0.6rem",
-                padding: "0 1rem 1rem",
-              }}
-            >
-              {(() => {
-                const raw = acc?.propietario_telefono?.trim() ?? "";
-                const digits = raw.replace(/\D/g, "");
-                const whatsappNumber =
-                  digits.length === 9 && !digits.startsWith("51")
-                    ? `51${digits}`
-                    : digits.startsWith("51")
-                      ? digits
-                      : digits;
-
-                const canOpenWa = Boolean(whatsappNumber);
-                const text = `Hola! Deseo proceder con el pago de la reserva en ${
-                  acc?.name ?? "Hospy"
-                }. Fechas: ${formatDate(reservePaymentNotice.checkIn)} → ${formatDate(
-                  reservePaymentNotice.checkOut
-                )}. Habitación: ${reservePaymentNotice.roomNumber}.`;
-                const href = canOpenWa
-                  ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`
-                  : null;
-
-                return (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    disabled={!href}
-                    onClick={() => {
-                      if (href) window.open(href, "_blank", "noopener,noreferrer");
-                      setReservePaymentNotice(null);
-                    }}
-                    title={
-                      href
-                        ? "Abrir WhatsApp"
-                        : "No se encontró el teléfono del propietario"
-                    }
-                  >
-                    Comunicar por WhatsApp
-                  </button>
-                );
-              })()}
-
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => {
-                  setReservePaymentNotice(null);
-                  if (!acc) return;
-                  openChat({
-                    mode: "guest",
-                    peerName: acc.propietario_nombre || t("detail.hostDefault"),
-                    peerPhotoUrl: acc.propietario_foto_url,
-                    hospedajeId: acc.id,
-                    hospedajeName: acc.name,
-                  });
-                }}
-              >
-                Abrir chat de Hospy
-              </button>
-            </div>
-          </div>
-        </>
+      {checkoutBooking && acc && (
+        <PaymentCheckoutModal
+          bookingId={checkoutBooking.id}
+          amount={checkoutBooking.amount}
+          accommodationName={acc.name}
+          onClose={() => setCheckoutBooking(null)}
+          onPaid={() => {
+            setCheckoutBooking(null);
+            setMsg("Reserva pagada y confirmada.");
+            navigate("/mis-reservas");
+          }}
+        />
       )}
     </div>
   );

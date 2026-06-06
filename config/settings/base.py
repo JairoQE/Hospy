@@ -46,8 +46,17 @@ INSTALLED_APPS.extend(
         "sponsors",
         "site_ui",
         "audit",
+        "payments",
     ]
 )
+
+# Pagos (mock / Culqi / Mercado Pago)
+PAYMENTS_GATEWAY = os.environ.get("PAYMENTS_GATEWAY", "mock").strip().lower()
+CULQI_SECRET_KEY = os.environ.get("CULQI_SECRET_KEY", "").strip()
+CULQI_PUBLIC_KEY = os.environ.get("CULQI_PUBLIC_KEY", "").strip()
+MP_ACCESS_TOKEN = os.environ.get("MP_ACCESS_TOKEN", "").strip()
+MP_PUBLIC_KEY = os.environ.get("MP_PUBLIC_KEY", "").strip()
+PAYMENT_EXPIRY_MINUTES = int(os.environ.get("PAYMENT_EXPIRY_MINUTES", "30"))
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

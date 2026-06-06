@@ -11,6 +11,7 @@ urlpatterns = [
     path("", include("properties.urls")),
     path("", include("rooms.urls")),
     path("", include("bookings.urls")),
+    path("", include("payments.urls")),
     path("", include("reviews.urls")),
     path("", include("notifications.urls")),
     path("", include("messaging.urls")),

@@ -8,6 +8,7 @@ import "./styles/home.css";
 import "./styles/header.css";
 import "./styles/footer.css";
 import "./styles/ads.css";
+import "./styles/payments.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

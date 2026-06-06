@@ -77,13 +77,27 @@ class BookingListSerializer(serializers.ModelSerializer):
 class BookingDetailSerializer(BookingListSerializer):
     room_id = serializers.IntegerField(source="room.id", read_only=True)
     desglose_precio = serializers.SerializerMethodField()
+    payment = serializers.SerializerMethodField()
 
     class Meta(BookingListSerializer.Meta):
         fields = BookingListSerializer.Meta.fields + (
             "room_id",
             "desglose_precio",
+            "payment",
             "updated_at",
         )
+
+    def get_payment(self, obj):
+        payment = getattr(obj, "payment", None)
+        if payment is None:
+            return None
+        return {
+            "id": payment.id,
+            "status": payment.status,
+            "method": payment.method or None,
+            "amount": str(payment.amount),
+            "expires_at": payment.expires_at.isoformat() if payment.expires_at else None,
+        }
 
     def get_desglose_precio(self, obj):
         if obj.status == Booking.Status.CANCELADA:

@@ -16,6 +16,8 @@ from .serializers import (
     BookingListSerializer,
     BookingPreviewSerializer,
 )
+from payments.services import create_payment_for_booking
+
 from .services import (
     cancel_booking,
     complete_booking,
@@ -44,6 +46,7 @@ class BookingViewSet(viewsets.GenericViewSet):
             "room",
             "room__accommodation",
             "guest",
+            "payment",
         )
         if user.role == user.Role.HUESPED:
             return qs.filter(guest=user)
@@ -107,6 +110,8 @@ class BookingViewSet(viewsets.GenericViewSet):
         )
         serializer.is_valid(raise_exception=True)
         booking = serializer.save()
+        create_payment_for_booking(booking)
+        booking = self.get_queryset().get(pk=booking.pk)
         log_action(
             actor=request.user,
             action="booking.create",

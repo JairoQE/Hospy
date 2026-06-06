@@ -300,6 +300,13 @@ export interface Booking {
   room_id?: number;
   desglose_precio?: PriceBreakdown | null;
   updated_at?: string;
+  payment?: {
+    id: number;
+    status: string;
+    method: string | null;
+    amount: string;
+    expires_at: string | null;
+  } | null;
 }
 
 export interface Review {
