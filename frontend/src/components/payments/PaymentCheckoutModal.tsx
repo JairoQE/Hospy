@@ -9,6 +9,8 @@ import {
   type PaymentRecord,
 } from "../../api/payments";
 import { ApiError } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
+import { MercadoPagoCardForm } from "./MercadoPagoCardForm";
 import { PrimeIcon } from "../PrimeIcon";
 
 interface Props {
@@ -28,6 +30,7 @@ export function PaymentCheckoutModal({
   onClose,
   onPaid,
 }: Props) {
+  const { user } = useAuth();
   const [methods, setMethods] = useState<PaymentMethodOption[]>([]);
   const [gateway, setGateway] = useState<"mock" | "culqi" | "mercadopago">("mock");
   const [culqiPublicKey, setCulqiPublicKey] = useState("");
@@ -88,23 +91,29 @@ export function PaymentCheckoutModal({
     }
   }, [payment, phone, otp, onPaid]);
 
+  const handleCardToken = useCallback(
+    async (sourceId: string) => {
+      if (!payment) return;
+      setSubmitting(true);
+      setError("");
+      try {
+        const result = await payWithCard(payment.id, sourceId);
+        setPayment(result);
+        if (result.status === "pagado") onPaid();
+        else setError(result.failure_message || "No se pudo completar el pago.");
+      } catch (e) {
+        setError(e instanceof ApiError ? e.message : "Error al pagar con tarjeta.");
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [payment, onPaid],
+  );
+
   const handleCard = useCallback(async () => {
     if (!payment) return;
-    setSubmitting(true);
-    setError("");
-    try {
-      const sourceId =
-        gateway === "mock" || !culqiPublicKey ? "tkn_test_mock" : "tkn_test_mock";
-      const result = await payWithCard(payment.id, sourceId);
-      setPayment(result);
-      if (result.status === "pagado") onPaid();
-      else setError(result.failure_message || "No se pudo completar el pago.");
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Error al pagar con tarjeta.");
-    } finally {
-      setSubmitting(false);
-    }
-  }, [payment, gateway, culqiPublicKey, onPaid]);
+    await handleCardToken("tkn_test_mock");
+  }, [payment, handleCardToken]);
 
   const handlePagoEfectivo = useCallback(async () => {
     if (!payment) return;
@@ -228,23 +237,31 @@ export function PaymentCheckoutModal({
                 <p className="payment-panel-help">
                   Paga con tarjeta de débito o crédito (Visa, Mastercard).
                 </p>
-                {mpPublicKey ? (
-                  <p className="muted">
-                    Mercado Pago configurado. Para tarjeta real se integrará el formulario seguro de MP.
-                  </p>
-                ) : culqiPublicKey ? (
-                  <p className="muted">
-                    Culqi configurado. Para tarjeta real se integrará el checkout seguro.
-                  </p>
-                ) : null}
-                <button
-                  type="button"
-                  className="btn btn-primary btn-block payment-submit"
-                  disabled={submitting}
-                  onClick={handleCard}
-                >
-                  {submitting ? "Procesando…" : "Pagar con tarjeta"}
-                </button>
+                {gateway === "mercadopago" && mpPublicKey ? (
+                  <MercadoPagoCardForm
+                    publicKey={mpPublicKey}
+                    amount={amount}
+                    email={user?.email || ""}
+                    disabled={submitting}
+                    onToken={handleCardToken}
+                  />
+                ) : (
+                  <>
+                    {culqiPublicKey ? (
+                      <p className="muted">
+                        Culqi configurado. Usa el flujo de prueba hasta integrar Culqi.js.
+                      </p>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-block payment-submit"
+                      disabled={submitting}
+                      onClick={handleCard}
+                    >
+                      {submitting ? "Procesando…" : "Pagar con tarjeta (prueba)"}
+                    </button>
+                  </>
+                )}
               </div>
             )}
 

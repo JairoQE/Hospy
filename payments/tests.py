@@ -48,3 +48,52 @@ def test_payment_methods_public(api_client):
     ids = [m["id"] for m in response.data["methods"]]
     assert "yape" in ids
     assert "card" in ids
+
+
+@pytest.mark.django_db
+def test_mercadopago_webhook_confirms_pagoefectivo(mocker, huesped, hospedaje_aprobado):
+    from datetime import date, timedelta
+
+    from bookings.models import Booking
+
+    mocker.patch("payments.services.get_gateway_name", return_value="mercadopago")
+
+    _, room = hospedaje_aprobado
+    booking = Booking.objects.create(
+        guest=huesped,
+        room=room,
+        check_in=date.today() + timedelta(days=10),
+        check_out=date.today() + timedelta(days=12),
+        total_amount="120.00",
+        status=Booking.Status.PENDIENTE,
+    )
+    payment = Payment.objects.create(
+        booking=booking,
+        guest=huesped,
+        amount="120.00",
+        currency="PEN",
+        status=Payment.Status.PENDIENTE,
+        method=Payment.Method.PAGOEFECTIVO,
+        gateway="mercadopago",
+        gateway_charge_id="999888",
+    )
+    mocker.patch(
+        "payments.gateways.mercadopago.fetch_payment",
+        return_value={
+            "id": "999888",
+            "status": "approved",
+            "external_reference": f"hospy-pago-{payment.pk}",
+        },
+    )
+
+    response = api_client.post(
+        "/api/v1/pagos/webhook/mercadopago/",
+        {"type": "payment", "data": {"id": "999888"}},
+        format="json",
+    )
+    assert response.status_code == 200
+
+    payment.refresh_from_db()
+    booking.refresh_from_db()
+    assert payment.status == Payment.Status.PAGADO
+    assert booking.status == Booking.Status.CONFIRMADA

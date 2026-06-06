@@ -35,6 +35,7 @@ class PaymentMethodsSerializer(serializers.Serializer):
     gateway = serializers.CharField()
     culqi_public_key = serializers.CharField(allow_blank=True)
     mp_public_key = serializers.CharField(allow_blank=True)
+    mp_webhook_url = serializers.CharField(allow_blank=True, required=False)
     methods = serializers.ListField()
 
 

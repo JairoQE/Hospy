@@ -11,6 +11,7 @@ export interface PaymentMethodsResponse {
   gateway: "mock" | "culqi" | "mercadopago";
   culqi_public_key: string;
   mp_public_key: string;
+  mp_webhook_url?: string;
   methods: PaymentMethodOption[];
 }
 

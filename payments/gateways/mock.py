@@ -57,6 +57,7 @@ def create_pagoefectivo_order(
     amount_cents: int,
     email: str,
     description: str,
+    external_reference: str = "",
 ) -> GatewayChargeResult:
     cip = f"9{amount_cents % 10000000:07d}"
     return GatewayChargeResult(

@@ -82,6 +82,20 @@ def _create_yape_token(*, phone: str, otp: str) -> str:
     return str(token)
 
 
+def fetch_payment(mp_payment_id: str) -> dict:
+    response = requests.get(
+        f"{MP_API}/v1/payments/{mp_payment_id}",
+        headers={"Authorization": f"Bearer {_access_token()}"},
+        timeout=30,
+    )
+    if response.status_code >= 400:
+        raise _mp_error(response)
+    data = response.json()
+    if not isinstance(data, dict):
+        raise PaymentGatewayError("Respuesta inválida de Mercado Pago.")
+    return data
+
+
 def _create_payment(
     *,
     amount_cents: int,
@@ -89,6 +103,7 @@ def _create_payment(
     description: str,
     token: str | None = None,
     payment_method_id: str | None = None,
+    external_reference: str = "",
 ) -> GatewayChargeResult:
     payload: dict = {
         "transaction_amount": _amount_pen(amount_cents),
@@ -96,6 +111,8 @@ def _create_payment(
         "installments": 1,
         "payer": {"email": email},
     }
+    if external_reference:
+        payload["external_reference"] = external_reference[:256]
     if token:
         payload["token"] = token
     if payment_method_id:
@@ -173,15 +190,21 @@ def create_pagoefectivo_order(
     amount_cents: int,
     email: str,
     description: str,
+    external_reference: str = "",
 ) -> GatewayChargeResult:
+    payload = {
+        "transaction_amount": _amount_pen(amount_cents),
+        "description": description[:200],
+        "payment_method_id": "pagoefectivo_atm",
+        "payer": {"email": email},
+        "metadata": {"payment_mode": "online"},
+    }
+    if external_reference:
+        payload["external_reference"] = external_reference[:256]
+
     response = requests.post(
         f"{MP_API}/v1/payments",
-        json={
-            "transaction_amount": _amount_pen(amount_cents),
-            "description": description[:200],
-            "payment_method_id": "pagoefectivo_atm",
-            "payer": {"email": email},
-        },
+        json=payload,
         headers={
             "Authorization": f"Bearer {_access_token()}",
             "Content-Type": "application/json",
@@ -195,10 +218,18 @@ def create_pagoefectivo_order(
     payment_id = str(data.get("id", ""))
     poi = data.get("point_of_interaction") or {}
     transaction_data = poi.get("transaction_data") or {}
-    cip = transaction_data.get("ticket_url") or transaction_data.get("qr_code") or payment_id
+    ticket_url = transaction_data.get("ticket_url") or ""
+    qr_code = transaction_data.get("qr_code") or ""
+    if ticket_url:
+        message = f"Pago pendiente. Paga aquí: {ticket_url}"
+    elif qr_code:
+        message = f"Pago pendiente. Código/instrucciones: {qr_code}"
+    else:
+        message = f"Pago pendiente. ID Mercado Pago: {payment_id}"
     return GatewayChargeResult(
         ok=True,
+        charge_id=payment_id,
         order_id=payment_id,
-        user_message=f"Pago pendiente. Sigue las instrucciones: {cip}",
+        user_message=message,
         raw=data,
     )

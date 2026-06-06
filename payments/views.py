@@ -33,6 +33,7 @@ class PaymentMethodsView(APIView):
             "gateway": get_gateway_name(),
             "culqi_public_key": getattr(settings, "CULQI_PUBLIC_KEY", ""),
             "mp_public_key": getattr(settings, "MP_PUBLIC_KEY", ""),
+            "mp_webhook_url": request.build_absolute_uri("/api/v1/pagos/webhook/mercadopago/"),
             "methods": get_available_methods(),
         }
         return Response(PaymentMethodsSerializer(payload).data)

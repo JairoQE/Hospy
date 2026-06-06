@@ -137,6 +137,7 @@ def create_pagoefectivo_order(
     amount_cents: int,
     email: str,
     description: str,
+    external_reference: str = "",
 ) -> GatewayChargeResult:
     payload = {
         "amount": amount_cents,

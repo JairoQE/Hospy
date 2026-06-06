@@ -146,6 +146,51 @@ def _charge_description(payment: Payment) -> str:
     return f"Reserva Hospy #{payment.booking_id} — {acc.name}"
 
 
+def payment_external_reference(payment: Payment) -> str:
+    return f"hospy-pago-{payment.pk}"
+
+
+def process_mercadopago_webhook(mp_payment_id: str) -> bool:
+    """Confirma un pago MP aprobado (p. ej. PagoEfectivo) vía webhook."""
+    if get_gateway_name() != "mercadopago":
+        return False
+
+    try:
+        data = mercadopago.fetch_payment(mp_payment_id)
+    except PaymentGatewayError:
+        return False
+
+    if data.get("status") != "approved":
+        return False
+
+    payment = None
+    ext_ref = (data.get("external_reference") or "").strip()
+    if ext_ref.startswith("hospy-pago-"):
+        try:
+            payment_pk = int(ext_ref.replace("hospy-pago-", ""))
+            payment = Payment.objects.select_related("booking").filter(pk=payment_pk).first()
+        except ValueError:
+            payment = None
+
+    if payment is None:
+        payment = Payment.objects.select_related("booking").filter(
+            gateway_charge_id=str(mp_payment_id),
+        ).first()
+
+    if payment is None or payment.status == Payment.Status.PAGADO:
+        return False
+
+    result = GatewayChargeResult(
+        ok=True,
+        charge_id=str(mp_payment_id),
+        user_message="Pago confirmado por Mercado Pago.",
+        raw=data,
+    )
+    method = payment.method or Payment.Method.PAGOEFECTIVO
+    _mark_success(payment, result, method)
+    return True
+
+
 def pay_with_yape(payment: Payment, user, *, phone: str, otp: str) -> Payment:
     _ensure_payable(payment, user)
     payment.status = Payment.Status.PROCESANDO
@@ -208,17 +253,26 @@ def create_pagoefectivo(payment: Payment, user) -> tuple[Payment, str]:
 
     gateway = get_gateway_module()
     amount_cents = _amount_cents(payment.amount)
+    ext_ref = payment_external_reference(payment) if gateway_name == "mercadopago" else ""
     try:
         result = gateway.create_pagoefectivo_order(
             amount_cents=amount_cents,
             email=user.email,
             description=_charge_description(payment),
+            external_reference=ext_ref,
         )
         payment.method = Payment.Method.PAGOEFECTIVO
         payment.gateway_order_id = result.order_id
+        payment.gateway_charge_id = result.charge_id or result.order_id
         payment.failure_message = result.user_message
         payment.save(
-            update_fields=["method", "gateway_order_id", "failure_message", "updated_at"]
+            update_fields=[
+                "method",
+                "gateway_order_id",
+                "gateway_charge_id",
+                "failure_message",
+                "updated_at",
+            ]
         )
         return payment, result.user_message
     except PaymentGatewayError as exc:

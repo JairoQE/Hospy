@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import views
+from .webhooks import MercadoPagoWebhookView
 
 urlpatterns = [
     path("pagos/metodos/", views.PaymentMethodsView.as_view(), name="payment-methods"),
@@ -23,5 +24,10 @@ urlpatterns = [
         "pagos/<int:payment_id>/pagoefectivo/",
         views.PaymentPagoEfectivoView.as_view(),
         name="payment-pagoefectivo",
+    ),
+    path(
+        "pagos/webhook/mercadopago/",
+        MercadoPagoWebhookView.as_view(),
+        name="payment-mp-webhook",
     ),
 ]

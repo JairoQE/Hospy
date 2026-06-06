@@ -60,3 +60,11 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
+      - key: PAYMENTS_GATEWAY
+        value: mercadopago
+      - key: MP_ACCESS_TOKEN
+        sync: false
+      - key: MP_PUBLIC_KEY
+        sync: false
+      - key: PAYMENT_EXPIRY_MINUTES
+        value: "30"
