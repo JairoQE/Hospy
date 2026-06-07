@@ -118,6 +118,7 @@ def process_message(
     user,
     pathname: str,
     flow_state: dict,
+    ip_city: str | None = None,
 ) -> tuple[list[dict], dict, str | None]:
     """Devuelve (replies, next_state, session_id)."""
     audience = resolve_audience(user, pathname)
@@ -138,7 +139,7 @@ def process_message(
     step = state["flow_step"]
 
     if flow_id == "search_stay":
-        return _flow_search(text, state, formal, logged_in)
+        return _flow_search(text, state, formal, logged_in, ip_city=ip_city)
     if flow_id == "booking_status":
         return _flow_booking(text, logged_in)
     if flow_id == "report_issue":
@@ -158,6 +159,11 @@ def process_message(
         )
 
     city = _extract_city(text)
+    if not city and ip_city and re.search(
+        r"buscar|hospedaje|alojamiento|reservar|hotel|hostal|barato|económico|economico",
+        lower,
+    ):
+        city = ip_city
     if city:
         return _show_city_results(city, state, formal, message=text)
 
@@ -328,10 +334,10 @@ def _start_search(formal: bool):
     )
 
 
-def _flow_search(text: str, state: dict, formal: bool, logged_in: bool):
+def _flow_search(text: str, state: dict, formal: bool, logged_in: bool, ip_city: str | None = None):
     step = state["flow_step"]
     if step == 0:
-        city = _extract_city(text) or text
+        city = _extract_city(text) or ip_city or text
         state["flow_data"]["city"] = city
         state["flow_step"] = 1
         return (

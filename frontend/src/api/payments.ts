@@ -15,6 +15,8 @@ export interface PaymentMethodsResponse {
   methods: PaymentMethodOption[];
 }
 
+import type { PaymentIpRisk } from "./geo";
+
 export interface PaymentRecord {
   id: number;
   booking_id: number;
@@ -31,6 +33,7 @@ export interface PaymentRecord {
   is_mock: boolean;
   created_at: string;
   instruction?: string;
+  ip_risk?: PaymentIpRisk;
 }
 
 export interface BookingPaymentSummary {

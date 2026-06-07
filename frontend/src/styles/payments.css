@@ -196,3 +196,28 @@
     border-radius: 16px 16px 0 0;
   }
 }
+
+.payment-ip-risk {
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  border: 1px solid transparent;
+}
+
+.payment-ip-risk strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.payment-ip-risk--medium {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
+.payment-ip-risk--high {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}

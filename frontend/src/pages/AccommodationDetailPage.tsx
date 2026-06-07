@@ -435,7 +435,11 @@ export function AccommodationDetailPage() {
               {minPrice != null && (
                 <p className="price-from">
                   {t("detail.fromPrice")} <strong>{formatMoney(minPrice)}</strong>
-                  {hasDates ? t("detail.perStay") : t("detail.perNight")}
+                  {hasDates
+                    ? wholeUnit
+                      ? t("detail.perStay")
+                      : t("detail.perRoomTotal")
+                    : t("detail.perNight")}
                 </p>
               )}
             </div>
@@ -466,7 +470,13 @@ export function AccommodationDetailPage() {
                   <tr>
                     <th>{wholeUnit ? t("detail.wholeUnitCol") : t("detail.roomTypeCol")}</th>
                     <th>{t("detail.guests")}</th>
-                    <th>{hasDates ? t("detail.priceStay") : t("detail.priceNight")}</th>
+                    <th>
+                      {hasDates
+                        ? wholeUnit
+                          ? t("detail.priceStay")
+                          : t("detail.priceRoomTotal")
+                        : t("detail.priceNight")}
+                    </th>
                     <th></th>
                   </tr>
                 </thead>
@@ -557,8 +567,13 @@ export function AccommodationDetailPage() {
                                             (quote as PriceBreakdown & { nights_count?: number })
                                               .nights_count ??
                                             0,
-                                        })}{" "}
-                                    · {t("detail.totalForStay")}
+                                        })}
+                                    {wholeUnit && (
+                                      <>
+                                        {" "}
+                                        · {t("detail.totalForStay")}
+                                      </>
+                                    )}
                                   </small>
                                 )}
                               </>
@@ -634,7 +649,7 @@ export function AccommodationDetailPage() {
                                     <dt>{wholeUnit ? t("detail.priceNight") : t("detail.basePriceNight")}</dt>
                                     <dd>{formatMoney(r.base_price)}</dd>
                                   </div>
-                                  {hasDates && quote && (
+                                  {hasDates && quote && wholeUnit && (
                                     <div>
                                       <dt>{t("detail.totalForStayLabel")}</dt>
                                       <dd>{formatMoney(quote.total)}</dd>

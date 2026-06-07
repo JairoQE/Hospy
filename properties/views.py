@@ -238,12 +238,20 @@ class AccommodationViewSet(viewsets.ModelViewSet):
         from notifications.services import notify_accommodation_submitted
 
         notify_accommodation_submitted(accommodation)
+        from integrations.security import assess_owner_location
+
+        owner_flags = assess_owner_location(
+            request=request,
+            user=request.user,
+            accommodation_city=accommodation.city,
+        )
         log_action(
             actor=request.user,
             action="accommodation.create",
             target_type="Accommodation",
             target_id=accommodation.pk,
             target_label=accommodation.name,
+            metadata={"owner_ip_flags": owner_flags.get("flags", [])},
             request=request,
         )
         return Response(

@@ -2439,7 +2439,7 @@ textarea:focus {
 .room-price-nights {
   display: block;
   margin-top: 0.15rem;
-  color: var(--muted, #64748b);
+  color: #4a5d73;
 }
 
 .room-price-unavailable {
@@ -4041,7 +4041,7 @@ textarea:focus {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  color: var(--muted);
+  color: #3d4f63;
 }
 
 .room-detail-dl dd {
@@ -5885,4 +5885,164 @@ textarea:focus {
     width: 100%;
     max-width: 100%;
   }
+}
+
+/* --- ip.guide / geo --- */
+.owner-geo-intl-stat {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #0d9488;
+  font-weight: 600;
+}
+
+.owner-geo-origin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.owner-geo-origin-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(15, 39, 68, 0.08);
+}
+
+.admin-geo-insights {
+  margin: 1.5rem 0;
+}
+
+.admin-geo-insights-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-geo-insights-head h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.15rem;
+}
+
+.admin-geo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .admin-geo-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-geo-map-card,
+.admin-geo-alerts-card {
+  background: var(--surface, #fff);
+  border: 1px solid rgba(15, 39, 68, 0.1);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+}
+
+.admin-geo-map-card h3,
+.admin-geo-alerts-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-geo-map-canvas {
+  position: relative;
+  height: 220px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #e0f2fe 0%, #f0fdf4 100%);
+  border: 1px solid rgba(15, 39, 68, 0.08);
+  overflow: hidden;
+}
+
+.admin-geo-map-dot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(13, 148, 136, 0.75);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.35);
+}
+
+.admin-geo-map-legend {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  font-size: 0.82rem;
+  color: var(--muted, #64748b);
+}
+
+.admin-geo-map-legend li + li {
+  margin-top: 0.25rem;
+}
+
+.admin-geo-alert-badge {
+  display: inline-flex;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.admin-geo-alert-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.admin-geo-alert {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  border-left: 3px solid #94a3b8;
+  background: #f8fafc;
+}
+
+.admin-geo-alert--high {
+  border-left-color: #dc2626;
+  background: #fef2f2;
+}
+
+.admin-geo-alert--medium {
+  border-left-color: #d97706;
+  background: #fffbeb;
+}
+
+.admin-geo-alert-meta {
+  display: block;
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+
+.admin-audit-warn {
+  color: #b45309;
+  font-weight: 600;
 }

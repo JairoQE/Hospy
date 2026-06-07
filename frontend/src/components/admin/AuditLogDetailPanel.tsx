@@ -99,6 +99,37 @@ export function AuditLogDetailPanel({ entry, onClose }: Props) {
                   </dd>
                 </div>
               )}
+              {(() => {
+                const geo = (entry.metadata?.ip_geo ?? {}) as Record<string, unknown>;
+                if (!geo.country_code && !geo.city) return null;
+                return (
+                  <>
+                    {geo.city ? (
+                      <div>
+                        <dt>Ciudad (IP)</dt>
+                        <dd>{String(geo.city)}</dd>
+                      </div>
+                    ) : null}
+                    {geo.country_code ? (
+                      <div>
+                        <dt>País (IP)</dt>
+                        <dd>
+                          {String(geo.country || geo.country_code)}
+                          {geo.organization ? (
+                            <span className="muted"> · {String(geo.organization)}</span>
+                          ) : null}
+                        </dd>
+                      </div>
+                    ) : null}
+                    {geo.is_datacenter ? (
+                      <div>
+                        <dt>Red</dt>
+                        <dd className="admin-audit-warn">Datacenter / hosting</dd>
+                      </div>
+                    ) : null}
+                  </>
+                );
+              })()}
             </dl>
           </section>
 

@@ -28,18 +28,30 @@ def sync_season_rates_from_base(room: Room) -> None:
         rate.save(update_fields=["price_per_night", "updated_at"])
 
 
-def get_nightly_price(room: Room, night: date) -> Decimal:
-    """RF-26: tarifa de temporada vigente o precio base; oferta del hospedaje si aplica."""
-    rate = (
+def _season_rate_for_night(room: Room, night: date) -> SeasonRate | None:
+    return (
         SeasonRate.objects.filter(
             room=room,
             start_date__lte=night,
             end_date__gte=night,
         )
-        .order_by("-price_per_night")
+        .order_by("-start_date")
         .first()
     )
-    base = rate.price_per_night if rate else room.base_price
+
+
+def _nightly_base_price(room: Room, night: date) -> Decimal:
+    """Precio de la noche según temporada activa, siempre derivado del precio base actual."""
+    rate = _season_rate_for_night(room, night)
+    if not rate:
+        return room.base_price
+    mult = SEASON_PRICE_MULTIPLIERS.get(rate.season, Decimal("1.00"))
+    return (room.base_price * mult).quantize(Decimal("0.01"))
+
+
+def get_nightly_price(room: Room, night: date) -> Decimal:
+    """RF-26: tarifa de temporada vigente o precio base; oferta del hospedaje si aplica."""
+    base = _nightly_base_price(room, night)
     from properties.offer_services import apply_discount, get_active_offer_for_room
 
     offer = get_active_offer_for_room(room.id, room.accommodation_id, night)
@@ -50,16 +62,7 @@ def get_nightly_price(room: Room, night: date) -> Decimal:
 
 def get_nightly_price_breakdown(room: Room, night: date) -> dict:
     """Precio de una noche con detalle de oferta (para desglose y calendario)."""
-    rate = (
-        SeasonRate.objects.filter(
-            room=room,
-            start_date__lte=night,
-            end_date__gte=night,
-        )
-        .order_by("-price_per_night")
-        .first()
-    )
-    base = rate.price_per_night if rate else room.base_price
+    base = _nightly_base_price(room, night)
     from properties.offer_services import apply_discount, get_active_offer_for_room
 
     offer = get_active_offer_for_room(room.id, room.accommodation_id, night)

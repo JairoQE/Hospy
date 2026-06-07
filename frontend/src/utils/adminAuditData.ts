@@ -106,9 +106,37 @@ export function formatAuditMetadata(entry: AuditLogEntry): MetadataLine[] {
   if (m.total_amount) lines.push({ label: "Importe", value: String(m.total_amount) });
   if (m.rating) lines.push({ label: "Calificación", value: String(m.rating) });
 
+  const ipGeo = m.ip_geo as Record<string, unknown> | undefined;
+  if (ipGeo && typeof ipGeo === "object") {
+    const parts = [
+      ipGeo.city,
+      ipGeo.country_code || ipGeo.country,
+      ipGeo.organization,
+    ].filter(Boolean);
+    if (parts.length) {
+      lines.push({ label: "Ubicación IP", value: parts.map(String).join(" · ") });
+    }
+  }
+
+  const risk = m.payment_risk as { level?: string; score?: number; messages?: string[] } | undefined;
+  if (risk?.level && risk.level !== "low") {
+    lines.push({
+      label: "Riesgo pago (ip.guide)",
+      value: `${risk.level}${risk.score != null ? ` · score ${risk.score}` : ""}`,
+    });
+    if (Array.isArray(risk.messages) && risk.messages[0]) {
+      lines.push({ label: "Detalle riesgo", value: String(risk.messages[0]) });
+    }
+  }
+
+  if (Array.isArray(m.security_flags) && m.security_flags.length) {
+    lines.push({ label: "Alertas seguridad", value: (m.security_flags as string[]).join(", ") });
+  }
+
   const known = new Set([
     "fields", "from", "to", "motivo", "accion", "status", "admin_notes",
     "warning", "check_in", "check_out", "total_amount", "rating",
+    "ip_geo", "ip_flags", "payment_risk", "security_flags", "owner_ip_flags",
   ]);
   for (const [key, val] of Object.entries(m)) {
     if (known.has(key) || val === null || val === undefined || val === "") continue;

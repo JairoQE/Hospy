@@ -58,6 +58,14 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         refresh = CustomTokenObtainPairSerializer.get_token(user)
+        log_action(
+            actor=user,
+            action="auth.register",
+            target_type="User",
+            target_id=user.pk,
+            target_label=user.email,
+            request=request,
+        )
         return Response(
             {
                 "user": UserSerializer(user).data,
@@ -77,6 +85,17 @@ class RegisterPropietarioView(RegisterView):
         response = super().create(request, *args, **kwargs)
         user = User.objects.get(pk=response.data["user"]["id"])
         notify_owner_registration_submitted(user)
+        from integrations.security import assess_owner_location
+
+        assess_owner_location(request=request, user=user)
+        log_action(
+            actor=user,
+            action="auth.register_owner",
+            target_type="User",
+            target_id=user.pk,
+            target_label=user.email,
+            request=request,
+        )
         return response
 
 
@@ -240,6 +259,21 @@ class PasswordResetConfirmView(APIView):
 class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     throttle_classes = (AuthEndpointThrottle,)
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200:
+            email = (request.data.get("email") or request.data.get("username") or "").strip()
+            user = User.objects.filter(email__iexact=email).first()
+            log_action(
+                actor=user,
+                action="auth.login",
+                target_type="User",
+                target_id=user.pk if user else None,
+                target_label=email or "login",
+                request=request,
+            )
+        return response
 
 
 class CaptchaConfigView(APIView):

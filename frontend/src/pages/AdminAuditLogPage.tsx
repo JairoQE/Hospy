@@ -14,6 +14,7 @@ import {
 import type { UserRole } from "../api/types";
 import { showAdminToast } from "../components/admin/AdminUsersToast";
 import { AuditLogDetailPanel } from "../components/admin/AuditLogDetailPanel";
+import { AdminGeoInsightsPanel } from "../components/geo/AdminGeoInsightsPanel";
 import { AuditRetentionPanel } from "../components/admin/AuditRetentionPanel";
 import { PrimeIcon } from "../components/PrimeIcon";
 import { markAuditAlertsSeen } from "../hooks/useAuditAlerts";
@@ -251,6 +252,8 @@ export function AdminAuditLogPage() {
       )}
 
       <AuditRetentionPanel />
+
+      <AdminGeoInsightsPanel />
 
       <div className="admin-users-toolbar-card admin-audit-toolbar">
         <form className="admin-users-toolbar" onSubmit={handleSearch} role="search">

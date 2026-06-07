@@ -51,5 +51,6 @@ class HospixChatView(APIView):
             history=history,
             action_id=action_id,
             action_target=action_target,
+            request=request,
         )
         return Response(payload)

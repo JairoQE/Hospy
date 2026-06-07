@@ -39,6 +39,7 @@ import {
 } from "../../utils/ownerDashboardData";
 import { PrimeIcon } from "../PrimeIcon";
 import { StatusBadge } from "../StatusBadge";
+import { OwnerBookingOriginsCard } from "../geo/OwnerBookingOriginsCard";
 import "../../styles/owner-dashboard.css";
 
 const PERIODS: { id: DashboardPeriod; label: string }[] = [
@@ -316,6 +317,8 @@ export function OwnerDashboard({
           )}
         </aside>
       </div>
+
+      <OwnerBookingOriginsCard />
 
       <div className="owner-dashboard-bottom-grid">
         <section className="owner-dash-card" aria-label="Próximas reservas">

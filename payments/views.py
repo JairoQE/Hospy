@@ -8,6 +8,8 @@ from accounts.permissions import IsHuesped
 
 from audit.services import log_action
 
+from integrations.security import assess_payment_risk
+
 from .models import Payment
 from .serializers import (
     CardPaySerializer,
@@ -91,6 +93,12 @@ class PaymentYapeView(APIView):
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)}) from exc
 
+        risk = assess_payment_risk(
+            request=request,
+            booking=payment.booking,
+            amount=payment.amount,
+        )
+
         if payment.status == Payment.Status.PAGADO:
             log_action(
                 actor=request.user,
@@ -98,10 +106,12 @@ class PaymentYapeView(APIView):
                 target_type="Payment",
                 target_id=payment.pk,
                 target_label=f"Pago Yape reserva #{payment.booking_id}",
-                metadata={"amount": str(payment.amount)},
+                metadata={"amount": str(payment.amount), "payment_risk": risk},
                 request=request,
             )
-        return Response(PaymentSerializer(payment).data)
+        data = PaymentSerializer(payment).data
+        data["ip_risk"] = risk
+        return Response(data)
 
 
 class PaymentCardView(APIView):
@@ -127,6 +137,12 @@ class PaymentCardView(APIView):
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)}) from exc
 
+        risk = assess_payment_risk(
+            request=request,
+            booking=payment.booking,
+            amount=payment.amount,
+        )
+
         if payment.status == Payment.Status.PAGADO:
             log_action(
                 actor=request.user,
@@ -134,10 +150,12 @@ class PaymentCardView(APIView):
                 target_type="Payment",
                 target_id=payment.pk,
                 target_label=f"Pago tarjeta reserva #{payment.booking_id}",
-                metadata={"amount": str(payment.amount)},
+                metadata={"amount": str(payment.amount), "payment_risk": risk},
                 request=request,
             )
-        return Response(PaymentSerializer(payment).data)
+        data = PaymentSerializer(payment).data
+        data["ip_risk"] = risk
+        return Response(data)
 
 
 class PaymentPagoEfectivoView(APIView):
@@ -157,6 +175,22 @@ class PaymentPagoEfectivoView(APIView):
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)}) from exc
 
+        risk = assess_payment_risk(
+            request=request,
+            booking=payment.booking,
+            amount=payment.amount,
+        )
+        log_action(
+            actor=request.user,
+            action="payment.pagoefectivo.create",
+            target_type="Payment",
+            target_id=payment.pk,
+            target_label=f"PagoEfectivo reserva #{payment.booking_id}",
+            metadata={"amount": str(payment.amount), "payment_risk": risk},
+            request=request,
+        )
+
         data = PaymentSerializer(payment).data
         data["instruction"] = message
+        data["ip_risk"] = risk
         return Response(data)

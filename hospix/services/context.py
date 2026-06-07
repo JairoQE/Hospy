@@ -274,7 +274,7 @@ def is_country_scope(place: str, message: str = "") -> bool:
     return is_peru_country_query(message)
 
 
-def build_llm_data_context(message: str) -> str:
+def build_llm_data_context(message: str, ip_city: str | None = None) -> str:
     """Contexto extra para el LLM: FAQ y hospedajes reales según el mensaje."""
     parts: list[str] = []
     faq = match_faq(message)
@@ -282,6 +282,11 @@ def build_llm_data_context(message: str) -> str:
         parts.append(f"FAQ relevante:\n{faq}")
 
     city = extract_city(message)
+    if not city and ip_city:
+        city = ip_city
+        parts.append(
+            f"Ubicación aproximada del usuario por IP: {ip_city} (úsala si no indicó ciudad)."
+        )
     if city:
         types = extract_stay_types(message)
         phrase = stay_types_phrase(types)

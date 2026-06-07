@@ -21,4 +21,5 @@ urlpatterns = [
     path("mis-anuncios/", include(urlpatterns_mine)),
     path("", include("site_ui.urls")),
     path("", include("audit.urls")),
+    path("", include("integrations.urls")),
 ]

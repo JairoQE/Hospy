@@ -8,6 +8,7 @@ import {
   type PaymentMethodOption,
   type PaymentRecord,
 } from "../../api/payments";
+import type { PaymentIpRisk } from "../../api/geo";
 import { ApiError } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { MercadoPagoCardForm } from "./MercadoPagoCardForm";
@@ -43,6 +44,7 @@ export function PaymentCheckoutModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [instruction, setInstruction] = useState("");
+  const [ipRisk, setIpRisk] = useState<PaymentIpRisk | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,6 +84,7 @@ export function PaymentCheckoutModal({
     try {
       const result = await payWithYape(payment.id, phone.trim(), otp.trim());
       setPayment(result);
+      if (result.ip_risk) setIpRisk(result.ip_risk);
       if (result.status === "pagado") onPaid();
       else setError(result.failure_message || "No se pudo completar el pago.");
     } catch (e) {
@@ -99,6 +102,7 @@ export function PaymentCheckoutModal({
       try {
         const result = await payWithCard(payment.id, sourceId);
         setPayment(result);
+        if (result.ip_risk) setIpRisk(result.ip_risk);
         if (result.status === "pagado") onPaid();
         else setError(result.failure_message || "No se pudo completar el pago.");
       } catch (e) {
@@ -122,6 +126,7 @@ export function PaymentCheckoutModal({
     try {
       const result = await createPagoEfectivo(payment.id);
       setPayment(result);
+      if (result.ip_risk) setIpRisk(result.ip_risk);
       setInstruction(result.instruction || result.failure_message || "");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Error al generar PagoEfectivo.");
@@ -158,6 +163,13 @@ export function PaymentCheckoutModal({
           <span>Total a pagar</span>
           <strong>S/ {amount}</strong>
         </div>
+
+        {ipRisk && ipRisk.level !== "low" && (
+          <div className={`payment-ip-risk payment-ip-risk--${ipRisk.level}`} role="status">
+            <strong>Verificación de ubicación (ip.guide)</strong>
+            <p>{ipRisk.messages?.[0] || "Conexión con señales de riesgo moderado."}</p>
+          </div>
+        )}
 
         {loading ? (
           <p className="payment-modal-loading">Cargando métodos de pago…</p>

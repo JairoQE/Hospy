@@ -34,6 +34,12 @@ ACTION_LABELS: dict[str, str] = {
     "sponsor_ad.delete": "Eliminó anuncio patrocinado",
     "sponsor_report.resolve": "Resolvió reporte de anuncio",
     "site_design.update": "Actualizó diseño del sitio",
+    "payment.yape.success": "Pago Yape confirmado",
+    "payment.card.success": "Pago con tarjeta confirmado",
+    "payment.pagoefectivo.create": "Generó código PagoEfectivo",
+    "auth.login": "Inició sesión",
+    "auth.register": "Registró cuenta",
+    "auth.register_owner": "Registró cuenta de propietario",
 }
 
 # critical = seguridad / gobernanza · high = moderación · medium = operaciones · low = rutina
@@ -42,6 +48,10 @@ ACTION_SEVERITY: dict[str, str] = {
     "user.revoke_admin": "critical",
     "profile.change_email": "critical",
     "profile.change_password": "critical",
+    "payment.yape.success": "medium",
+    "payment.card.success": "medium",
+    "auth.login": "high",
+    "auth.register_owner": "high",
     "site_design.update": "critical",
     "user.owner.approve": "high",
     "user.owner.reject": "high",
@@ -100,5 +110,7 @@ def action_category(action: str) -> str:
         "message_report": "moderation",
         "sponsor_ad": "sponsor",
         "sponsor_report": "moderation",
+        "payment": "booking",
+        "auth": "account",
     }
     return mapping.get(prefix, "other")

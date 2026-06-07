@@ -9,6 +9,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ChatDockProvider } from "./context/ChatDockContext";
 import { HospixChatProvider } from "./context/HospixChatContext";
 import { LocaleCurrencyProvider } from "./context/LocaleCurrencyContext";
+import { GeoHintsBootstrap } from "./components/geo/GeoHintsBootstrap";
 import { SiteDesignProvider } from "./context/SiteDesignContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { FloatingChatHeads } from "./components/chat/FloatingChatHeads";
@@ -45,6 +46,7 @@ function AppTree() {
     <AuthProvider>
       <ThemeProvider>
       <LocaleCurrencyProvider>
+      <GeoHintsBootstrap />
       <SiteDesignProvider>
       <ChatDockProvider>
         <BrowserRouter>

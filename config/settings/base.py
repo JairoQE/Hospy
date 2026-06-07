@@ -47,6 +47,7 @@ INSTALLED_APPS.extend(
         "site_ui",
         "audit",
         "payments",
+        "integrations",
     ]
 )
 
@@ -291,6 +292,17 @@ REVIEWS_AUTO_APPROVE = os.environ.get("REVIEWS_AUTO_APPROVE", "true").lower() in
     "1",
     "yes",
 )
+
+# --- Integración ip.guide (geolocalización por IP) ---
+IP_GUIDE_ENABLED = os.environ.get("IP_GUIDE_ENABLED", "true").lower() in (
+    "true",
+    "1",
+    "yes",
+)
+IP_GUIDE_API_TEMPLATE = os.environ.get("IP_GUIDE_API_TEMPLATE", "https://ip.guide/{ip}")
+IP_GUIDE_API_KEY = os.environ.get("IP_GUIDE_API_KEY", "").strip()
+IP_GUIDE_CACHE_SECONDS = int(os.environ.get("IP_GUIDE_CACHE_SECONDS", "86400"))
+IP_GUIDE_TIMEOUT_SECONDS = float(os.environ.get("IP_GUIDE_TIMEOUT_SECONDS", "4"))
 
 # --- Integración SIST ---
 HOSPY_INTEGRATION_API_KEY = os.environ.get("HOSPY_INTEGRATION_API_KEY", "")

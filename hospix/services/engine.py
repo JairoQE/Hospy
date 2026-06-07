@@ -138,7 +138,14 @@ def chat(
     history: list[dict],
     action_id: str | None = None,
     action_target: str | None = None,
+    request=None,
 ) -> dict:
+    from integrations.ipguide import city_search_fallback, lookup_request
+
+    ip_city = None
+    if request is not None:
+        ip_city = city_search_fallback(lookup_request(request))
+
     sid = session_id or rules_svc.new_session_id()
     state = session_store.flow_state(sid)
     audience = resolve_audience(user, pathname)
@@ -160,7 +167,7 @@ def chat(
             )
 
     if llm_svc.llm_enabled() and message.strip():
-        data_context = build_llm_data_context(message)
+        data_context = build_llm_data_context(message, ip_city=ip_city)
         system = llm_svc.build_system_prompt(
             audience=audience,
             formal=formal,
@@ -200,6 +207,7 @@ def chat(
             "flow_step": state.get("flow_step", 0),
             "flow_data": state.get("flow_data") or {},
         },
+        ip_city=ip_city,
     )
     return _finish_turn(
         sid,

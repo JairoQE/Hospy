@@ -45,6 +45,15 @@ def log_action(
     if request is not None:
         ua = (request.META.get("HTTP_USER_AGENT") or "")[:500]
 
+    meta = metadata or {}
+    if request is not None:
+        try:
+            from integrations.security import enrich_audit_metadata
+
+            meta = enrich_audit_metadata(request, action, meta)
+        except Exception:
+            pass
+
     try:
         return AuditLog.objects.create(
             actor_id=actor_id,
@@ -55,7 +64,7 @@ def log_action(
             target_type=target_type[:64],
             target_id=target_id,
             target_label=(target_label or "")[:255],
-            metadata=metadata or {},
+            metadata=meta,
             ip_address=ip,
             user_agent=ua,
         )
