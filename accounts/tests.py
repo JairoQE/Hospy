@@ -480,3 +480,66 @@ def test_solo_admin_asigna_administrador(api_client, huesped, propietario):
         format="json",
     )
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_perfil_propietario_payout_fields(api_client, propietario):
+    api_client.force_authenticate(user=propietario)
+    response = api_client.get("/api/v1/auth/perfil/")
+    assert response.status_code == 200
+    assert response.data["payout_profile_complete"] is True
+    assert response.data["payout_missing_fields"] == []
+
+
+@pytest.mark.django_db
+def test_perfil_guarda_payout_incompleto(api_client):
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    owner = User.objects.create_user(
+        email="sin_payout@hospy.local",
+        username="sin_payout",
+        password="Testpass123!",
+        first_name="Sin",
+        role=User.Role.PROPIETARIO,
+        owner_status=User.OwnerStatus.APROBADO,
+    )
+    api_client.force_authenticate(user=owner)
+    response = api_client.get("/api/v1/auth/perfil/")
+    assert response.data["payout_profile_complete"] is False
+    assert "phone" in response.data["payout_missing_fields"]
+
+    response = api_client.patch(
+        "/api/v1/auth/perfil/",
+        {
+            "phone": "999111222",
+            "payout_document_number": "12345678",
+            "payout_mp_email": "owner@mp.test",
+        },
+        format="json",
+    )
+    assert response.status_code == 200
+    assert response.data["payout_profile_complete"] is True
+
+
+@pytest.mark.django_db
+def test_reserva_bloqueada_sin_payout(api_client, huesped, hospedaje_aprobado):
+    _, room = hospedaje_aprobado
+    owner = room.accommodation.owner
+    owner.phone = ""
+    owner.payout_document_number = ""
+    owner.payout_mp_email = ""
+    owner.save()
+
+    api_client.force_authenticate(user=huesped)
+    response = api_client.post(
+        "/api/v1/reservas/preview/",
+        {
+            "room_id": room.id,
+            "check_in": "2030-06-01",
+            "check_out": "2030-06-03",
+        },
+        format="json",
+    )
+    assert response.status_code == 400
+    assert "datos de cobro" in str(response.data).lower()

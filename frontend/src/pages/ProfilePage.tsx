@@ -5,6 +5,7 @@ import type { PublicUserProfile, User } from "../api/types";
 import { ProfileHero } from "../components/profile/ProfileHero";
 import { PhoneInput, formatPhoneDisplay } from "../components/profile/PhoneInput";
 import { ProfileSecuritySection } from "../components/profile/ProfileSecuritySection";
+import { OwnerPayoutSection } from "../components/profile/OwnerPayoutSection";
 import { useAuth } from "../context/AuthContext";
 import { formatDate, profileHeading, roleLabel } from "../utils/format";
 import { formatLastAccessRelative } from "../utils/relativeTime";
@@ -340,6 +341,10 @@ export function ProfilePage() {
                 </button>
               </form>
             </section>
+
+            {me?.role === "propietario" && me.owner_status === "aprobado" && (
+              <OwnerPayoutSection user={me} phone={form.phone} onUpdated={refreshUser} />
+            )}
 
             <ProfileSecuritySection user={me!} onUpdated={refreshUser} />
           </div>

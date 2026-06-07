@@ -8,6 +8,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .captcha import verify_captcha_token
+from .payout import normalize_dni, validate_dni
 
 User = get_user_model()
 
@@ -67,6 +68,8 @@ class UserSerializer(serializers.ModelSerializer):
     accommodations_count = serializers.SerializerMethodField()
     accommodations = serializers.SerializerMethodField()
     has_password = serializers.SerializerMethodField()
+    payout_profile_complete = serializers.SerializerMethodField()
+    payout_missing_fields = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -85,6 +88,11 @@ class UserSerializer(serializers.ModelSerializer):
             "sponsor_warning_at",
             "phone",
             "bio",
+            "payout_document_number",
+            "payout_mp_email",
+            "payout_bank_cci",
+            "payout_profile_complete",
+            "payout_missing_fields",
             "photo",
             "photo_url",
             "cover_photo",
@@ -116,7 +124,21 @@ class UserSerializer(serializers.ModelSerializer):
             "followers_count",
             "following_count",
             "has_password",
+            "payout_profile_complete",
+            "payout_missing_fields",
         )
+
+    def get_payout_profile_complete(self, obj):
+        if obj.role != User.Role.PROPIETARIO:
+            return None
+        return obj.payout_profile_complete
+
+    def get_payout_missing_fields(self, obj):
+        if obj.role != User.Role.PROPIETARIO:
+            return None
+        from .payout import owner_payout_missing_fields
+
+        return owner_payout_missing_fields(obj)
 
     def get_photo_url(self, obj):
         return media_public_path(obj.photo) if obj.photo else None
@@ -176,6 +198,36 @@ class UserSerializer(serializers.ModelSerializer):
 
     def validate_bio(self, value):
         return (value or "").strip()[:500]
+
+    def validate_payout_document_number(self, value):
+        if not value:
+            return ""
+        try:
+            return validate_dni(value)
+        except ValueError as exc:
+            raise serializers.ValidationError(str(exc)) from exc
+
+    def validate_payout_mp_email(self, value):
+        return (value or "").strip().lower()
+
+    def validate_payout_bank_cci(self, value):
+        cleaned = (value or "").strip().replace(" ", "")
+        if cleaned and (not cleaned.isdigit() or len(cleaned) != 20):
+            raise serializers.ValidationError(
+                "El CCI debe tener 20 dígitos numéricos."
+            )
+        return cleaned
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if self.instance and self.instance.role == User.Role.PROPIETARIO:
+            doc = attrs.get(
+                "payout_document_number",
+                self.instance.payout_document_number,
+            )
+            if doc:
+                attrs["payout_document_number"] = normalize_dni(doc)
+        return attrs
 
 
 class AdminUserListSerializer(serializers.ModelSerializer):

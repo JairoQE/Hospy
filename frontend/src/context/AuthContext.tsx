@@ -50,6 +50,7 @@ interface AuthState {
   refreshUser: () => Promise<void>;
   isRole: (...roles: UserRole[]) => boolean;
   isOwnerApproved: () => boolean;
+  isOwnerPayoutReady: () => boolean;
   isSponsorApproved: () => boolean;
 }
 
@@ -218,6 +219,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
+  const isOwnerPayoutReady = useCallback(
+    () =>
+      user?.role === "propietario" ? user.payout_profile_complete === true : false,
+    [user],
+  );
+
   const isSponsorApproved = useCallback(
     () =>
       user?.role === "patrocinador" ? user.sponsor_status === "aprobado" : false,
@@ -236,6 +243,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshUser,
       isRole,
       isOwnerApproved,
+      isOwnerPayoutReady,
       isSponsorApproved,
     }),
     [
@@ -249,6 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshUser,
       isRole,
       isOwnerApproved,
+      isOwnerPayoutReady,
       isSponsorApproved,
     ],
   );

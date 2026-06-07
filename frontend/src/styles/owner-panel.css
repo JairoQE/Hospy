@@ -640,6 +640,16 @@ html[data-sidebar-animated="0"] .owner-sidebar-bg {
   border-left: 4px solid #ef4444;
 }
 
+.owner-payout-banner-panel {
+  border-left: 4px solid #f59e0b;
+}
+
+.owner-payout-banner-link {
+  display: inline-block;
+  margin-top: 0.75rem;
+  text-decoration: none;
+}
+
 /* Toolbar */
 .owner-properties-toolbar {
   display: flex;

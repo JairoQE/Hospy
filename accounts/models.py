@@ -79,6 +79,23 @@ class User(AbstractUser):
         max_length=500,
         help_text="Texto visible en el perfil público.",
     )
+    payout_document_number = models.CharField(
+        "DNI para cobros",
+        max_length=12,
+        blank=True,
+        help_text="Documento de identidad del titular de la cuenta de cobro.",
+    )
+    payout_mp_email = models.EmailField(
+        "correo Mercado Pago",
+        blank=True,
+        help_text="Correo de la cuenta Mercado Pago donde recibirás los pagos.",
+    )
+    payout_bank_cci = models.CharField(
+        "CCI (opcional)",
+        max_length=20,
+        blank=True,
+        help_text="Código de cuenta interbancario, alternativa a Mercado Pago.",
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username", "first_name"]
@@ -103,6 +120,12 @@ class User(AbstractUser):
         if self.role != self.Role.PROPIETARIO:
             return False
         return self.owner_status == self.OwnerStatus.APROBADO
+
+    @property
+    def payout_profile_complete(self) -> bool:
+        from .payout import owner_has_complete_payout_profile
+
+        return owner_has_complete_payout_profile(self)
 
     @property
     def is_sponsor_approved(self) -> bool:

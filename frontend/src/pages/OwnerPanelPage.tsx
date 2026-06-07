@@ -50,8 +50,9 @@ function formToPayload(form: AccommodationFormData) {
 }
 
 export function OwnerPanelPage() {
-  const { user, isOwnerApproved } = useAuth();
+  const { user, isOwnerApproved, isOwnerPayoutReady } = useAuth();
   const ownerApproved = isOwnerApproved();
+  const ownerPayoutReady = isOwnerPayoutReady();
   const ownerPending = user?.owner_status === "pendiente";
   const ownerRejected = user?.owner_status === "rechazado";
   const navigate = useNavigate();
@@ -180,6 +181,19 @@ export function OwnerPanelPage() {
 
         {ownerApproved && (
           <>
+            {!ownerPayoutReady && (
+              <div className="owner-approval-banner owner-payout-banner-panel" role="alert">
+                <h2>Completa tus datos de cobro</h2>
+                <p className="muted">
+                  Los huéspedes no pueden reservar con pago en tus hospedajes hasta que cargues tu
+                  DNI, teléfono y correo de Mercado Pago.
+                </p>
+                <Link to="/perfil" className="btn btn-primary owner-payout-banner-link">
+                  Ir a datos de cobro
+                </Link>
+              </div>
+            )}
+
             <div className="owner-panel-alerts">
               {msg && <p className="owner-panel-msg owner-panel-msg--success">{msg}</p>}
               {error && <p className="owner-panel-msg owner-panel-msg--error">{error}</p>}

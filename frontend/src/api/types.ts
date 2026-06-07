@@ -40,6 +40,11 @@ export interface User {
   cover_photo?: string | null;
   cover_photo_url?: string | null;
   bio?: string;
+  payout_document_number?: string;
+  payout_mp_email?: string;
+  payout_bank_cci?: string;
+  payout_profile_complete?: boolean | null;
+  payout_missing_fields?: string[] | null;
   followers_count?: number;
   following_count?: number;
   owner_average_rating?: number;

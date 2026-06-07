@@ -106,6 +106,15 @@ class Command(BaseCommand):
         elif not (owner.phone or "").strip():
             owner.phone = "987654321"
             owner.save(update_fields=["phone"])
+        payout_updates = []
+        if not (owner.payout_document_number or "").strip():
+            owner.payout_document_number = "87654321"
+            payout_updates.append("payout_document_number")
+        if not (owner.payout_mp_email or "").strip():
+            owner.payout_mp_email = "propietario@hospy.local"
+            payout_updates.append("payout_mp_email")
+        if payout_updates:
+            owner.save(update_fields=payout_updates)
         elif owner.owner_status != User.OwnerStatus.APROBADO:
             owner.owner_status = User.OwnerStatus.APROBADO
             owner.owner_rejection_reason = ""

@@ -88,6 +88,15 @@ def is_room_available(
     ):
         return False, "El hospedaje no está disponible para reservas."
 
+    from accounts.payout import (
+        PAYOUT_INCOMPLETE_MESSAGE,
+        owner_has_complete_payout_profile,
+    )
+
+    owner = acc.owner
+    if not owner_has_complete_payout_profile(owner):
+        return False, PAYOUT_INCOMPLETE_MESSAGE
+
     current = check_in
     while current < check_out:
         status = get_day_status(room, current)

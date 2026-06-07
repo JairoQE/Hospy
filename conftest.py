@@ -41,6 +41,9 @@ def propietario(db):
         first_name="Prop",
         role=User.Role.PROPIETARIO,
         owner_status=User.OwnerStatus.APROBADO,
+        phone="999888777",
+        payout_document_number="12345678",
+        payout_mp_email="prop.mp@hospy.local",
     )
     return user
 
