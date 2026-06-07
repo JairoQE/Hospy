@@ -1,4 +1,6 @@
 import os
+import logging
+
 from datetime import datetime, time, timedelta
 
 from django.db import transaction
@@ -9,6 +11,8 @@ from rooms.models import Room
 from rooms.services import calculate_stay_total, get_day_status
 
 from .models import Booking
+
+logger = logging.getLogger(__name__)
 
 ACTIVE_BLOCKING_STATUSES = (
     Booking.Status.PENDIENTE,
@@ -128,8 +132,15 @@ def create_booking(guest, room: Room, check_in, check_out) -> Booking:
             total_amount=pricing["total"],
             status=Booking.Status.PENDIENTE,
         )
-    notify_booking_created(booking)
     return booking
+
+
+def notify_booking_created_safe(booking: Booking) -> None:
+    """Notificaciones post-reserva; no deben revertir la reserva si fallan."""
+    try:
+        notify_booking_created(booking)
+    except Exception:
+        logger.exception("No se pudieron enviar notificaciones de reserva #%s", booking.pk)
 
 
 def confirm_booking(booking: Booking) -> Booking:

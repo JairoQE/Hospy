@@ -1,4 +1,7 @@
+import logging
+
 from django.db import transaction
+from django.db.utils import DatabaseError, ProgrammingError
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -23,8 +26,11 @@ from .services import (
     cancel_booking,
     complete_booking,
     confirm_booking,
+    notify_booking_created_safe,
     reject_booking,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class BookingPreviewView(APIView):
@@ -116,15 +122,33 @@ class BookingViewSet(viewsets.GenericViewSet):
                 create_payment_for_booking(booking)
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)}) from exc
+        except (ProgrammingError, DatabaseError) as exc:
+            logger.exception("Error de base de datos al crear pago para reserva")
+            msg = str(exc).lower()
+            if "payment" in msg or "payments_" in msg:
+                raise ValidationError(
+                    {
+                        "detail": (
+                            "Falta inicializar pagos en el servidor. "
+                            "Ejecuta «python manage.py migrate payments» en Render y vuelve a intentar."
+                        )
+                    }
+                ) from exc
+            raise ValidationError(
+                {"detail": "Error de base de datos al registrar la reserva."}
+            ) from exc
         except Exception as exc:
+            logger.exception("Error inesperado al crear reserva con pago")
             raise ValidationError(
                 {
                     "detail": (
-                        "No se pudo registrar el pago de la reserva. "
-                        "Si el problema continúa, contacta al administrador."
+                        "No se pudo completar la reserva. "
+                        "Inténtalo de nuevo en unos segundos."
                     )
                 }
             ) from exc
+
+        notify_booking_created_safe(booking)
 
         booking = self.get_queryset().get(pk=booking.pk)
         log_action(
