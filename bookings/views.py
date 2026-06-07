@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -109,8 +110,22 @@ class BookingViewSet(viewsets.GenericViewSet):
             data=request.data, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
-        booking = serializer.save()
-        create_payment_for_booking(booking)
+        try:
+            with transaction.atomic():
+                booking = serializer.save()
+                create_payment_for_booking(booking)
+        except ValueError as exc:
+            raise ValidationError({"detail": str(exc)}) from exc
+        except Exception as exc:
+            raise ValidationError(
+                {
+                    "detail": (
+                        "No se pudo registrar el pago de la reserva. "
+                        "Si el problema continúa, contacta al administrador."
+                    )
+                }
+            ) from exc
+
         booking = self.get_queryset().get(pk=booking.pk)
         log_action(
             actor=request.user,

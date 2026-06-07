@@ -59,7 +59,9 @@ def enrich_audit_metadata(
     if action not in ENRICH_ACTIONS:
         return meta
 
-    geo = lookup_request(request)
+    geo = lookup_request(request, allow_fetch=False)
+    if geo and not geo.get("country_code") and not geo.get("is_private"):
+        geo = lookup_request(request, allow_fetch=True)
     if geo:
         meta["ip_geo"] = {
             k: geo[k]

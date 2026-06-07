@@ -119,6 +119,25 @@ class BookingCreateSerializer(serializers.Serializer):
         room = data["room"]
         check_in = data["check_in"]
         check_out = data["check_out"]
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            existing = Booking.objects.filter(
+                guest=request.user,
+                room=room,
+                check_in=check_in,
+                check_out=check_out,
+                status=Booking.Status.PENDIENTE,
+            ).first()
+            if existing:
+                raise serializers.ValidationError(
+                    {
+                        "detail": (
+                            f"Ya tienes una reserva pendiente (#{existing.pk}) "
+                            "para esta habitación y fechas. Revisa «Mis reservas» o espera "
+                            "a que expire el plazo de pago."
+                        )
+                    }
+                )
         available, message = is_room_available(room, check_in, check_out)
         if not available:
             raise serializers.ValidationError({"detail": message})

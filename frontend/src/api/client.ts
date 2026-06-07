@@ -135,10 +135,15 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     } else if (res.status >= 500) {
       data = {
         detail:
-          "El servidor no respondió a tiempo. Espera unos segundos e inténtalo de nuevo.",
+          "Error del servidor. Espera unos segundos e inténtalo de nuevo.",
       };
     } else if (text.trim()) {
       data = { detail: text.trim().slice(0, 240) };
+    } else if (res.status === 400) {
+      data = {
+        detail:
+          "No se pudo completar la solicitud (400). Revisa fechas, habitación o si ya tienes una reserva pendiente.",
+      };
     }
   }
   if (!res.ok) {

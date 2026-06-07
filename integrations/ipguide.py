@@ -163,8 +163,15 @@ def lookup_ip(ip: str | None, *, use_cache: bool = True) -> dict[str, Any]:
     return normalized
 
 
-def lookup_request(request) -> dict[str, Any]:
-    return lookup_ip(client_ip(request))
+def lookup_request(request, *, allow_fetch: bool = True) -> dict[str, Any]:
+    ip = client_ip(request)
+    if not ip:
+        return {}
+    if not allow_fetch:
+        cache_key = f"{_CACHE_PREFIX}{ip}"
+        cached = cache.get(cache_key)
+        return cached if cached is not None else {"ip": ip}
+    return lookup_ip(ip)
 
 
 def geo_hints_from_lookup(geo: dict[str, Any]) -> dict[str, Any]:
