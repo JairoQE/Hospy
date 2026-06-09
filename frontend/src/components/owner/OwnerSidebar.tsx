@@ -49,7 +49,7 @@ export function OwnerSidebar({
             aria-label="Ir al inicio de Hospy"
             title="Ir al inicio"
           >
-            <HospyIcon size={32} className="owner-sidebar-brand-icon" />
+            <HospyIcon size={32} className="owner-sidebar-brand-icon owner-sidebar-brand-logo" />
             {!collapsed && <span className="owner-sidebar-brand-name">Hospy</span>}
           </Link>
           {showCollapseControl && onToggleCollapse && (

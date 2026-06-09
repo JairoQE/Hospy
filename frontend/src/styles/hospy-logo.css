@@ -1,0 +1,50 @@
+.hospy-logo {
+  display: block;
+  flex-shrink: 0;
+}
+
+.hospy-logo--full {
+  width: auto;
+  max-width: min(100%, 200px);
+  object-fit: contain;
+}
+
+.hospy-logo--mark {
+  object-fit: cover;
+  object-position: center 16%;
+  border-radius: 10px;
+}
+
+.hospy-brand {
+  gap: 0.75rem;
+}
+
+.hospy-brand-logo {
+  max-width: 148px;
+}
+
+@media (min-width: 769px) {
+  .hospy-brand-logo {
+    max-width: 168px;
+  }
+}
+
+.login-card-header .hospy-brand {
+  justify-content: center;
+}
+
+.login-card-header .hospy-brand-logo {
+  max-width: 180px;
+  height: 72px !important;
+}
+
+.site-footer-brand-logo {
+  max-width: 160px;
+  margin-bottom: 0.25rem;
+}
+
+.owner-sidebar-brand-logo,
+.admin-sidebar-brand-logo,
+.sponsor-sidebar-brand-logo {
+  border-radius: 10px;
+}

@@ -6,7 +6,7 @@ import { api } from "../../api/client";
 import type { SponsorContactConfig } from "../../api/types";
 import { PrimeIcon } from "../PrimeIcon";
 
-import { HospyIcon } from "../brand/HospyIcon";
+import { HospyLogo } from "../brand/HospyLogo";
 
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 
@@ -121,17 +121,7 @@ export function SiteFooter() {
           <section className="site-footer-col site-footer-col--brand" aria-labelledby="footer-brand">
 
             <Link to="/" className="site-footer-brand" id="footer-brand">
-
-              <HospyIcon size={32} className="site-footer-brand-icon" />
-
-              <span className="site-footer-brand-text">
-
-                <span className="site-footer-brand-name">Hospy</span>
-
-                <span className="site-footer-brand-line">{t("footer.brandLine")}</span>
-
-              </span>
-
+              <HospyLogo height={72} variant="full" className="site-footer-brand-logo" alt="Hospy" />
             </Link>
 
             <p className="site-footer-tagline">{t("footer.tagline")}</p>

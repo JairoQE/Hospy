@@ -66,12 +66,10 @@
 /* Marca */
 
 .site-footer-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.65rem;
+  display: inline-block;
   text-decoration: none;
   color: #f9fafb;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .site-footer-brand:hover {

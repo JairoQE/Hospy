@@ -18,7 +18,7 @@ export const translations = {
       myAds: "Mis anuncios",
     },
     footer: {
-      tagline: "El mejor lugar para encontrar hospedajes verificados en Perú",
+      tagline: "Conexión a tu destino",
       verified: "Hospedajes 100% verificados",
       ssl: "Conexión segura",
       rights: "Todos los derechos reservados.",
@@ -88,7 +88,8 @@ export const translations = {
       peru: "Perú",
     },
     brand: {
-      tagline: "Hoteles · Hostales · Hospedajes",
+      tagline: "Conexión a tu destino",
+      logoAlt: "Hospy — Conexión a tu destino",
       verified: "Verificado",
       homeAria: "Hospy — Inicio",
     },
@@ -394,7 +395,7 @@ export const translations = {
       myAds: "My ads",
     },
     footer: {
-      tagline: "The best place to find verified stays in Peru",
+      tagline: "Connection to your destination",
       verified: "100% verified stays",
       ssl: "Secure connection",
       rights: "All rights reserved.",
@@ -464,7 +465,8 @@ export const translations = {
       peru: "Peru",
     },
     brand: {
-      tagline: "Hotels · Hostels · Stays",
+      tagline: "Connection to your destination",
+      logoAlt: "Hospy — Connection to your destination",
       verified: "Verified",
       homeAria: "Hospy — Home",
     },

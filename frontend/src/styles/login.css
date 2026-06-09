@@ -9,9 +9,9 @@
   min-height: calc(100vh - 8rem);
   padding: 2rem 1rem 3rem;
   background:
-    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(13, 110, 110, 0.14), transparent 55%),
-    radial-gradient(ellipse 80% 50% at 100% 50%, rgba(77, 182, 172, 0.12), transparent 50%),
-    linear-gradient(165deg, #eef4f6 0%, #f8fafb 45%, #e8f0f2 100%);
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(24, 172, 254, 0.16), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 100% 50%, rgba(141, 198, 63, 0.1), transparent 50%),
+    linear-gradient(165deg, #eef6fc 0%, #f8fafb 45%, #e8f2f8 100%);
 }
 
 .login-card {

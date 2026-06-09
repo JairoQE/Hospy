@@ -37,7 +37,7 @@ export function SponsorSidebar({
             aria-label="Ir al inicio de Hospy"
             title="Ir al inicio"
           >
-            <HospyIcon size={32} className="sponsor-sidebar-brand-icon" />
+            <HospyIcon size={32} className="sponsor-sidebar-brand-icon sponsor-sidebar-brand-logo" />
             {!collapsed && <span className="sponsor-sidebar-brand-name">Hospy</span>}
           </Link>
           {showCollapseControl && onToggleCollapse && (
