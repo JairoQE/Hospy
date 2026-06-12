@@ -82,7 +82,7 @@ class ServiceViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-_PUBLIC_DETAIL_ACTIONS = ("retrieve", "detalle_bootstrap", "cotizacion")
+_PUBLIC_DETAIL_ACTIONS = ("retrieve", "detalle_bootstrap", "cotizacion", "tendencia_precios")
 
 
 class AccommodationViewSet(viewsets.ModelViewSet):
@@ -114,6 +114,7 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             "cercanos",
             "detalle_bootstrap",
             "cotizacion",
+            "tendencia_precios",
         ):
             return public_accommodations_queryset()
 
@@ -209,6 +210,7 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             "cercanos",
             "detalle_bootstrap",
             "cotizacion",
+            "tendencia_precios",
         ):
             return [permissions.AllowAny()]
         if self.action == "pendientes":
@@ -504,6 +506,18 @@ class AccommodationViewSet(viewsets.ModelViewSet):
                 ]
             }
         )
+
+    @action(detail=True, methods=["get"], url_path="tendencia-precios")
+    def tendencia_precios(self, request, pk=None):
+        """GET /api/v1/hospedajes/{id}/tendencia-precios/?dias=90 — precio mínimo por noche."""
+        from properties.price_trend import build_accommodation_price_trend
+
+        accommodation = self.get_object()
+        try:
+            days = int(request.query_params.get("dias", 90))
+        except (TypeError, ValueError):
+            days = 90
+        return Response(build_accommodation_price_trend(accommodation, days=days))
 
     @action(detail=False, methods=["get"], url_path="cercanos")
     def cercanos(self, request):

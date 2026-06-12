@@ -3,7 +3,8 @@ import type { BrowseTile } from "../../api/types";
 import { resolveMediaUrl } from "../../utils/media";
 
 import { PrimeIcon } from "../PrimeIcon";
-import { tileCountBadge, tileIcon } from "../../utils/tileIcons";
+import { tileIcon } from "../../utils/tileIcons";
+import { BrowseTileStats } from "./BrowseTileStats";
 
 import { BrowseCarousel } from "./BrowseCarousel";
 
@@ -42,8 +43,6 @@ export function BrowseTilesCarousel({ tiles, onSelect, ariaLabel, loading = fals
         const imageUrl = resolveMediaUrl(tile.image_url);
 
         const iconName = tileIcon(tile);
-
-        const count = tileCountBadge(tile);
 
         const gradient =
 
@@ -90,13 +89,15 @@ export function BrowseTilesCarousel({ tiles, onSelect, ariaLabel, loading = fals
                 className="browse-tile-emoji browse-tile-emoji--lg"
               />
 
-              {count != null && <span className="browse-tile-badge">{count} aloj.</span>}
-
             </span>
 
             <span className="browse-tile-label">{tile.title}</span>
 
-            {tile.subtitle && !count && <span className="browse-tile-sub">{tile.subtitle}</span>}
+            <BrowseTileStats tile={tile} />
+
+            {tile.subtitle && !(tile.hotels_count && tile.hotels_count > 0) && (
+              <span className="browse-tile-sub">{tile.subtitle}</span>
+            )}
 
           </button>
 
@@ -109,5 +110,4 @@ export function BrowseTilesCarousel({ tiles, onSelect, ariaLabel, loading = fals
   );
 
 }
-
 

@@ -1,9 +1,12 @@
+import { TrendingDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Ref } from "react";
 import type { AccommodationListItem } from "../api/types";
 import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
-import { formatMoney, typeLabel } from "../utils/format";
+import { formatMoney, formatStayDateRange } from "../utils/format";
 import { resolveMediaUrl } from "../utils/media";
+import { ratingLabel, toTenPointScore } from "../utils/rating";
+import { IconChevronRight } from "./icons";
 
 interface Props {
   item: AccommodationListItem;
@@ -20,15 +23,32 @@ export function AccommodationCard({
   compact = false,
   cardRef,
 }: Props) {
-  const { t, tVars } = useLocaleCurrency();
+  const { t, tVars, language } = useLocaleCurrency();
   const qs = new URLSearchParams();
   if (checkIn) qs.set("entrada", checkIn);
   if (checkOut) qs.set("salida", checkOut);
   const suffix = qs.toString() ? `?${qs}` : "";
 
-  const rating = Number(item.average_rating) || 0;
+  const rawRating = Number(item.average_rating) || 0;
+  const score = toTenPointScore(rawRating);
+  const reviewsCount = item.reviews_count ?? 0;
   const fotoUrl = resolveMediaUrl(item.foto_principal);
-  const hasDates = Boolean(checkIn && checkOut);
+  const dateRange = formatStayDateRange(checkIn, checkOut, { language });
+
+  const priceCurrent =
+    item.precio_desde != null ? Number(item.precio_desde) : null;
+  const priceOriginal =
+    item.precio_desde_original != null ? Number(item.precio_desde_original) : null;
+  const priceDrop =
+    item.oferta_activa && priceOriginal != null && priceCurrent != null
+      ? priceOriginal - priceCurrent
+      : null;
+
+  const country = item.country || t("common.peru");
+  const locationLabel =
+    item.region && item.region !== item.city
+      ? `${item.city}, ${item.region}, ${country}`
+      : `${item.city}, ${country}`;
 
   return (
     <Link
@@ -41,38 +61,57 @@ export function AccommodationCard({
         style={fotoUrl ? { backgroundImage: `url(${fotoUrl})` } : undefined}
       >
         {!fotoUrl && <span className="acc-card-placeholder">{t("common.noPhoto")}</span>}
-        {item.oferta_activa && (
-          <span className="acc-card-offer">
-            −{Number(item.descuento_porcentaje) || ""}%
-          </span>
-        )}
-        <span className="acc-card-type">{typeLabel(item.type)}</span>
       </div>
+
       <div className="acc-card-body">
-        <h3>{item.name}</h3>
-        <p className="acc-card-meta">
-          {item.city}
+        <h3 className="acc-card-title">{item.name}</h3>
+        <p className="acc-card-location">
+          {locationLabel}
           {item.distance_km != null && (
-            <> · {tVars("common.distanceKm", { km: item.distance_km })}</>
+            <span className="acc-card-distance">
+              {" "}
+              · {tVars("common.distanceKm", { km: item.distance_km })}
+            </span>
           )}
         </p>
-        <div className="acc-card-footer">
-          <span className="rating" title={`${rating} estrellas`}>
-            ★ {rating > 0 ? rating.toFixed(1) : t("price.new")}
-          </span>
-          <span className={`price${hasDates ? " price--highlight" : ""}`}>
-            {item.precio_desde != null ? (
-              <>
-                {hasDates ? `${t("price.totalFrom")} ` : `${t("price.from")} `}
-                {item.oferta_activa && item.precio_desde_original != null && (
-                  <span className="price-was">{formatMoney(item.precio_desde_original)}</span>
-                )}
-                <strong>{formatMoney(item.precio_desde)}</strong>
-                {!hasDates && <span className="price-unit"> {t("price.perNight")}</span>}
-              </>
+
+        {score > 0 && (
+          <div className="acc-card-rating-row">
+            <span className="acc-card-score-badge">{score.toFixed(1)}</span>
+            <span className="acc-card-rating-text">
+              <strong>{ratingLabel(score, language)}</strong>
+              {reviewsCount > 0 && (
+                <span className="acc-card-reviews">
+                  ({reviewsCount.toLocaleString()})
+                </span>
+              )}
+            </span>
+          </div>
+        )}
+
+        {priceDrop != null && priceDrop > 0 && (
+          <div className="acc-card-drop-badge">
+            <TrendingDown size={14} strokeWidth={2.5} aria-hidden />
+            {tVars("card.priceDropped", { price: formatMoney(priceDrop, { language }) })}
+          </div>
+        )}
+
+        <div className="acc-card-price-row">
+          <div className="acc-card-price-block">
+            {priceCurrent != null ? (
+              <p className="acc-card-price-main">
+                <strong>{formatMoney(priceCurrent, { language })}</strong>
+                <span className="acc-card-price-unit">{t("price.perNight")}</span>
+              </p>
             ) : (
-              t("price.consult")
+              <p className="acc-card-price-main acc-card-price-main--muted">
+                {t("price.consult")}
+              </p>
             )}
+            {dateRange && <p className="acc-card-dates">{dateRange}</p>}
+          </div>
+          <span className="acc-card-action" aria-hidden>
+            <IconChevronRight size={18} />
           </span>
         </div>
       </div>

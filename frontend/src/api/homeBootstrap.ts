@@ -1,5 +1,6 @@
 import type { BrowseTile, FeaturedSearchesPayload } from "./types";
 import type { UbigeoItem } from "../components/home/LocationExplorer";
+import type { TileStatsMap } from "../utils/tileStats";
 import { api } from "./client";
 
 export type HomeBootstrapPayload = {
@@ -8,9 +9,10 @@ export type HomeBootstrapPayload = {
   departamento: BrowseTile[];
   ubigeo_departamentos: UbigeoItem[];
   busquedas_destacadas: FeaturedSearchesPayload;
+  tile_stats: TileStatsMap;
 };
 
-const CACHE_KEY = "hospy_home_bootstrap_v2";
+const CACHE_KEY = "hospy_home_bootstrap_v3";
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
 type CacheEntry = {
@@ -60,6 +62,8 @@ export async function fetchHomeBootstrap(): Promise<HomeBootstrapPayload> {
       ciudades: Array.isArray(featured?.ciudades) ? featured.ciudades : [],
       destinos: Array.isArray(featured?.destinos) ? featured.destinos : [],
     },
+    tile_stats:
+      data.tile_stats && typeof data.tile_stats === "object" ? data.tile_stats : {},
   };
   writeCache(payload);
   return payload;

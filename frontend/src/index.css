@@ -1339,11 +1339,12 @@ html[data-browse-marquee="0"] .browse-carousel-marquee {
   text-align: left;
   border-radius: 12px;
   overflow: hidden;
-  transition: transform 0.15s ease;
+  transition: transform 0.25s ease;
+  transform-origin: center center;
 }
 
 .browse-tile:hover {
-  transform: translateY(-3px);
+  transform: scale(1.05) translateY(-2px);
 }
 
 .browse-tile-lg {
@@ -1423,6 +1424,28 @@ html[data-browse-marquee="0"] .browse-carousel-marquee {
   font-size: 0.8rem;
   color: var(--muted);
   line-height: 1.35;
+}
+
+.browse-tile-meta {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.86rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.browse-tile-price {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.browse-tile-carousel .browse-tile-meta,
+.browse-tile-carousel .browse-tile-price {
+  text-align: center;
+  width: 100%;
 }
 
 /* Fila a ancho completo (sin carrusel vacío) */
@@ -2142,32 +2165,35 @@ textarea:focus {
 
 .acc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.25rem;
+  padding: 0.35rem 0.15rem;
 }
 
 .acc-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 12px;
   background: var(--surface);
-  box-shadow: var(--shadow);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
   color: inherit;
   text-decoration: none;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transform-origin: center center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .acc-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgba(26, 35, 50, 0.12);
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
   text-decoration: none;
 }
 
 .acc-card-image {
   position: relative;
-  aspect-ratio: 4 / 3;
-  min-height: 160px;
+  aspect-ratio: 16 / 10;
+  min-height: 168px;
   background: linear-gradient(135deg, #d4e8e8, #b8d4d4) center / cover;
 }
 
@@ -2180,28 +2206,156 @@ textarea:focus {
   color: var(--muted);
 }
 
-.acc-card-offer {
-  position: absolute;
-  top: 0.6rem;
-  right: 0.6rem;
-  padding: 0.25rem 0.55rem;
-  border-radius: 6px;
-  background: #c62828;
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 700;
+.acc-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 0.85rem 0.95rem 0.95rem;
 }
 
-.acc-card-type {
-  position: absolute;
-  top: 0.6rem;
-  left: 0.6rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.92);
-  font-size: 0.75rem;
-  font-weight: 600;
+.acc-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
 }
+
+.acc-card-location {
+  margin: 0.25rem 0 0;
+  font-size: 0.86rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.acc-card-distance {
+  white-space: nowrap;
+}
+
+.acc-card-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+}
+
+.acc-card-score-badge {
+  flex-shrink: 0;
+  min-width: 2.45rem;
+  padding: 0.32rem 0.42rem;
+  border-radius: 7px 7px 7px 2px;
+  background: #008009;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+
+.acc-card-rating-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem;
+  font-size: 0.86rem;
+  line-height: 1.25;
+}
+
+.acc-card-rating-text strong {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.acc-card-reviews {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.acc-card-drop-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  margin-top: 0.55rem;
+  padding: 0.32rem 0.55rem;
+  border-radius: 6px;
+  background: #7b1538;
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.acc-card-price-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 0.7rem;
+}
+
+.acc-card-price-block {
+  min-width: 0;
+}
+
+.acc-card-price-main {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem;
+  line-height: 1.2;
+}
+
+.acc-card-price-main strong {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.acc-card-price-main--muted {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.acc-card-price-unit {
+  font-size: 0.86rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.acc-card-dates {
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.acc-card-action {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--text);
+  border-radius: 8px;
+  color: var(--text);
+  background: #fff;
+}
+
+.acc-card--compact .acc-card-image {
+  min-height: 130px;
+}
+
+.acc-card--compact .acc-card-body {
+  padding: 0.7rem 0.8rem 0.85rem;
+}
+
+.acc-card--compact .acc-card-price-main strong {
+  font-size: 1.15rem;
+}
+
+/* Legacy helpers kept for otros componentes */
 
 .price-was {
   text-decoration: line-through;
@@ -2211,13 +2365,8 @@ textarea:focus {
   font-weight: 400;
 }
 
-.acc-card-body {
-  padding: 1rem;
-}
-
 .acc-card-body h3 {
-  margin: 0 0 0.25rem;
-  font-size: 1.05rem;
+  margin: 0;
 }
 
 .acc-card-meta {
@@ -3263,6 +3412,66 @@ textarea:focus {
 .property-section h2 {
   margin: 0 0 1rem;
   font-size: 1.25rem;
+}
+
+.price-trend-section {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem 1.15rem 1rem;
+  background: var(--surface);
+}
+
+.price-trend-sub {
+  margin: 0 0 1rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.price-trend-chart-wrap {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.price-trend-nav {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.price-trend-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.price-trend-nav:not(:disabled):hover {
+  background: var(--bg);
+}
+
+.price-trend-chart {
+  min-width: 0;
+}
+
+.price-trend-chart .recharts-cartesian-grid-horizontal line {
+  stroke: #dbe3ea;
+}
+
+@media (max-width: 640px) {
+  .price-trend-chart-wrap {
+    grid-template-columns: 1fr;
+  }
+
+  .price-trend-nav {
+    display: none;
+  }
 }
 
 .property-faq-grid {

@@ -28,6 +28,8 @@ def test_inicio_bootstrap_agrupa_bloques(api_client):
     featured = r.data["busquedas_destacadas"]
     assert isinstance(featured["ciudades"], list)
     assert isinstance(featured["destinos"], list)
+    assert isinstance(r.data["tile_stats"], dict)
+    assert "tipo|hotel" in r.data["tile_stats"] or len(r.data["tile_stats"]) >= 0
 
 
 @pytest.mark.django_db

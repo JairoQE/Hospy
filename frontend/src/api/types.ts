@@ -89,7 +89,10 @@ export interface AccommodationListItem {
   name: string;
   type: string;
   city: string;
+  region?: string;
+  country?: string;
   average_rating: string | number;
+  reviews_count?: number;
   precio_desde: string | number | null;
   precio_desde_original?: string | number | null;
   oferta_activa?: boolean;
@@ -230,6 +233,9 @@ export interface BrowseTile {
   is_active?: boolean;
   /** Clics en los últimos 30 días (solo en listado admin). */
   clicks_30d?: number;
+  /** Inventario publicado para este bloque (desde tile_stats del bootstrap). */
+  hotels_count?: number;
+  price_avg?: number | null;
 }
 
 export interface FeaturedSearchItem {
@@ -252,6 +258,19 @@ export interface FeaturedSearchItem {
 export interface FeaturedSearchesPayload {
   ciudades: FeaturedSearchItem[];
   destinos: FeaturedSearchItem[];
+}
+
+export interface PriceTrendPoint {
+  date: string;
+  price: number | null;
+}
+
+export interface PriceTrendResponse {
+  start_date: string;
+  end_date: string;
+  days: number;
+  currency: string;
+  points: PriceTrendPoint[];
 }
 
 export interface RoomPhoto {

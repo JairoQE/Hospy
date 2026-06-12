@@ -172,6 +172,7 @@ class AccommodationListSerializer(serializers.ModelSerializer):
     descuento_porcentaje = serializers.SerializerMethodField()
     foto_principal = serializers.SerializerMethodField()
     distance_km = serializers.SerializerMethodField()
+    reviews_count = serializers.IntegerField(read_only=True, default=0)
 
     class Meta:
         model = Accommodation
@@ -180,7 +181,10 @@ class AccommodationListSerializer(serializers.ModelSerializer):
             "name",
             "type",
             "city",
+            "region",
+            "country",
             "average_rating",
+            "reviews_count",
             "precio_desde",
             "precio_desde_original",
             "oferta_activa",

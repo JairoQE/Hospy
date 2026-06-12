@@ -1,9 +1,9 @@
 import type { BrowseTile } from "../../api/types";
-import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { resolveMediaUrl } from "../../utils/media";
 
 import { PrimeIcon } from "../PrimeIcon";
-import { tileCountBadge, tileIcon } from "../../utils/tileIcons";
+import { tileIcon } from "../../utils/tileIcons";
+import { BrowseTileStats } from "./BrowseTileStats";
 
 import { SkeletonBrowseTilesRow } from "../ui/Skeleton";
 
@@ -26,8 +26,6 @@ interface Props {
 
 
 export function BrowseTilesSection({ title, subtitle, tiles, loading = false, onSelect }: Props) {
-  const { t } = useLocaleCurrency();
-
   if (!loading && tiles.length === 0) return null;
 
 
@@ -53,8 +51,6 @@ export function BrowseTilesSection({ title, subtitle, tiles, loading = false, on
             const imageUrl = resolveMediaUrl(tile.image_url);
 
             const iconName = tileIcon(tile);
-
-            const count = tileCountBadge(tile);
 
             const gradient =
 
@@ -96,19 +92,13 @@ export function BrowseTilesSection({ title, subtitle, tiles, loading = false, on
 
                   <PrimeIcon name={iconName} className="browse-tile-emoji" />
 
-                  {count != null && (
-
-                    <span className="browse-tile-badge">
-                      {count} {t("home.staysAbbr")}
-                    </span>
-
-                  )}
-
                 </span>
 
                 <span className="browse-tile-label">{tile.title}</span>
 
-                {tile.subtitle && !count && (
+                <BrowseTileStats tile={tile} />
+
+                {tile.subtitle && !(tile.hotels_count && tile.hotels_count > 0) && (
 
                   <span className="browse-tile-sub">{tile.subtitle}</span>
 
@@ -129,5 +119,4 @@ export function BrowseTilesSection({ title, subtitle, tiles, loading = false, on
   );
 
 }
-
 

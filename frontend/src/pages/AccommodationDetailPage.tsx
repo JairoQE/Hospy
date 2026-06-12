@@ -14,6 +14,7 @@ import { MapModal } from "../components/MapModal";
 import { CancellationPolicySection } from "../components/bookings/CancellationPolicySection";
 import { PaymentCheckoutModal } from "../components/payments/PaymentCheckoutModal";
 import { AccommodationFaqSection } from "../components/AccommodationFaqSection";
+import { PriceTrendSection } from "../components/property/PriceTrendSection";
 import { PhotoGallery } from "../components/PhotoGallery";
 import { LazyPropertyMap } from "../components/LazyPropertyMap";
 import type {
@@ -37,7 +38,7 @@ import { IconCheck, IconEye, IconMapPin, IconUser } from "../components/icons";
 import { PrimeIcon } from "../components/PrimeIcon";
 import { ReviewStayMeta } from "../components/reviews/ReviewStayMeta";
 import { StarRating } from "../components/StarRating";
-import { ratingLabel, ratingStars } from "../utils/rating";
+import { ratingLabel, ratingStars, toTenPointScore } from "../utils/rating";
 
 const SERVICE_ICONS: Record<string, string> = {
   wifi: "WiFi",
@@ -247,7 +248,7 @@ export function AccommodationDetailPage() {
 
   const lat = acc ? Number(acc.latitude) : 0;
   const lng = acc ? Number(acc.longitude) : 0;
-  const score = acc ? Number(acc.average_rating) : 0;
+  const score = acc ? toTenPointScore(Number(acc.average_rating)) : 0;
   const stars = ratingStars(score);
   const topReview = reviews[0];
   const wholeUnit = acc ? isWholeUnitPricing(acc.type) : false;
@@ -723,6 +724,12 @@ export function AccommodationDetailPage() {
             {error && <p className="error-msg">{error}</p>}
             {msg && <p className="success-msg">{msg}</p>}
           </section>
+
+          <PriceTrendSection
+            accommodationId={acc.id}
+            checkIn={effectiveEntrada}
+            checkOut={effectiveSalida}
+          />
 
           <section className="property-section" id="servicios">
             <h2>{tVars("detail.servicesOf", { name: acc.name })}</h2>

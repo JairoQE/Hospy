@@ -27,6 +27,8 @@ import {
 
 import { NearbySection } from "../components/home/NearbySection";
 
+import { AppPromoBanner } from "../components/home/AppPromoBanner";
+
 import { FeaturedSearchesSection } from "../components/home/FeaturedSearchesSection";
 import { RecentlyViewedSection } from "../components/home/RecentlyViewedSection";
 
@@ -50,6 +52,7 @@ import { useRecentlyViewed } from "../hooks/useRecentlyViewed";
 import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
 import { translateBrowseTiles } from "../utils/browseTileI18n";
 import { mergeDepartmentTiles } from "../utils/departmentTiles";
+import { applyTileStatsList, type TileStatsMap } from "../utils/tileStats";
 import { fetchDistrictCatalogForSearch } from "../utils/fetchDistrictCatalog";
 
 
@@ -62,6 +65,7 @@ function initialHomeTilesState(): {
   departmentTiles: BrowseTile[];
   featuredCities: FeaturedSearchItem[];
   featuredDestinations: FeaturedSearchItem[];
+  tileStats: TileStatsMap;
   tilesLoading: boolean;
 } {
   const cached = loadCachedHomeBootstrap();
@@ -72,18 +76,21 @@ function initialHomeTilesState(): {
       departmentTiles: [],
       featuredCities: [],
       featuredDestinations: [],
+      tileStats: {},
       tilesLoading: true,
     };
   }
+  const tileStats = cached.tile_stats ?? {};
   return {
-    typeTiles: cached.tipo,
-    regionTiles: cached.region,
-    departmentTiles: mergeDepartmentTiles(
-      cached.ubigeo_departamentos,
-      cached.departamento,
+    typeTiles: applyTileStatsList(cached.tipo, tileStats),
+    regionTiles: applyTileStatsList(cached.region, tileStats),
+    departmentTiles: applyTileStatsList(
+      mergeDepartmentTiles(cached.ubigeo_departamentos, cached.departamento),
+      tileStats,
     ),
     featuredCities: cached.busquedas_destacadas?.ciudades ?? [],
     featuredDestinations: cached.busquedas_destacadas?.destinos ?? [],
+    tileStats,
     tilesLoading: false,
   };
 }
@@ -278,16 +285,22 @@ export function HomePage() {
         ciudades: FeaturedSearchItem[];
         destinos: FeaturedSearchItem[];
       };
+      tile_stats?: TileStatsMap;
     }) => {
+      const tileStats = payload.tile_stats ?? {};
       setTileState({
-        typeTiles: payload.tipo,
-        regionTiles: payload.region,
-        departmentTiles: mergeDepartmentTiles(
-          payload.ubigeo_departamentos,
-          payload.departamento,
+        typeTiles: applyTileStatsList(payload.tipo, tileStats),
+        regionTiles: applyTileStatsList(payload.region, tileStats),
+        departmentTiles: applyTileStatsList(
+          mergeDepartmentTiles(
+            payload.ubigeo_departamentos,
+            payload.departamento,
+          ),
+          tileStats,
         ),
         featuredCities: payload.busquedas_destacadas?.ciudades ?? [],
         featuredDestinations: payload.busquedas_destacadas?.destinos ?? [],
+        tileStats,
         tilesLoading: false,
       });
     },
@@ -658,6 +671,8 @@ export function HomePage() {
               />
 
             )}
+
+            <AppPromoBanner />
 
           </>
 

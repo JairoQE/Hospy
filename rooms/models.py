@@ -39,6 +39,30 @@ class Room(TimeStampedModel):
         return f"{self.accommodation.name} — Hab. {self.number}"
 
 
+class RoomBasePriceHistory(models.Model):
+    """Registro de cambios de precio base para la tendencia histórica."""
+
+    room = models.ForeignKey(
+        Room,
+        on_delete=models.CASCADE,
+        related_name="price_history",
+    )
+    base_price = models.DecimalField(max_digits=10, decimal_places=2)
+    effective_from = models.DateField(db_index=True)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "historial de precio base"
+        verbose_name_plural = "historial de precios base"
+        ordering = ("-effective_from", "-recorded_at")
+        indexes = [
+            models.Index(fields=["room", "effective_from"]),
+        ]
+
+    def __str__(self):
+        return f"Hab. {self.room_id} · S/ {self.base_price} desde {self.effective_from}"
+
+
 class RoomPhoto(TimeStampedModel):
     """RF-22: fotografías por habitación."""
 

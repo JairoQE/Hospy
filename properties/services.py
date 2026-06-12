@@ -7,12 +7,13 @@ from operator import or_
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Min, Prefetch, Q
+from django.db.models import Count, Min, Prefetch, Q
 from django.utils import timezone
 
 
 def public_accommodations_queryset(on_date: date | None = None):
     from .models import Accommodation, AccommodationOffer
+    from reviews.models import Review
 
     on_date = on_date or timezone.localdate()
     active_offers = AccommodationOffer.objects.filter(
@@ -38,7 +39,11 @@ def public_accommodations_queryset(on_date: date | None = None):
             precio_desde=Min(
                 "habitaciones__base_price",
                 filter=Q(habitaciones__is_active=True),
-            )
+            ),
+            reviews_count=Count(
+                "resenas",
+                filter=Q(resenas__status=Review.Status.APROBADA),
+            ),
         )
         .select_related("owner")
         .prefetch_related(

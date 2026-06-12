@@ -18,16 +18,13 @@ interface Props {
 function FeaturedSearchCard({
   item,
   onSelect,
-  hotelsLabel,
-  priceLabel,
   noPhotoLabel,
 }: {
   item: FeaturedSearchItem;
   onSelect: (item: FeaturedSearchItem) => void;
-  hotelsLabel: string;
-  priceLabel: string | null;
   noPhotoLabel: string;
 }) {
+  const { t } = useLocaleCurrency();
   const imageUrl = resolveMediaUrl(item.image_url);
 
   return (
@@ -52,8 +49,15 @@ function FeaturedSearchCard({
       </div>
       <div className="featured-search-card-body">
         <h3>{item.name}</h3>
-        <p className="featured-search-card-meta">{hotelsLabel}</p>
-        {priceLabel && <p className="featured-search-card-price">{priceLabel}</p>}
+        <p className="featured-search-card-meta">
+          <strong>{item.hotels_count.toLocaleString()}</strong>{" "}
+          {t("home.tileLocalsSuffix")}
+        </p>
+        {item.price_from != null && (
+          <p className="featured-search-card-price">
+            <strong>{formatMoney(item.price_from)}</strong> {t("home.priceAvgSuffix")}
+          </p>
+        )}
       </div>
     </button>
   );
@@ -78,7 +82,7 @@ export function FeaturedSearchesSection({
   loading = false,
   onSelect,
 }: Props) {
-  const { t, tVars } = useLocaleCurrency();
+  const { t } = useLocaleCurrency();
   const [tab, setTab] = useState<Tab>("cities");
 
   const hasCities = cities.length > 0;
@@ -137,16 +141,6 @@ export function FeaturedSearchesSection({
               key={`${item.kind}-${item.slug}`}
               item={item}
               onSelect={onSelect}
-              hotelsLabel={tVars("home.featuredHotels", {
-                count: item.hotels_count.toLocaleString(),
-              })}
-              priceLabel={
-                item.price_from != null
-                  ? tVars("home.featuredAvgPrice", {
-                      price: formatMoney(item.price_from),
-                    })
-                  : null
-              }
               noPhotoLabel={t("common.noPhoto")}
             />
           ))}

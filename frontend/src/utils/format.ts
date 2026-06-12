@@ -81,6 +81,22 @@ export function formatDate(
   });
 }
 
+/** Rango corto para tarjetas: «28 ago. – 5 set.» */
+export function formatStayDateRange(
+  checkIn: string | null | undefined,
+  checkOut: string | null | undefined,
+  opts?: Pick<FormatOptions, "language">,
+): string | null {
+  const start = parseApiDate(checkIn);
+  const end = parseApiDate(checkOut);
+  if (!start || !end) return null;
+  const { language } = resolveFormatOpts(opts);
+  const locale = intlLocale(language);
+  const fmt = (d: Date) =>
+    d.toLocaleDateString(locale, { day: "numeric", month: "short" }).replace(/\.$/, "");
+  return `${fmt(start)} – ${fmt(end)}`;
+}
+
 export function formatDateTime(
   iso: string | null | undefined,
   opts?: Pick<FormatOptions, "language">,

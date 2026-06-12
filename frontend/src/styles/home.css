@@ -647,11 +647,12 @@ html[data-home-entrance="0"] .tab-panel-fade {
 /* Tiles v2 */
 
 .browse-tile--v2 {
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  transform-origin: center center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .browse-tile--v2:hover {
-  transform: scale(1.02) translateY(-2px);
+  transform: scale(1.05) translateY(-2px);
   box-shadow: 0 12px 28px rgba(30, 58, 95, 0.15);
 }
 
@@ -711,6 +712,7 @@ html[data-home-entrance="0"] .tab-panel-fade {
 
 .h-carousel-slide {
   scroll-snap-align: start;
+  transform-origin: center center;
 }
 
 .h-carousel-btn {
@@ -826,11 +828,12 @@ html[data-home-entrance="0"] .tab-panel-fade {
   text-align: left;
   cursor: pointer;
   color: inherit;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform-origin: center center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .featured-search-card:hover {
-  transform: translateY(-3px);
+  transform: scale(1.05) translateY(-2px);
   box-shadow: 0 10px 24px rgba(30, 58, 95, 0.12);
 }
 
@@ -889,11 +892,12 @@ html[data-home-entrance="0"] .tab-panel-fade {
   border: 1px solid var(--border);
   text-decoration: none;
   color: inherit;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform-origin: center center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .recent-card:hover {
-  transform: translateY(-3px);
+  transform: scale(1.05) translateY(-2px);
   box-shadow: 0 10px 24px rgba(30, 58, 95, 0.12);
   text-decoration: none;
 }
@@ -1138,30 +1142,14 @@ html[data-home-entrance="0"] .tab-panel-fade {
 /* Cards mejoradas */
 
 .acc-card {
-  border-radius: var(--home-radius-lg);
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  border-radius: 12px;
+  transform-origin: center center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .acc-card:hover {
-  transform: scale(1.02);
+  transform: scale(1.05) translateY(-2px);
   box-shadow: 0 14px 32px rgba(30, 58, 95, 0.14);
-}
-
-.acc-card-type {
-  background: var(--home-deep);
-  font-weight: 700;
-  letter-spacing: 0.03em;
-}
-
-.price--highlight strong {
-  color: var(--home-accent);
-  font-size: 1.05em;
-}
-
-.price-unit {
-  font-size: 0.85em;
-  color: var(--muted);
-  font-weight: 400;
 }
 
 /* Scroll to top */
@@ -1319,4 +1307,368 @@ html[data-home-entrance="0"] .tab-panel-fade {
 .home-page--v2 .home-block-title {
   color: var(--home-deep);
   font-weight: 800;
+}
+
+/* Banner promocional app (display ad / hero banner) */
+
+.app-promo-banner {
+  margin-top: 0.5rem;
+}
+
+.app-promo-banner-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.85fr);
+  gap: 1.5rem 2rem;
+  align-items: center;
+  padding: clamp(1.5rem, 3vw, 2.25rem) clamp(1.25rem, 3vw, 2.5rem);
+  border-radius: var(--home-radius-hero);
+  background: linear-gradient(
+    128deg,
+    #c2185b 0%,
+    #d81b60 38%,
+    #e91e63 62%,
+    #ad1457 100%
+  );
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(173, 20, 87, 0.28);
+}
+
+.app-promo-banner-copy {
+  min-width: 0;
+}
+
+.app-promo-banner-title {
+  margin: 0 0 1rem;
+  font-size: clamp(1.55rem, 3.2vw, 2.35rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.app-promo-features {
+  list-style: none;
+  margin: 0 0 1.35rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.app-promo-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: clamp(0.92rem, 1.8vw, 1.05rem);
+  line-height: 1.4;
+}
+
+.app-promo-feature-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-top: 0.1rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.app-promo-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.app-promo-qr-link {
+  display: block;
+  flex-shrink: 0;
+  padding: 0.65rem;
+  background: #fff;
+  border-radius: 14px;
+  line-height: 0;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.app-promo-qr-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.app-promo-qr-image {
+  display: block;
+  width: 132px;
+  height: 132px;
+  border-radius: 8px;
+}
+
+.app-promo-qr-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 132px;
+  height: 132px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--home-deep);
+}
+
+.app-promo-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.app-promo-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.app-promo-stat strong {
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.app-promo-stat span {
+  font-size: 0.82rem;
+  opacity: 0.92;
+  line-height: 1.25;
+}
+
+.app-promo-stat-divider {
+  width: 1px;
+  align-self: stretch;
+  min-height: 2.75rem;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.app-promo-stores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.app-promo-store-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 44px;
+  padding: 0.45rem 0.85rem 0.45rem 0.65rem;
+  border-radius: 10px;
+  background: #111;
+  color: #fff;
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.app-promo-store-badge:hover {
+  transform: translateY(-1px);
+  background: #000;
+  color: #fff;
+  text-decoration: none;
+}
+
+.app-promo-store-badge-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.app-promo-store-badge-text small {
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
+.app-promo-store-badge-text strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.app-promo-store-badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.app-promo-store-badge--google .app-promo-store-badge-icon {
+  font-size: 0.95rem;
+  color: #34a853;
+}
+
+.app-promo-web-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.55rem 1.15rem;
+  border-radius: 999px;
+  background: #fff;
+  color: #ad1457;
+  font-weight: 700;
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app-promo-web-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  color: #880e4f;
+  text-decoration: none;
+}
+
+.app-promo-phone {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 280px;
+}
+
+.app-promo-phone-shell {
+  position: relative;
+  width: min(100%, 240px);
+  padding: 10px 10px 0;
+  border-radius: 32px 32px 0 0;
+  background: linear-gradient(180deg, #2a2a2a 0%, #111 100%);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+}
+
+.app-promo-phone-notch {
+  width: 88px;
+  height: 22px;
+  margin: 0 auto 8px;
+  border-radius: 0 0 14px 14px;
+  background: #111;
+}
+
+.app-promo-phone-screen {
+  position: relative;
+  min-height: 300px;
+  padding: 0.85rem 0.75rem 1rem;
+  border-radius: 22px 22px 0 0;
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  overflow: hidden;
+}
+
+.app-promo-phone-header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.85rem;
+}
+
+.app-promo-phone-logo {
+  filter: none;
+}
+
+.app-promo-phone-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  background: #22c55e;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.35);
+  animation: app-promo-alert-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes app-promo-alert-pulse {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.app-promo-phone-card {
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+}
+
+.app-promo-phone-card-image {
+  height: 118px;
+  background:
+    linear-gradient(180deg, transparent 35%, rgba(0, 0, 0, 0.65) 100%),
+    linear-gradient(135deg, #1a2e4a 0%, #18acfe 55%, #4db6ac 100%);
+}
+
+.app-promo-phone-card-caption {
+  position: relative;
+  margin-top: -2.4rem;
+  padding: 0.55rem 0.65rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #fff;
+}
+
+.app-promo-phone-card-caption strong {
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.app-promo-phone-card-caption span {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 900px) {
+  .app-promo-banner-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .app-promo-phone {
+    order: -1;
+    min-height: 240px;
+  }
+
+  .app-promo-phone-shell {
+    width: min(220px, 72vw);
+  }
+
+  .app-promo-phone-screen {
+    min-height: 250px;
+  }
+}
+
+@media (max-width: 560px) {
+  .app-promo-cta-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .app-promo-stats {
+    width: 100%;
+  }
+
+  .app-promo-stores {
+    width: 100%;
+  }
+
+  .app-promo-store-badge,
+  .app-promo-web-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
 }
