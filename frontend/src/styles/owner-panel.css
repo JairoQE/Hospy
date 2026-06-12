@@ -111,13 +111,16 @@ html[data-sidebar-animated="0"] .owner-sidebar-bg {
 
 @media (min-width: 1024px) {
   .owner-shell {
-    display: flex;
-    flex-direction: row;
+    display: block;
+    min-height: 100vh;
   }
 
   .owner-sidebar {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    bottom: 0;
+    height: auto;
     transform: none;
     flex-shrink: 0;
   }
@@ -126,8 +129,17 @@ html[data-sidebar-animated="0"] .owner-sidebar-bg {
     display: none !important;
   }
 
+  .owner-main {
+    margin-left: var(--owner-sidebar-w);
+    min-height: 100vh;
+  }
+
   .owner-shell--collapsed .owner-sidebar {
     width: var(--owner-sidebar-collapsed);
+  }
+
+  .owner-shell--collapsed .owner-main {
+    margin-left: var(--owner-sidebar-collapsed);
   }
 
   .owner-shell--collapsed .owner-sidebar-link span {

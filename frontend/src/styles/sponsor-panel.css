@@ -111,13 +111,16 @@ html[data-sidebar-animated="0"] .sponsor-sidebar-bg {
 
 @media (min-width: 1024px) {
   .sponsor-shell {
-    display: flex;
-    flex-direction: row;
+    display: block;
+    min-height: 100vh;
   }
 
   .sponsor-sidebar {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    bottom: 0;
+    height: auto;
     transform: none;
     flex-shrink: 0;
   }
@@ -126,8 +129,17 @@ html[data-sidebar-animated="0"] .sponsor-sidebar-bg {
     display: none !important;
   }
 
+  .sponsor-main {
+    margin-left: var(--sponsor-sidebar-w);
+    min-height: 100vh;
+  }
+
   .sponsor-shell--collapsed .sponsor-sidebar {
     width: var(--sponsor-sidebar-collapsed);
+  }
+
+  .sponsor-shell--collapsed .sponsor-main {
+    margin-left: var(--sponsor-sidebar-collapsed);
   }
 
   .sponsor-shell--collapsed .sponsor-sidebar-link span {
