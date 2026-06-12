@@ -245,6 +245,7 @@ export interface FeaturedSearchItem {
   subtitle?: string;
   hotels_count: number;
   price_from: number | null;
+  rating_avg?: number | null;
   image_url: string | null;
   gradient_css?: string;
   search: {

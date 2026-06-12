@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 
-from django.db.models import Count, Min, Q
+from django.db.models import Avg, Count, Min, Q
 from django.utils import timezone
 from django.utils.text import slugify
 
@@ -74,6 +74,7 @@ def build_featured_cities(limit: int = DEFAULT_LIMIT) -> list[dict]:
                 "habitaciones__base_price",
                 filter=Q(habitaciones__is_active=True),
             ),
+            rating_avg=Avg("average_rating"),
         )
         .filter(hotels_count__gte=1)
     )
@@ -95,6 +96,7 @@ def build_featured_cities(limit: int = DEFAULT_LIMIT) -> list[dict]:
             "slug": slugify(row["city"]) or "ciudad",
             "hotels_count": row["hotels_count"],
             "price_from": float(row["price_from"]) if row["price_from"] is not None else None,
+            "rating_avg": float(row["rating_avg"]) if row["rating_avg"] is not None else None,
             "image_url": images.get(row["city"]),
             "search": {"ciudad": row["city"]},
         }
@@ -110,6 +112,7 @@ def _destination_stats(search: dict) -> dict | None:
     agg = qs.aggregate(
         hotels_count=Count("id", distinct=True),
         price_from=Min("precio_desde"),
+        rating_avg=Avg("average_rating"),
     )
     if not agg["hotels_count"]:
         return None
@@ -155,6 +158,9 @@ def build_featured_destinations(limit: int = DEFAULT_LIMIT) -> list[dict]:
                 "hotels_count": agg["hotels_count"],
                 "price_from": float(agg["price_from"])
                 if agg["price_from"] is not None
+                else None,
+                "rating_avg": float(agg["rating_avg"])
+                if agg["rating_avg"] is not None
                 else None,
                 "image_url": media_public_path(tile.image) if tile.image else None,
                 "gradient_css": tile.gradient_css,

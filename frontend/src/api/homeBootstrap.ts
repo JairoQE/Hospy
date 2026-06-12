@@ -12,7 +12,7 @@ export type HomeBootstrapPayload = {
   tile_stats: TileStatsMap;
 };
 
-const CACHE_KEY = "hospy_home_bootstrap_v3";
+const CACHE_KEY = "hospy_home_bootstrap_v4";
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
 type CacheEntry = {

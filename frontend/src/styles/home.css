@@ -895,6 +895,17 @@ html[data-home-entrance="0"] .tab-panel-fade {
   line-height: 1.25;
 }
 
+.featured-search-card-rating {
+  margin: 0 0 0.35rem;
+}
+
+.featured-search-card-rating--new {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--home-turquoise);
+}
+
 .featured-search-card-meta {
   margin: 0;
   font-size: 0.86rem;

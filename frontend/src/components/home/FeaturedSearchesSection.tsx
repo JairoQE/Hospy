@@ -4,6 +4,7 @@ import type { FeaturedSearchItem } from "../../api/types";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { formatMoney } from "../../utils/format";
 import { resolveMediaUrl } from "../../utils/media";
+import { StarRating } from "../StarRating";
 import { HorizontalCarousel } from "../ui/HorizontalCarousel";
 
 type Tab = "cities" | "destinations";
@@ -26,6 +27,7 @@ function FeaturedSearchCard({
 }) {
   const { t } = useLocaleCurrency();
   const imageUrl = resolveMediaUrl(item.image_url);
+  const rating = Number(item.rating_avg) || 0;
 
   return (
     <button
@@ -49,6 +51,15 @@ function FeaturedSearchCard({
       </div>
       <div className="featured-search-card-body">
         <h3>{item.name}</h3>
+        {rating > 0 ? (
+          <div className="featured-search-card-rating">
+            <StarRating rating={rating} size="sm" />
+          </div>
+        ) : (
+          <p className="featured-search-card-rating featured-search-card-rating--new">
+            ★ {t("price.new")}
+          </p>
+        )}
         <p className="featured-search-card-meta">
           <strong>{item.hotels_count.toLocaleString()}</strong>{" "}
           {t("home.tileLocalsSuffix")}
