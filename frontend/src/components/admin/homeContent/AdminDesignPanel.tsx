@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ApiError } from "../../../api/client";
 import {
+  HERO_ANIMATION_STYLE_GROUPS,
+  HERO_ANIMATION_STYLE_OPTIONS,
+  type HeroAnimationStyle,
+} from "../../../api/heroAnimationStyles";
+import {
   DEFAULT_SITE_DESIGN,
   applySiteDesignToDocument,
   resolveSidebarColors,
@@ -9,6 +14,7 @@ import {
   type SiteChartStyle,
   type SiteDesignSettings,
 } from "../../../api/siteDesign";
+import { HeroBackground } from "../../home/HeroBackground";
 import { ChartStylePreview } from "../../charts/ChartStylePreview";
 import { ChartStyleSelector } from "../../charts/ChartStyleSelector";
 import { normalizeChartStyle, type ChartStyleId } from "../../charts/chartStyles";
@@ -204,6 +210,7 @@ export function AdminDesignPanel() {
         sidebar_menu_accent: form.sidebar_menu_accent,
         sidebar_sync_hero: form.sidebar_sync_hero,
         hero_animated: form.hero_animated,
+        hero_animation_style: form.hero_animation_style,
         sidebar_animated: form.sidebar_animated,
         home_entrance_animated: form.home_entrance_animated,
         browse_marquee_animated: form.browse_marquee_animated,
@@ -316,11 +323,39 @@ export function AdminDesignPanel() {
             <section className="admin-design-section">
               <h2 className="admin-design-section-title">
                 <PrimeIcon name="pi-image" size={18} />
-                Hero del inicio (ola animada)
+                Hero del inicio
               </h2>
               <p className="muted admin-design-section-sub">
-                Fondo de la portada pública con movimiento suave del gradiente.
+                Fondo de la portada pública: colores y estilo de animación del hero.
               </p>
+              <label className="admin-users-filter admin-design-hero-style">
+                <span>Estilo de animación del hero</span>
+                <select
+                  value={form.hero_animation_style}
+                  onChange={(e) =>
+                    patch("hero_animation_style", e.target.value as HeroAnimationStyle)
+                  }
+                >
+                  {HERO_ANIMATION_STYLE_GROUPS.map((group) => (
+                    <optgroup key={group} label={group}>
+                      {HERO_ANIMATION_STYLE_OPTIONS.filter((o) => o.group === group).map(
+                        (o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ),
+                      )}
+                    </optgroup>
+                  ))}
+                </select>
+                <span className="muted admin-design-hint">
+                  {
+                    HERO_ANIMATION_STYLE_OPTIONS.find(
+                      (o) => o.value === form.hero_animation_style,
+                    )?.hint
+                  }
+                </span>
+              </label>
               <div className="admin-design-color-grid">
                 <ColorField
                   label="Tono profundo"
@@ -356,8 +391,8 @@ export function AdminDesignPanel() {
               </p>
               <div className="admin-design-anim-list">
                 <AnimToggle
-                  label="Ola del hero (inicio)"
-                  hint="Gradiente animado de la portada pública"
+                  label="Animación del hero (inicio)"
+                  hint="Activa o pausa el estilo elegido arriba"
                   checked={form.hero_animated}
                   onChange={(v) => patch("hero_animated", v)}
                 />
@@ -463,13 +498,13 @@ export function AdminDesignPanel() {
 
             <p className="admin-design-preview-caption">Hero del inicio</p>
             <div className="admin-design-hero-preview-wrap">
-              <GradientPreview
+              <HeroBackground
                 deep={form.hero_color_deep}
                 mid={form.hero_color_mid}
                 green={form.hero_color_green}
+                style={form.hero_animation_style}
                 animated={form.hero_animated}
-                className="admin-design-preview-hero"
-                angle={125}
+                className="admin-design-hero-preview-bg"
               />
               <div className="admin-design-hero-preview-content">
                 <span className="admin-design-preview-title">

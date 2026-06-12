@@ -1,4 +1,8 @@
 import { api } from "./client";
+import {
+  DEFAULT_HERO_ANIMATION_STYLE,
+  type HeroAnimationStyle,
+} from "./heroAnimationStyles";
 
 export type SiteBorderRadius = "sm" | "md" | "lg";
 export type SiteAnimationSpeed = "slow" | "normal" | "fast";
@@ -35,6 +39,7 @@ export interface SiteDesignSettings {
   sidebar_menu_accent: string;
   sidebar_sync_hero: boolean;
   hero_animated: boolean;
+  hero_animation_style: HeroAnimationStyle;
   sidebar_animated: boolean;
   home_entrance_animated: boolean;
   browse_marquee_animated: boolean;
@@ -56,6 +61,7 @@ export const DEFAULT_SITE_DESIGN: SiteDesignSettings = {
   sidebar_menu_accent: "#f4a261",
   sidebar_sync_hero: true,
   hero_animated: true,
+  hero_animation_style: DEFAULT_HERO_ANIMATION_STYLE,
   sidebar_animated: true,
   home_entrance_animated: true,
   browse_marquee_animated: true,
@@ -171,6 +177,7 @@ export function applySiteDesignToDocument(settings: SiteDesignSettings) {
   root.style.setProperty("--sidebar-gradient-duration", `${speed.sidebar}s`);
 
   root.dataset.heroAnimated = settings.hero_animated ? "1" : "0";
+  root.dataset.heroAnimationStyle = settings.hero_animation_style ?? DEFAULT_HERO_ANIMATION_STYLE;
   root.dataset.sidebarAnimated = settings.sidebar_animated ? "1" : "0";
   root.dataset.homeEntrance = settings.home_entrance_animated ? "1" : "0";
   root.dataset.browseMarquee = settings.browse_marquee_animated ? "1" : "0";

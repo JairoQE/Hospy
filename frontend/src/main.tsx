@@ -4,6 +4,7 @@ import "primeicons/primeicons.css";
 import App from "./App";
 import "./index.css";
 import "./styles/hospy-logo.css";
+import "./styles/hero-animations.css";
 import "./styles/chat-heads.css";
 import "./styles/home.css";
 import "./styles/header.css";

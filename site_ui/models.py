@@ -22,7 +22,32 @@ class SiteDesignSettings(models.Model):
         default=True,
         help_text="Si es True, el menú lateral usa los mismos tonos del hero.",
     )
+    class HeroAnimationStyle(models.TextChoices):
+        GRADIENT_SHIFT = "gradient_shift", "Gradiente deslizante"
+        MESH = "mesh", "Mesh gradient"
+        AURORA = "aurora", "Aurora boreal"
+        CONIC = "conic", "Gradiente cónico"
+        RADIAL_PULSE = "radial_pulse", "Pulso radial"
+        BLOBS = "blobs", "Blobs orgánicos"
+        PARTICLES = "particles", "Partículas flotantes"
+        BOKEH = "bokeh", "Bokeh"
+        GEO_NETWORK = "geo_network", "Red geográfica"
+        WAVE_LAYERS = "wave_layers", "Capas de olas"
+        PARALLAX_WAVES = "parallax_waves", "Olas parallax"
+        GRAIN = "grain", "Grano cinematográfico"
+        TRAVEL_ROUTES = "travel_routes", "Rutas de viaje"
+        FLOATING_PINS = "floating_pins", "Pins de ubicación"
+        KEN_BURNS = "ken_burns", "Ken Burns"
+        WAVE_PATH = "wave_path", "Ola del divisor animada"
+        STATIC = "static", "Estático"
+
     hero_animated = models.BooleanField(default=True)
+    hero_animation_style = models.CharField(
+        max_length=24,
+        choices=HeroAnimationStyle.choices,
+        default=HeroAnimationStyle.GRADIENT_SHIFT,
+        help_text="Estilo de animación del fondo del hero en la portada.",
+    )
     sidebar_animated = models.BooleanField(
         default=True,
         help_text="Gradiente animado del menú lateral del admin.",

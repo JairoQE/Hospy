@@ -3673,14 +3673,9 @@ html[data-sidebar-animated="0"] .admin-sidebar-bg {
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.15);
 }
 
-.admin-design-preview-hero {
+.admin-design-hero-preview-bg {
   position: absolute;
   inset: 0;
-  background-size: 200% 200%;
-}
-
-.admin-design-preview-hero.is-animated {
-  animation: hero-gradient 14s ease infinite;
 }
 
 .admin-design-hero-preview-content {

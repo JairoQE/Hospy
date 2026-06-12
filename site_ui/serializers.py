@@ -18,6 +18,7 @@ class SiteDesignSettingsSerializer(serializers.ModelSerializer):
             "sidebar_menu_accent",
             "sidebar_sync_hero",
             "hero_animated",
+            "hero_animation_style",
             "sidebar_animated",
             "home_entrance_animated",
             "browse_marquee_animated",

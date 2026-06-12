@@ -60,8 +60,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .fade-in,
-  .tab-panel-fade,
-  .home-hero-bg {
+  .tab-panel-fade {
     animation: none;
   }
 }
@@ -104,41 +103,11 @@
   z-index: 100;
 }
 
-.home-hero-bg {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    125deg,
-    #0f2744 0%,
-    var(--home-deep) 28%,
-    var(--home-turquoise) 55%,
-    var(--site-hero-green, #1d6b5c) 82%,
-    #0d4d4a 100%
-  );
-  background-size: 200% 200%;
-  animation: hero-gradient var(--hero-gradient-duration, 14s) ease infinite;
-}
-
-html[data-hero-animated="0"] .home-hero-bg {
-  animation: none;
-  background-position: 50% 50%;
-}
-
 html[data-home-entrance="0"] .fade-in,
 html[data-home-entrance="0"] .tab-panel-fade {
   animation: none;
   opacity: 1;
   transform: none;
-}
-
-@keyframes hero-gradient {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
 }
 
 .home-hero--v2 .home-hero-inner {
