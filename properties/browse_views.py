@@ -15,6 +15,7 @@ from accounts.permissions import IsAdministrador
 from audit.services import log_action
 
 from .browse_serializers import BrowseTileAdminSerializer, BrowseTilePublicSerializer
+from .featured_searches import build_featured_searches
 from .models import BrowseTile, BrowseTileClick
 from .ubigeo_loader import list_departamentos
 
@@ -43,6 +44,7 @@ class HomeInicioBootstrapView(APIView):
                     many=True,
                 ).data,
                 "ubigeo_departamentos": list_departamentos(),
+                "busquedas_destacadas": build_featured_searches(),
             }
         )
 

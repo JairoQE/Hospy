@@ -232,6 +232,28 @@ export interface BrowseTile {
   clicks_30d?: number;
 }
 
+export interface FeaturedSearchItem {
+  kind: "city" | "destination";
+  name: string;
+  slug: string;
+  subtitle?: string;
+  hotels_count: number;
+  price_from: number | null;
+  image_url: string | null;
+  gradient_css?: string;
+  search: {
+    ciudad?: string;
+    departamento?: string;
+    zona?: string;
+  };
+  tile_id?: number;
+}
+
+export interface FeaturedSearchesPayload {
+  ciudades: FeaturedSearchItem[];
+  destinos: FeaturedSearchItem[];
+}
+
 export interface RoomPhoto {
   id: number;
   image: string;

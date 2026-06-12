@@ -4,7 +4,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { api, buildQuery } from "../api/client";
 
-import type { AccommodationListItem, BrowseTile, Paginated } from "../api/types";
+import type {
+  AccommodationListItem,
+  BrowseTile,
+  FeaturedSearchItem,
+  Paginated,
+} from "../api/types";
 
 import { BrowseTilesSection } from "../components/home/BrowseTilesSection";
 
@@ -22,6 +27,7 @@ import {
 
 import { NearbySection } from "../components/home/NearbySection";
 
+import { FeaturedSearchesSection } from "../components/home/FeaturedSearchesSection";
 import { RecentlyViewedSection } from "../components/home/RecentlyViewedSection";
 
 import { SearchResultsSection } from "../components/home/SearchResultsSection";
@@ -54,6 +60,8 @@ function initialHomeTilesState(): {
   typeTiles: BrowseTile[];
   regionTiles: BrowseTile[];
   departmentTiles: BrowseTile[];
+  featuredCities: FeaturedSearchItem[];
+  featuredDestinations: FeaturedSearchItem[];
   tilesLoading: boolean;
 } {
   const cached = loadCachedHomeBootstrap();
@@ -62,6 +70,8 @@ function initialHomeTilesState(): {
       typeTiles: [],
       regionTiles: [],
       departmentTiles: [],
+      featuredCities: [],
+      featuredDestinations: [],
       tilesLoading: true,
     };
   }
@@ -72,6 +82,8 @@ function initialHomeTilesState(): {
       cached.ubigeo_departamentos,
       cached.departamento,
     ),
+    featuredCities: cached.busquedas_destacadas?.ciudades ?? [],
+    featuredDestinations: cached.busquedas_destacadas?.destinos ?? [],
     tilesLoading: false,
   };
 }
@@ -134,7 +146,14 @@ export function HomePage() {
   const [resultsTitle, setResultsTitle] = useState<string | null>(null);
 
   const [tileState, setTileState] = useState(initialHomeTilesState);
-  const { typeTiles, regionTiles, departmentTiles, tilesLoading } = tileState;
+  const {
+    typeTiles,
+    regionTiles,
+    departmentTiles,
+    featuredCities,
+    featuredDestinations,
+    tilesLoading,
+  } = tileState;
 
   const typeTilesI18n = useMemo(
     () => translateBrowseTiles(typeTiles, language),
@@ -255,6 +274,10 @@ export function HomePage() {
       region: BrowseTile[];
       departamento: BrowseTile[];
       ubigeo_departamentos: UbigeoItem[];
+      busquedas_destacadas?: {
+        ciudades: FeaturedSearchItem[];
+        destinos: FeaturedSearchItem[];
+      };
     }) => {
       setTileState({
         typeTiles: payload.tipo,
@@ -263,6 +286,8 @@ export function HomePage() {
           payload.ubigeo_departamentos,
           payload.departamento,
         ),
+        featuredCities: payload.busquedas_destacadas?.ciudades ?? [],
+        featuredDestinations: payload.busquedas_destacadas?.destinos ?? [],
         tilesLoading: false,
       });
     },
@@ -426,6 +451,34 @@ export function HomePage() {
 
 
 
+  const onFeaturedSearch = (item: FeaturedSearchItem) => {
+    if (item.tile_id) {
+      void recordBrowseTileClick(item.tile_id).catch(() => {});
+    }
+
+    setFilters(null);
+
+    setBrowse({
+      label: item.name,
+      zona: item.search.zona,
+      departamento: item.search.departamento,
+    });
+
+    loadList(
+      {
+        ciudad: item.search.ciudad,
+        departamento: item.search.departamento,
+        zona: item.search.zona,
+        ordenar: "-rating",
+      },
+      item.search.zona
+        ? tVars("home.staysInRegion", { region: item.name })
+        : tVars("home.staysInPlace", { place: item.name }),
+    );
+  };
+
+
+
   const clearResults = () => {
 
     setFilters(null);
@@ -548,6 +601,13 @@ export function HomePage() {
         {showBrowseSections && (
 
           <>
+
+            <FeaturedSearchesSection
+              cities={featuredCities}
+              destinations={featuredDestinations}
+              loading={tilesLoading}
+              onSelect={onFeaturedSearch}
+            />
 
             <RecentlyViewedSection items={recentItems} />
 

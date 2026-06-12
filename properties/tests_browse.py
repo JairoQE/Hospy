@@ -25,6 +25,9 @@ def test_inicio_bootstrap_agrupa_bloques(api_client):
     assert any(x["title"] == "Costa Bootstrap" for x in r.data["region"])
     assert isinstance(r.data["ubigeo_departamentos"], list)
     assert len(r.data["ubigeo_departamentos"]) >= 20
+    featured = r.data["busquedas_destacadas"]
+    assert isinstance(featured["ciudades"], list)
+    assert isinstance(featured["destinos"], list)
 
 
 @pytest.mark.django_db

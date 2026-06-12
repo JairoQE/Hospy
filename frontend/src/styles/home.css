@@ -773,6 +773,112 @@ html[data-home-entrance="0"] .tab-panel-fade {
   border-radius: 4px;
 }
 
+/* Búsquedas destacadas */
+
+.featured-searches-section {
+  margin-top: 0.25rem;
+}
+
+.featured-searches-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 0.35rem 0 1.15rem;
+}
+
+.featured-searches-tab {
+  padding: 0.15rem 0 0.55rem;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.featured-searches-tab:hover:not(:disabled) {
+  color: var(--home-deep);
+}
+
+.featured-searches-tab.is-active {
+  font-weight: 700;
+  color: var(--text, #111);
+  border-bottom-color: currentColor;
+}
+
+.featured-searches-tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.featured-search-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--home-radius-lg);
+  overflow: hidden;
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.featured-search-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(30, 58, 95, 0.12);
+}
+
+.featured-search-card-image {
+  height: 132px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--bg);
+  position: relative;
+}
+
+.featured-search-card-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.featured-search-card-body {
+  padding: 0.8rem 0.85rem 0.95rem;
+}
+
+.featured-search-card-body h3 {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.featured-search-card-meta {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+
+.featured-search-card-price {
+  margin: 0.35rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.featured-search-card--skeleton {
+  pointer-events: none;
+}
+
 .recent-card {
   display: flex;
   flex-direction: column;

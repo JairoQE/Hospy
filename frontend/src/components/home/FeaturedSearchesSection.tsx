@@ -1,0 +1,157 @@
+import { useMemo, useState } from "react";
+
+import type { FeaturedSearchItem } from "../../api/types";
+import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
+import { formatMoney } from "../../utils/format";
+import { resolveMediaUrl } from "../../utils/media";
+import { HorizontalCarousel } from "../ui/HorizontalCarousel";
+
+type Tab = "cities" | "destinations";
+
+interface Props {
+  cities: FeaturedSearchItem[];
+  destinations: FeaturedSearchItem[];
+  loading?: boolean;
+  onSelect: (item: FeaturedSearchItem) => void;
+}
+
+function FeaturedSearchCard({
+  item,
+  onSelect,
+  hotelsLabel,
+  priceLabel,
+  noPhotoLabel,
+}: {
+  item: FeaturedSearchItem;
+  onSelect: (item: FeaturedSearchItem) => void;
+  hotelsLabel: string;
+  priceLabel: string | null;
+  noPhotoLabel: string;
+}) {
+  const imageUrl = resolveMediaUrl(item.image_url);
+
+  return (
+    <button
+      type="button"
+      className="featured-search-card"
+      onClick={() => onSelect(item)}
+    >
+      <div
+        className="featured-search-card-image"
+        style={
+          imageUrl
+            ? { backgroundImage: `url(${imageUrl})` }
+            : item.gradient_css
+              ? { background: item.gradient_css }
+              : undefined
+        }
+      >
+        {!imageUrl && !item.gradient_css && (
+          <span className="featured-search-card-placeholder">{noPhotoLabel}</span>
+        )}
+      </div>
+      <div className="featured-search-card-body">
+        <h3>{item.name}</h3>
+        <p className="featured-search-card-meta">{hotelsLabel}</p>
+        {priceLabel && <p className="featured-search-card-price">{priceLabel}</p>}
+      </div>
+    </button>
+  );
+}
+
+function FeaturedSearchSkeleton() {
+  return (
+    <div className="featured-search-card featured-search-card--skeleton" aria-hidden>
+      <div className="featured-search-card-image skeleton" />
+      <div className="featured-search-card-body">
+        <div className="skeleton skeleton-line" style={{ width: "70%" }} />
+        <div className="skeleton skeleton-line" style={{ width: "50%", marginTop: "0.45rem" }} />
+        <div className="skeleton skeleton-line" style={{ width: "40%", marginTop: "0.45rem" }} />
+      </div>
+    </div>
+  );
+}
+
+export function FeaturedSearchesSection({
+  cities,
+  destinations,
+  loading = false,
+  onSelect,
+}: Props) {
+  const { t, tVars } = useLocaleCurrency();
+  const [tab, setTab] = useState<Tab>("cities");
+
+  const hasCities = cities.length > 0;
+  const hasDestinations = destinations.length > 0;
+
+  const defaultTab = useMemo<Tab>(() => {
+    if (hasCities) return "cities";
+    if (hasDestinations) return "destinations";
+    return "cities";
+  }, [hasCities, hasDestinations]);
+
+  const activeTab = tab === "cities" && !hasCities ? defaultTab : tab;
+  const visibleItems = activeTab === "cities" ? cities : destinations;
+
+  if (!loading && !hasCities && !hasDestinations) {
+    return null;
+  }
+
+  return (
+    <section className="home-block fade-in featured-searches-section" id="destacados">
+      <h2 className="home-block-title">{t("home.featuredTitle")}</h2>
+
+      <div className="featured-searches-tabs" role="tablist" aria-label={t("home.featuredTitle")}>
+        <button
+          type="button"
+          role="tab"
+          className={`featured-searches-tab${activeTab === "cities" ? " is-active" : ""}`}
+          aria-selected={activeTab === "cities"}
+          disabled={!hasCities && !loading}
+          onClick={() => setTab("cities")}
+        >
+          {t("home.featuredTabCities")}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          className={`featured-searches-tab${activeTab === "destinations" ? " is-active" : ""}`}
+          aria-selected={activeTab === "destinations"}
+          disabled={!hasDestinations && !loading}
+          onClick={() => setTab("destinations")}
+        >
+          {t("home.featuredTabDestinations")}
+        </button>
+      </div>
+
+      {loading && visibleItems.length === 0 ? (
+        <HorizontalCarousel itemWidth={200} ariaLabel={t("home.featuredTitle")}>
+          {Array.from({ length: 5 }, (_, i) => (
+            <FeaturedSearchSkeleton key={i} />
+          ))}
+        </HorizontalCarousel>
+      ) : (
+        <HorizontalCarousel itemWidth={200} ariaLabel={t("home.featuredTitle")}>
+          {visibleItems.map((item) => (
+            <FeaturedSearchCard
+              key={`${item.kind}-${item.slug}`}
+              item={item}
+              onSelect={onSelect}
+              hotelsLabel={tVars("home.featuredHotels", {
+                count: item.hotels_count.toLocaleString(),
+              })}
+              priceLabel={
+                item.price_from != null
+                  ? tVars("home.featuredAvgPrice", {
+                      price: formatMoney(item.price_from),
+                    })
+                  : null
+              }
+              noPhotoLabel={t("common.noPhoto")}
+            />
+          ))}
+        </HorizontalCarousel>
+      )}
+    </section>
+  );
+}
