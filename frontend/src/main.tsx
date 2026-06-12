@@ -8,6 +8,7 @@ import "./styles/hero-animations.css";
 import "./styles/chat-heads.css";
 import "./styles/home.css";
 import "./styles/header.css";
+import "./styles/accessibility.css";
 import "./styles/footer.css";
 import "./styles/ads.css";
 import "./styles/payments.css";

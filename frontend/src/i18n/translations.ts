@@ -1,4 +1,4 @@
-export type Language = "es-PE" | "en";
+export type Language = "es-PE" | "en" | "qu";
 export type Currency = "PEN" | "USD";
 
 export const translations = {
@@ -95,6 +95,27 @@ export const translations = {
       logoAlt: "Hospy — Conexión a tu destino",
       verified: "Verificado",
       homeAria: "Hospy — Inicio",
+    },
+    a11y: {
+      title: "Menú de accesibilidad",
+      close: "Cerrar menú de accesibilidad",
+      language: "Idioma",
+      langEs: "Español",
+      langEn: "Inglés",
+      langQu: "Quechua",
+      profile: "Perfil",
+      profileLowVision: "Visión baja",
+      profileDyslexia: "Dislexia",
+      profileAdhd: "TDHA",
+      profileColorBlind: "Daltonismo",
+      textSize: "Tamaño de texto",
+      contrast: "Contrastes",
+      cursor: "Cursor",
+      readingMask: "Máscara de lectura",
+      dyslexiaFriendly: "Dislexia amigable",
+      lineHeight: "Interlineado",
+      level: "Nivel",
+      reset: "Restablecer",
     },
     home: {
       heroTitle: "Encuentra tu próxima",
@@ -504,6 +525,27 @@ export const translations = {
       verified: "Verified",
       homeAria: "Hospy — Home",
     },
+    a11y: {
+      title: "Accessibility menu",
+      close: "Close accessibility menu",
+      language: "Language",
+      langEs: "Spanish",
+      langEn: "English",
+      langQu: "Quechua",
+      profile: "Profile",
+      profileLowVision: "Low vision",
+      profileDyslexia: "Dyslexia",
+      profileAdhd: "ADHD",
+      profileColorBlind: "Color blindness",
+      textSize: "Text size",
+      contrast: "Contrast",
+      cursor: "Cursor",
+      readingMask: "Reading mask",
+      dyslexiaFriendly: "Dyslexia friendly",
+      lineHeight: "Line spacing",
+      level: "Level",
+      reset: "Reset",
+    },
     home: {
       heroTitle: "Find your next",
       heroHighlight: "stay",
@@ -842,6 +884,7 @@ function getNested(obj: Record<string, unknown>, path: string): string | undefin
 }
 
 export function translate(path: string, language: Language): string {
-  const table = translations[language] as Record<string, unknown>;
+  const resolved = language === "qu" ? "es-PE" : language;
+  const table = translations[resolved] as Record<string, unknown>;
   return getNested(table, path) ?? getNested(translations["es-PE"] as Record<string, unknown>, path) ?? path;
 }

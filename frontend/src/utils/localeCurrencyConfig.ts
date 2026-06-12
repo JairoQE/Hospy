@@ -21,7 +21,7 @@ let config: LocaleCurrencyConfig = {
 function loadLanguage(): Language {
   try {
     const v = localStorage.getItem(STORAGE_LANG) ?? sessionStorage.getItem(STORAGE_LANG);
-    if (v === "en" || v === "es-PE") return v;
+    if (v === "en" || v === "es-PE" || v === "qu") return v;
   } catch {
     /* ignore */
   }
@@ -47,7 +47,8 @@ export function getLocaleCurrencyConfig(): LocaleCurrencyConfig {
 export function setLocaleCurrencyConfig(next: Partial<LocaleCurrencyConfig>): LocaleCurrencyConfig {
   config = { ...config, ...next };
   if (next.language) {
-    document.documentElement.lang = next.language.startsWith("es") ? "es" : "en";
+    document.documentElement.lang =
+      next.language === "qu" ? "qu" : next.language.startsWith("es") ? "es" : "en";
     try {
       localStorage.setItem(STORAGE_LANG, next.language);
       sessionStorage.setItem(STORAGE_LANG, next.language);
@@ -72,6 +73,7 @@ export function initLocaleCurrencyConfig(): LocaleCurrencyConfig {
     currency: loadCurrency(),
     penPerUsd: DEFAULT_RATE,
   };
-  document.documentElement.lang = config.language.startsWith("es") ? "es" : "en";
+  document.documentElement.lang =
+    config.language === "qu" ? "qu" : config.language.startsWith("es") ? "es" : "en";
   return config;
 }

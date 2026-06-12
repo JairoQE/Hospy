@@ -259,7 +259,7 @@ html[data-home-entrance="0"] .tab-panel-fade {
   position: relative;
   z-index: 3;
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   align-items: stretch;
   max-width: 960px;
   margin-left: auto;
@@ -270,6 +270,7 @@ html[data-home-entrance="0"] .tab-panel-fade {
   box-shadow: 0 12px 40px rgba(15, 39, 68, 0.35);
   gap: 0.45rem;
   overflow: visible;
+  --hero-search-field-min-h: 6.25rem;
 }
 
 .hero-search--v2:has(.hero-destination.has-suggestions) {
@@ -277,14 +278,22 @@ html[data-home-entrance="0"] .tab-panel-fade {
 }
 
 .hero-search--v2 .hero-search-field {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: var(--hero-search-field-min-h);
+  height: 100%;
   padding: 0.85rem 1rem;
   border-radius: 14px;
   border: 1px solid #e8ecf0;
   border-right: 1px solid #e8ecf0;
+  box-sizing: border-box;
 }
 
 .hero-search--v2 .hero-search-field-wide {
   border-radius: 14px;
+  flex: none;
+  width: 100%;
 }
 
 .hero-search--v2 .hero-search-field input {
@@ -298,14 +307,15 @@ html[data-home-entrance="0"] .tab-panel-fade {
 .hero-search-field-destination .hero-search-field-hint {
   display: block;
   margin: 0 0 0.35rem;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.3;
   color: #5c6b7a;
   text-transform: none;
   letter-spacing: 0;
-  white-space: normal;
-  word-wrap: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hero-search-field-destination .hero-search-input-wrap input {
@@ -320,7 +330,18 @@ html[data-home-entrance="0"] .tab-panel-fade {
 .hero-search--v2 .hero-search-field-dates {
   flex: 1;
   min-width: 0;
+  min-height: var(--hero-search-field-min-h);
   overflow: visible;
+}
+
+.hero-search--v2 .hero-date-picker,
+.hero-search--v2 .hero-search-field-dates .date-picker-wrap--hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100%;
+  width: 100%;
 }
 
 .hero-search--v2 .hero-search-carousel {
@@ -332,7 +353,15 @@ html[data-home-entrance="0"] .tab-panel-fade {
 }
 
 .hero-search--v2 .hero-search-slide {
+  display: flex;
   min-width: 0;
+  min-height: var(--hero-search-field-min-h);
+}
+
+.hero-search--v2 .hero-search-slide > .hero-search-field,
+.hero-search--v2 .hero-search-slide > .hero-search-field-dates {
+  flex: 1;
+  width: 100%;
 }
 
 .hero-search--v2 .hero-search-date-pair {
@@ -468,12 +497,12 @@ html[data-home-entrance="0"] .tab-panel-fade {
 }
 
 .btn-hero-search--v2 {
-  width: clamp(9.25rem, 16vw, 12rem);
+  width: clamp(9.25rem, 14vw, 11rem);
+  min-height: var(--hero-search-field-min-h);
   align-self: stretch;
   justify-content: center;
   border-radius: 14px;
   padding: 0.75rem 1.25rem;
-  min-height: 0;
   background: linear-gradient(135deg, var(--home-turquoise), var(--home-deep));
   font-size: 1rem;
   font-weight: 700;
@@ -1199,6 +1228,7 @@ html[data-home-entrance="0"] .tab-panel-fade {
     box-shadow: none;
     padding: 0;
     gap: 0.75rem;
+    --hero-search-field-min-h: 5.75rem;
   }
 
   .hero-search-carousel {
@@ -1226,7 +1256,7 @@ html[data-home-entrance="0"] .tab-panel-fade {
 
   .hero-search-slide {
     display: block;
-    flex: 0 0 88%;
+    flex: 0 0 min(100%, 20rem);
     scroll-snap-align: center;
     scroll-snap-stop: always;
     min-width: 0;
@@ -1242,6 +1272,7 @@ html[data-home-entrance="0"] .tab-panel-fade {
   .hero-search--v2 .hero-search-field-dates {
     width: 100%;
     min-width: 0;
+    min-height: var(--hero-search-field-min-h, 5.75rem);
     border-radius: 14px !important;
     background: #fff;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
@@ -1262,6 +1293,7 @@ html[data-home-entrance="0"] .tab-panel-fade {
 
   .btn-hero-search--v2 {
     width: 100%;
+    min-height: var(--hero-search-field-min-h, 3.25rem);
     border-radius: 14px;
   }
 

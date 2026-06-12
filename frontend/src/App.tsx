@@ -11,6 +11,9 @@ import { HospixChatProvider } from "./context/HospixChatContext";
 import { LocaleCurrencyProvider } from "./context/LocaleCurrencyContext";
 import { GeoHintsBootstrap } from "./components/geo/GeoHintsBootstrap";
 import { SiteDesignProvider } from "./context/SiteDesignContext";
+import { AccessibilityProvider } from "./context/AccessibilityContext";
+import { AccessibilityMenu } from "./components/accessibility/AccessibilityMenu";
+import { ReadingMaskOverlay } from "./components/accessibility/ReadingMaskOverlay";
 import { ThemeProvider } from "./context/ThemeContext";
 import { FloatingChatHeads } from "./components/chat/FloatingChatHeads";
 import { GlobalChatDock } from "./components/GlobalChatDock";
@@ -45,6 +48,7 @@ function AppTree() {
   return (
     <AuthProvider>
       <ThemeProvider>
+      <AccessibilityProvider>
       <LocaleCurrencyProvider>
       <GeoHintsBootstrap />
       <SiteDesignProvider>
@@ -141,11 +145,14 @@ function AppTree() {
           <FloatingChatHeads />
           <GlobalChatDock />
           <HospixWidget />
+          <AccessibilityMenu />
+          <ReadingMaskOverlay />
         </HospixChatProvider>
         </BrowserRouter>
       </ChatDockProvider>
       </SiteDesignProvider>
       </LocaleCurrencyProvider>
+      </AccessibilityProvider>
       </ThemeProvider>
     </AuthProvider>
   );

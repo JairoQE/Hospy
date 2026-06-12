@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { useTheme } from "../../context/ThemeContext";
 import { HospyBrand } from "../brand/HospyBrand";
+import { AccessibilityButton } from "../accessibility/AccessibilityButton";
 import { IconClose, IconMenu } from "../icons";
 import { InboxHeaderButtons } from "../InboxHeaderButtons";
 import { HeaderUserMenu } from "./HeaderUserMenu";
@@ -146,6 +147,8 @@ export function SiteHeader() {
           </nav>
 
           <div className="header-end">
+            <AccessibilityButton />
+
             <label className="theme-switch" aria-label="Cambiar tema claro/oscuro">
               <span className="theme-switch-sun" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

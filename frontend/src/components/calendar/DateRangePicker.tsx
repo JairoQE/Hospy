@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import { createPortal } from "react-dom";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import {
+  calendarLanguage,
   compareDateStr,
   formatDisplayDate,
   formatDisplayDateShort,
@@ -80,7 +81,7 @@ export function DateRangePicker({
   const formatValue = (dateStr: string) => {
     if (!dateStr) return emptyLabel;
     if (isAdmin) return formatDisplayDateShort(dateStr);
-    return formatDisplayDate(dateStr, language);
+    return formatDisplayDate(dateStr, calendarLanguage(language));
   };
 
   useEffect(() => {

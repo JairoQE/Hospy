@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Language } from "../../i18n/translations";
 import {
   addMonths,
   buildMonthGrid,
+  calendarLanguage,
   compareDateStr,
   formatDisplayDate,
   isInRange,
@@ -25,7 +27,7 @@ export type DateRangeCalendarProps = {
   maxDate?: string;
   isDateDisabled?: (dateStr: string) => boolean;
   specialDates?: Set<string>;
-  language?: "es-PE" | "en";
+  language?: Language;
   showPresets?: boolean;
   showToolbar?: boolean;
   showFooter?: boolean;
@@ -53,6 +55,7 @@ export function DateRangeCalendar({
   marketingHint,
   className = "",
 }: DateRangeCalendarProps) {
+  const lang = calendarLanguage(language);
   const today = todayStr();
   const initial = parseDateString(startDate ?? today) ?? new Date();
   const [viewYear, setViewYear] = useState(initial.getFullYear());
@@ -92,31 +95,31 @@ export function DateRangeCalendar({
   }, []);
 
   const secondMonth = addMonths(viewYear, viewMonth, 1);
-  const weekdays = language === "en" ? WEEKDAY_LABELS_EN : WEEKDAY_LABELS_ES;
+  const weekdays = lang === "en" ? WEEKDAY_LABELS_EN : WEEKDAY_LABELS_ES;
 
   const labels = useMemo(
     () => ({
-      from: language === "en" ? "From" : "Desde",
-      to: language === "en" ? "To" : "Hasta",
-      clear: language === "en" ? "Clear" : "Borrar",
-      today: language === "en" ? "Today" : "Hoy",
+      from: lang === "en" ? "From" : "Desde",
+      to: lang === "en" ? "To" : "Hasta",
+      clear: lang === "en" ? "Clear" : "Borrar",
+      today: lang === "en" ? "Today" : "Hoy",
       nights: (n: number) =>
-        language === "en"
+        lang === "en"
           ? n === 1
             ? "1 night"
             : `${n} nights`
           : n === 1
             ? "1 noche"
             : `${n} noches`,
-      presetWeekend: language === "en" ? "This weekend" : "Este fin de semana",
-      preset7: language === "en" ? "Next 7 days" : "Próximos 7 días",
+      presetWeekend: lang === "en" ? "This weekend" : "Este fin de semana",
+      preset7: lang === "en" ? "Next 7 days" : "Próximos 7 días",
       hintDiscount:
-        language === "en"
+        lang === "en"
           ? "Stay 2+ nights and unlock better deals!"
           : "¡Elige 2 noches o más y obtén mejores tarifas!",
-      unavailable: language === "en" ? "Not available" : "No disponible",
+      unavailable: lang === "en" ? "Not available" : "No disponible",
     }),
-    [language],
+    [lang],
   );
 
   const navigateMonth = (delta: number) => {
@@ -253,7 +256,7 @@ export function DateRangeCalendar({
             type="button"
             className="date-range-calendar-nav"
             onClick={() => navigateMonth(-1)}
-            aria-label={language === "en" ? "Previous month" : "Mes anterior"}
+            aria-label={lang === "en" ? "Previous month" : "Mes anterior"}
           >
             ‹
           </button>
@@ -264,7 +267,7 @@ export function DateRangeCalendar({
             className="date-range-calendar-month-title"
             onClick={() => monthIdx === 0 && setPickerOpen((o) => !o)}
           >
-            {monthYearLabel(year, month, language)}
+            {monthYearLabel(year, month, lang)}
           </button>
           {pickerOpen && monthIdx === 0 && (
             <div className="date-range-calendar-month-picker" role="listbox">
@@ -282,7 +285,7 @@ export function DateRangeCalendar({
                       setPickerOpen(false);
                     }}
                   >
-                    {monthYearLabel(y, m, language).slice(0, 3)} {y}
+                    {monthYearLabel(y, m, lang).slice(0, 3)} {y}
                   </button>
                 );
               })}
@@ -294,7 +297,7 @@ export function DateRangeCalendar({
             type="button"
             className="date-range-calendar-nav"
             onClick={() => navigateMonth(1)}
-            aria-label={language === "en" ? "Next month" : "Mes siguiente"}
+            aria-label={lang === "en" ? "Next month" : "Mes siguiente"}
           >
             ›
           </button>
@@ -337,7 +340,7 @@ export function DateRangeCalendar({
       ref={rootRef}
       className={`date-range-calendar ${className}`.trim()}
       role="application"
-      aria-label={language === "en" ? "Date picker" : "Selector de fechas"}
+      aria-label={lang === "en" ? "Date picker" : "Selector de fechas"}
       onKeyDown={(e) => {
         if (e.key === "b" || e.key === "B") {
           e.preventDefault();
@@ -353,11 +356,11 @@ export function DateRangeCalendar({
         <div className="date-range-calendar-toolbar">
           <div className="date-range-calendar-range-summary">
             <span>
-              {labels.from}: <strong>{formatDisplayDate(startDate, language)}</strong>
+              {labels.from}: <strong>{formatDisplayDate(startDate, lang)}</strong>
             </span>
             {mode === "range" && (
               <span>
-                {labels.to}: <strong>{formatDisplayDate(endDate, language)}</strong>
+                {labels.to}: <strong>{formatDisplayDate(endDate, lang)}</strong>
               </span>
             )}
             {nights > 0 && (

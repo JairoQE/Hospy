@@ -1,5 +1,13 @@
 /** Utilidades de fechas (YYYY-MM-DD) sin dependencias externas. */
 
+import type { Language } from "../i18n/translations";
+
+export type CalendarLanguage = "es-PE" | "en";
+
+export function calendarLanguage(lang: Language): CalendarLanguage {
+  return lang === "en" ? "en" : "es-PE";
+}
+
 export function toDateString(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -64,7 +72,7 @@ const MONTH_NAMES_EN = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-export function monthYearLabel(year: number, month: number, lang: "es-PE" | "en" = "es-PE"): string {
+export function monthYearLabel(year: number, month: number, lang: CalendarLanguage = "es-PE"): string {
   const names = lang === "en" ? MONTH_NAMES_EN : MONTH_NAMES_ES;
   return `${names[month]} ${year}`;
 }
@@ -96,7 +104,7 @@ export function buildMonthGrid(year: number, month: number): CalendarCell[] {
   return cells;
 }
 
-export function formatDisplayDate(dateStr: string | null, lang: "es-PE" | "en" = "es-PE"): string {
+export function formatDisplayDate(dateStr: string | null, lang: CalendarLanguage = "es-PE"): string {
   if (!dateStr) return "—";
   const d = parseDateString(dateStr);
   if (!d) return dateStr;
