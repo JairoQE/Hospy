@@ -9,7 +9,8 @@
   padding: 0;
   border: none;
   border-radius: 8px;
-  background: transparent;
+  background: #2b78c9;
+  color: #fff;
   cursor: pointer;
   flex-shrink: 0;
   transition: transform 0.15s ease, opacity 0.15s ease;
@@ -26,8 +27,8 @@
 }
 
 .a11y-trigger-icon {
-  width: 36px;
-  height: 36px;
+  width: 22px;
+  height: 22px;
   display: block;
 }
 
