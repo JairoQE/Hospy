@@ -111,6 +111,27 @@ def expand_free_text_location_to_cities(text: str) -> list[str] | None:
         return "".join(c for c in s if unicodedata.category(c) != "Mn")
 
     norm_raw = _norm_local(raw)
+
+    def _with_raw(names: list[str]) -> list[str]:
+        merged = set(district_name_variants(names))
+        merged.update(district_name_variants([raw]))
+        return list(merged)
+
+    depto = resolve_departamento(raw)
+    if depto:
+        names = distrito_nombres_departamento(raw)
+        if names:
+            return _with_raw(names)
+
+    prov = resolve_provincia(raw, None)
+    if prov:
+        names = distrito_nombres_provincia(
+            prov["nombre"],
+            prov.get("departamento_nombre"),
+        )
+        if names:
+            return _with_raw(names)
+
     try:
         suggestions = search_places(raw, limit=20)
     except Exception:
@@ -128,21 +149,6 @@ def expand_free_text_location_to_cities(text: str) -> list[str] | None:
         if exact:
             mapped_city = exact.get("ciudad") or exact.get("distrito") or exact.get("nombre")
             if mapped_city:
-                return district_name_variants([mapped_city])
-
-    depto = resolve_departamento(raw)
-    if depto:
-        names = distrito_nombres_departamento(raw)
-        if names:
-            return district_name_variants(names)
-
-    prov = resolve_provincia(raw, None)
-    if prov:
-        names = distrito_nombres_provincia(
-            prov["nombre"],
-            prov.get("departamento_nombre"),
-        )
-        if names:
-            return district_name_variants(names)
+                return _with_raw([mapped_city])
 
     return None

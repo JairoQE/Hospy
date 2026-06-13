@@ -96,17 +96,11 @@ function initialHomeTilesState(): {
 }
 
 type BrowseMeta = {
-
   label: string;
-
   zona?: string;
-
   departamento?: string;
-
   provincia?: string;
-
   distrito?: string;
-
 };
 
 
@@ -469,21 +463,38 @@ export function HomePage() {
       void recordBrowseTileClick(item.tile_id).catch(() => {});
     }
 
-    setFilters(null);
+    const query = {
+      ciudad: item.search.ciudad,
+      departamento: item.search.departamento,
+      provincia: item.search.provincia,
+      distrito: item.search.distrito,
+      zona: item.search.zona,
+      ordenar: "-rating",
+    };
+
+    setFilters({
+      ciudad: item.search.ciudad ?? "",
+      departamento: item.search.departamento ?? "",
+      provincia: item.search.provincia ?? "",
+      distrito: item.search.distrito ?? "",
+      entrada: "",
+      salida: "",
+      tipo: "",
+      precio_min: "",
+      precio_max: "",
+      ordenar: "-rating",
+    });
 
     setBrowse({
       label: item.name,
       zona: item.search.zona,
       departamento: item.search.departamento,
+      provincia: item.search.provincia,
+      distrito: item.search.distrito,
     });
 
     loadList(
-      {
-        ciudad: item.search.ciudad,
-        departamento: item.search.departamento,
-        zona: item.search.zona,
-        ordenar: "-rating",
-      },
+      query,
       item.search.zona
         ? tVars("home.staysInRegion", { region: item.name })
         : tVars("home.staysInPlace", { place: item.name }),

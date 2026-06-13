@@ -9,6 +9,7 @@ from django.utils.text import slugify
 from .media_urls import media_public_path
 from .models import Accommodation, AccommodationPhoto, BrowseTile
 from .services import apply_accommodation_search_params, public_accommodations_queryset
+from .ubigeo_loader import resolve_departamento, resolve_provincia
 
 CLICK_BOOST = 10
 DEFAULT_LIMIT = 12
@@ -41,6 +42,23 @@ def _department_click_scores(since):
             if normalized:
                 scores[normalized] = max(scores.get(normalized, 0), tile.clicks_30d)
     return scores
+
+
+def _search_params_for_city(city: str) -> dict:
+    """Parámetros de búsqueda alineados con UBIGEO (evita 0 resultados en Lima, Cusco, etc.)."""
+    name = (city or "").strip()
+    if not name:
+        return {}
+    if resolve_departamento(name):
+        return {"departamento": name}
+    prov = resolve_provincia(name, None)
+    if prov:
+        params: dict = {"provincia": prov["nombre"]}
+        depto = prov.get("departamento_nombre")
+        if depto:
+            params["departamento"] = depto
+        return params
+    return {"ciudad": name}
 
 
 def _photos_for_cities(cities: list[str]) -> dict[str, str]:
@@ -98,7 +116,7 @@ def build_featured_cities(limit: int = DEFAULT_LIMIT) -> list[dict]:
             "price_from": float(row["price_from"]) if row["price_from"] is not None else None,
             "rating_avg": float(row["rating_avg"]) if row["rating_avg"] is not None else None,
             "image_url": images.get(row["city"]),
-            "search": {"ciudad": row["city"]},
+            "search": _search_params_for_city(row["city"]),
         }
         for row in rows
     ]

@@ -41,6 +41,7 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { SponsorLayout } from "./components/sponsor/SponsorLayout";
 import { SponsorPanelPage } from "./pages/SponsorPanelPage";
 import { InfoPage } from "./pages/InfoPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ?? "";
 
@@ -139,8 +140,8 @@ function AppTree() {
                 </ProtectedRoute>
               }
             />
-            <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
           <FloatingChatHeads />
           <GlobalChatDock />

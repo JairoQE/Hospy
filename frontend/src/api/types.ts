@@ -251,6 +251,8 @@ export interface FeaturedSearchItem {
   search: {
     ciudad?: string;
     departamento?: string;
+    provincia?: string;
+    distrito?: string;
     zona?: string;
   };
   tile_id?: number;

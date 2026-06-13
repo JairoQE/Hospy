@@ -76,6 +76,14 @@ def test_expand_ciudad_libre_departamento_huanuco_sin_tilde():
     assert len(cities) >= 10
 
 
+def test_expand_ciudad_libre_departamento_lima_incluye_miraflores():
+    cities = expand_free_text_location_to_cities("Lima")
+    assert cities is not None
+    norm = {c.lower().replace("-", " ") for c in cities}
+    assert "miraflores" in norm
+    assert "lima" in norm
+
+
 def test_expand_ciudad_libre_tingo_maria_mapear_a_rupa_rupa():
     cities = expand_free_text_location_to_cities("Tingo María")
     assert cities is not None
@@ -91,6 +99,19 @@ def test_hospedajes_ciudad_libre_como_provincia_leoncio_prado(
     acc.city = "Rupa-Rupa"
     acc.save(update_fields=["city"])
     r = api_client.get("/api/v1/hospedajes/?ciudad=Leoncio Prado")
+    assert r.status_code == 200
+    ids = [x["id"] for x in r.data["results"]]
+    assert acc.id in ids
+
+
+@pytest.mark.django_db
+def test_hospedajes_ciudad_libre_como_departamento_lima(
+    api_client, hospedaje_aprobado
+):
+    acc, _room = hospedaje_aprobado
+    acc.city = "Miraflores"
+    acc.save(update_fields=["city"])
+    r = api_client.get("/api/v1/hospedajes/?ciudad=Lima")
     assert r.status_code == 200
     ids = [x["id"] for x in r.data["results"]]
     assert acc.id in ids

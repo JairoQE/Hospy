@@ -90,6 +90,11 @@ export const translations = {
       retry: "Reintentar",
       peru: "Perú",
     },
+    notFound: {
+      title: "Página no encontrada",
+      message: "La dirección que buscaste no existe o fue movida.",
+      backHome: "Volver al inicio",
+    },
     brand: {
       tagline: "Conexión a tu destino",
       logoAlt: "Hospy — Conexión a tu destino",
@@ -518,6 +523,11 @@ export const translations = {
       back: "Back",
       retry: "Retry",
       peru: "Peru",
+    },
+    notFound: {
+      title: "Page not found",
+      message: "The address you looked for does not exist or was moved.",
+      backHome: "Back to home",
     },
     brand: {
       tagline: "Connection to your destination",

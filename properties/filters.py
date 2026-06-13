@@ -4,7 +4,7 @@ from .models import Accommodation, Service
 
 
 class AccommodationFilter(django_filters.FilterSet):
-    ciudad = django_filters.CharFilter(field_name="city", lookup_expr="iexact")
+    # `ciudad` se resuelve en apply_accommodation_search_params (UBIGEO / texto libre).
     tipo = django_filters.CharFilter(field_name="type")
     precio_min = django_filters.NumberFilter(
         field_name="precio_desde", lookup_expr="gte"
