@@ -6,8 +6,14 @@
   background: #0b1220;
 }
 
-.not-found-page > div,
-.not-found-page canvas {
+.not-found-spline-wrap {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+}
+
+.not-found-spline-wrap > div,
+.not-found-spline-wrap canvas {
   width: 100% !important;
   height: 100dvh !important;
 }
@@ -33,7 +39,7 @@
   position: fixed;
   top: calc(1rem + env(safe-area-inset-top, 0px));
   right: calc(1rem + env(safe-area-inset-right, 0px));
-  z-index: 10;
+  z-index: 10001;
   padding: 0.55rem 1rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
@@ -58,10 +64,32 @@
   outline-offset: 2px;
 }
 
-/* Badge «Built with Spline» — oculto en demo/curso */
-.not-found-page a[href*="spline.design"],
-.not-found-page a[href*="splinetool"],
-.not-found-page a[href*="spline"] {
+/* Tapa física del badge Spline (esquina inferior derecha) */
+.not-found-spline-badge-cover {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  width: min(240px, 42vw);
+  height: 56px;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgba(11, 18, 32, 0.55) 35%,
+    rgba(11, 18, 32, 0.98) 70%
+  );
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Badge DOM (si aparece como enlace o texto) */
+body:has(.not-found-page) a[href*="spline.design"],
+body:has(.not-found-page) a[href*="splinetool"],
+body:has(.not-found-page) a[href*="spline.design"] ~ *,
+.not-found-page a[href*="spline"],
+.not-found-page [class*="spline-watermark"],
+.not-found-page [id*="spline-watermark"] {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;

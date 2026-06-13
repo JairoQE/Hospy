@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
+import { hideSplineBadge, watchSplineBadge } from "../utils/hideSplineBadge";
 import "../styles/not-found.css";
 
 const Spline = lazy(() => import("@splinetool/react-spline"));
@@ -13,26 +14,7 @@ export function NotFoundPage() {
 
   useEffect(() => {
     document.title = "404 · Hospy";
-  }, []);
-
-  useEffect(() => {
-    const hideSplineBadge = () => {
-      const root = document.querySelector(".not-found-page");
-      if (!root) return;
-      root.querySelectorAll('a[href*="spline"]').forEach((el) => {
-        el.setAttribute("aria-hidden", "true");
-        (el as HTMLElement).style.cssText =
-          "display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;";
-      });
-    };
-
-    hideSplineBadge();
-    const root = document.querySelector(".not-found-page");
-    if (!root) return;
-
-    const observer = new MutationObserver(hideSplineBadge);
-    observer.observe(root, { childList: true, subtree: true });
-    return () => observer.disconnect();
+    return watchSplineBadge();
   }, []);
 
   return (
@@ -40,9 +22,12 @@ export function NotFoundPage() {
       <Link to="/" className="not-found-home-link">
         {t("notFound.backHome")}
       </Link>
-      <Suspense fallback={<div className="not-found-spline-loading" />}>
-        <Spline scene={SPLINE_SCENE} />
-      </Suspense>
+      <div className="not-found-spline-wrap">
+        <Suspense fallback={<div className="not-found-spline-loading" />}>
+          <Spline scene={SPLINE_SCENE} onLoad={() => hideSplineBadge()} />
+        </Suspense>
+        <div className="not-found-spline-badge-cover" aria-hidden="true" />
+      </div>
     </main>
   );
 }
