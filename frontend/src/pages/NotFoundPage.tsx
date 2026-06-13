@@ -12,24 +12,17 @@ export function NotFoundPage() {
   const { t } = useLocaleCurrency();
 
   useEffect(() => {
-    document.title = `404 · Hospy`;
+    document.title = "404 · Hospy";
   }, []);
 
   return (
     <main className="not-found-page">
-      <div className="not-found-spline" aria-hidden="true">
-        <Suspense fallback={<div className="not-found-spline-loading" />}>
-          <Spline scene={SPLINE_SCENE} />
-        </Suspense>
-      </div>
-      <div className="not-found-overlay">
-        <p className="not-found-code">404</p>
-        <h1 className="not-found-title">{t("notFound.title")}</h1>
-        <p className="not-found-message">{t("notFound.message")}</p>
-        <Link to="/" className="btn btn-primary not-found-home">
-          {t("notFound.backHome")}
-        </Link>
-      </div>
+      <Link to="/" className="not-found-home-link">
+        {t("notFound.backHome")}
+      </Link>
+      <Suspense fallback={<div className="not-found-spline-loading" />}>
+        <Spline scene={SPLINE_SCENE} />
+      </Suspense>
     </main>
   );
 }
