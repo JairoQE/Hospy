@@ -15,6 +15,26 @@ export function NotFoundPage() {
     document.title = "404 · Hospy";
   }, []);
 
+  useEffect(() => {
+    const hideSplineBadge = () => {
+      const root = document.querySelector(".not-found-page");
+      if (!root) return;
+      root.querySelectorAll('a[href*="spline"]').forEach((el) => {
+        el.setAttribute("aria-hidden", "true");
+        (el as HTMLElement).style.cssText =
+          "display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;";
+      });
+    };
+
+    hideSplineBadge();
+    const root = document.querySelector(".not-found-page");
+    if (!root) return;
+
+    const observer = new MutationObserver(hideSplineBadge);
+    observer.observe(root, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <main className="not-found-page">
       <Link to="/" className="not-found-home-link">

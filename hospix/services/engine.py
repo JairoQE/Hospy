@@ -15,6 +15,7 @@ from .context import (
     formal_tone,
     resolve_audience,
 )
+from .page_context import describe_page, is_page_location_question, reply_page_location
 
 
 def _parse_db_cards_from_context(data_context: str) -> list[dict]:
@@ -51,11 +52,27 @@ def _enrich_card(card: dict, by_id: dict[str, dict], by_name: dict[str, dict]) -
     }
 
 
-def _merge_stay_cards(replies: list[dict], data_context: str, message: str) -> list[dict]:
+def _merge_stay_cards(
+    replies: list[dict],
+    data_context: str,
+    message: str,
+    pathname: str = "",
+) -> list[dict]:
     """Inyecta fichas reales de la BD (con foto) en respuestas del LLM."""
+    if is_page_location_question(message):
+        return replies
+
+    page = describe_page(pathname)
     lower = (message or "").lower()
+    if page.get("is_error") and not re.search(
+        r"buscar|hospedaje|alojamiento|hotel|hostal|reservar",
+        lower,
+    ):
+        return replies
+
     if not re.search(
-        r"buscar|hospedaje|alojamiento|hotel|hostal|reservar|donde|dónde|ciudad|en\s+|lima|cusco|peru|perú|todos",
+        r"buscar|hospedaje|alojamiento|hotel|hostal|reservar|donde|dónde|ciudad|"
+        r"lima|cusco|arequipa|peru|perú|todos|barato|económico|economico",
         lower,
     ):
         return replies
@@ -166,6 +183,25 @@ def chat(
                 source="rules",
             )
 
+    if message.strip() and is_page_location_question(message):
+        formal = formal_tone(audience)
+        replies = [
+            {
+                "role": "hospix",
+                "markdown": reply_page_location(pathname, formal),
+                "actions": [
+                    {"id": "home", "label": "Ir al inicio", "type": "navigate", "target": "/"},
+                ],
+            }
+        ]
+        return _finish_turn(
+            sid,
+            user_text=message,
+            replies=replies,
+            flow_state=rules_svc._empty_state(),
+            source="rules",
+        )
+
     if llm_svc.llm_enabled() and message.strip():
         data_context = build_llm_data_context(message, ip_city=ip_city)
         system = llm_svc.build_system_prompt(
@@ -184,7 +220,7 @@ def chat(
         if llm_data:
             replies = rules_svc.llm_to_replies(llm_data)
             if replies:
-                replies = _merge_stay_cards(replies, data_context, message)
+                replies = _merge_stay_cards(replies, data_context, message, pathname)
                 next_state = {
                     "flow_id": llm_data.get("flow_id"),
                     "flow_step": int(llm_data.get("flow_step") or 0),

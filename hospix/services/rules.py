@@ -16,6 +16,7 @@ from .context import (
     search_stays,
     stay_types_phrase,
 )
+from .page_context import is_page_location_question, reply_page_location
 
 PERU_CITIES = [
     "lima",
@@ -133,6 +134,14 @@ def process_message(
 
     if not text:
         return [], state, None
+
+    if is_page_location_question(text):
+        actions = [{"id": "home", "label": "Ir al inicio", "type": "navigate", "target": "/"}]
+        return (
+            [_reply(markdown=reply_page_location(pathname, formal), actions=actions)],
+            _empty_state(),
+            None,
+        )
 
     lower = text.lower()
     flow_id = state["flow_id"]

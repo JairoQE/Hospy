@@ -7,6 +7,7 @@ import re
 
 from django.db.models import Min, Q
 
+from .page_context import is_page_location_question, page_context_snippet
 from hospix.faq_data import FAQ_ENTRIES
 
 from bookings.models import Booking
@@ -276,6 +277,13 @@ def is_country_scope(place: str, message: str = "") -> bool:
 
 def build_llm_data_context(message: str, ip_city: str | None = None) -> str:
     """Contexto extra para el LLM: FAQ y hospedajes reales según el mensaje."""
+    if is_page_location_question(message):
+        return (
+            "El usuario pregunta en qué página está. "
+            "Responde solo con la descripción de la ruta actual. "
+            "No incluyas cards ni recomiendes hospedajes."
+        )
+
     parts: list[str] = []
     faq = match_faq(message)
     if faq:

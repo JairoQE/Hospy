@@ -5,6 +5,7 @@ import {
   ownerQuickActions,
   welcomeMessage,
 } from "../data/chatFlows";
+import { isPageLocationQuestion, replyPageLocation } from "../utils/pageContext";
 import type { HospixContext, HospixFlowState, HospixTurnResult } from "../types/hospix";
 
 function filterStays(city: string): typeof MOCK_STAYS {
@@ -52,6 +53,19 @@ export function processUserInput(
   }
 
   const lower = trimmed.toLowerCase();
+
+  if (isPageLocationQuestion(trimmed)) {
+    return {
+      replies: [
+        {
+          role: "hospix",
+          markdown: replyPageLocation(ctx.pathname, ctx.formalTone),
+          actions: [{ id: "home", label: "Ir al inicio", type: "navigate", target: "/" }],
+        },
+      ],
+      nextState: initialState(),
+    };
+  }
 
   if (state.flowId === "search_stay") {
     return handleSearchFlow(trimmed, state, ctx);

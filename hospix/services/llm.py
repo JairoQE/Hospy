@@ -345,6 +345,10 @@ def build_system_prompt(
     )
     data_block = f"\n\nDatos en tiempo real de Hospy:\n{data_context}" if data_context else ""
 
+    from .page_context import page_context_snippet
+
+    page_block = page_context_snippet(pathname)
+
     return f"""Eres Hospix, el asistente virtual de Hospy (Perú). {tone}
 Eres conversacional: respondes como un chat de mensajes de **solo texto** (sin imágenes, sin audio, sin archivos).
 Personalidad: experto en hospedajes peruanos, cercano, claro y honesto.
@@ -355,7 +359,9 @@ Responde en español (Perú). Adapta la longitud a la pregunta (1-6 frases habit
 Contexto del visitante:
 {user_snippet}
 
-Página actual: {pathname}
+Interpretación de la página actual (usa esto si preguntan dónde están):
+{page_block}
+
 Rol del visitante: {audience}
 {data_block}
 
@@ -376,6 +382,7 @@ Reglas de conversación:
 - Respeta el tipo pedido: si buscó "hospedajes", no pongas hoteles; si buscó "hoteles", no pongas hostales.
 - No inventes reservas, precios ni fichas. Si no tienes datos, dilo con naturalidad.
 - Si preguntan quién eres, preséntate como Hospix (asistente de Hospy), no como humano.
+- Si preguntan en qué página están, responde según «Interpretación de la página actual». En error 404 NO digas que es una ficha de hospedaje ni uses cards.
 - Preguntas personales, opiniones o charla general: responde con naturalidad y vuelve suavemente a cómo ayudar en Hospy.
 - No repitas en cada mensaje la lista de funciones ni botones; conversa primero.
 - Rutas internas si las mencionas: /, /mis-reservas, /panel, /bandeja, /login, /centro-ayuda
