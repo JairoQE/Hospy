@@ -202,6 +202,8 @@ export interface AccommodationDetail {
   latitude: string | number;
   longitude: string | number;
   average_rating: string | number;
+  check_in_from?: string;
+  check_out_until?: string;
   services: Service[];
   fotos: AccommodationPhoto[];
   faqs?: AccommodationFaq[];

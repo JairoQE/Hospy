@@ -16,6 +16,8 @@ export interface AccommodationFormData {
   latitude: string;
   longitude: string;
   service_ids: number[];
+  check_in_from: string;
+  check_out_until: string;
   faqs: AccommodationFaqInput[];
 }
 
@@ -30,6 +32,8 @@ export const emptyAccommodationForm = (): AccommodationFormData => ({
   latitude: "-12.046400",
   longitude: "-77.042800",
   service_ids: [],
+  check_in_from: "13:00",
+  check_out_until: "11:00",
   faqs: [],
 });
 
@@ -247,6 +251,32 @@ export function AccommodationForm({
           required
         />
       </label>
+      <div className="full location-fields check-policy-fields">
+        <p className="location-fields-label">Políticas de entrada y salida</p>
+        <div className="location-fields-row">
+          <label>
+            Check-in desde
+            <input
+              type="time"
+              value={value.check_in_from}
+              onChange={(e) => set("check_in_from", e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Check-out hasta
+            <input
+              type="time"
+              value={value.check_out_until}
+              onChange={(e) => set("check_out_until", e.target.value)}
+              required
+            />
+          </label>
+        </div>
+        <p className="hint">
+          Estándar Hospy: entrada 13:00 y salida 11:00. Puedes ajustarlos según tu operación.
+        </p>
+      </div>
       <div className="full location-fields">
         <p className="location-fields-label">Ubicación GPS</p>
         <div className="location-fields-row">

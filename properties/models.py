@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import time, timedelta
 
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -82,6 +82,17 @@ class Accommodation(TimeStampedModel):
         help_text="Motivo si el administrador rechaza el registro (HU-10).",
     )
     services = models.ManyToManyField(Service, related_name="hospedajes", blank=True)
+
+    check_in_from = models.TimeField(
+        "check-in desde",
+        default=time(13, 0),
+        help_text="Hora estándar de entrada (política Hospy por defecto 13:00).",
+    )
+    check_out_until = models.TimeField(
+        "check-out hasta",
+        default=time(11, 0),
+        help_text="Hora estándar de salida (política Hospy por defecto 11:00).",
+    )
 
     class Meta:
         verbose_name = "hospedaje"

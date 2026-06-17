@@ -12,6 +12,7 @@ import { ContactHostSection } from "../components/ContactHostSection";
 import { OwnerStoreBanner } from "../components/owner/OwnerStoreBanner";
 import { MapModal } from "../components/MapModal";
 import { CancellationPolicySection } from "../components/bookings/CancellationPolicySection";
+import { CheckInCheckOutPolicySection } from "../components/bookings/CheckInCheckOutPolicySection";
 import { PaymentCheckoutModal } from "../components/payments/PaymentCheckoutModal";
 import { AccommodationFaqSection } from "../components/AccommodationFaqSection";
 import { PriceTrendSection } from "../components/property/PriceTrendSection";
@@ -750,6 +751,11 @@ export function AccommodationDetailPage() {
               <p className="muted">{t("detail.noServices")}</p>
             )}
           </section>
+
+          <CheckInCheckOutPolicySection
+            checkInFrom={acc.check_in_from}
+            checkOutUntil={acc.check_out_until}
+          />
 
           <CancellationPolicySection />
 

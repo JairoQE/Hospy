@@ -7,7 +7,7 @@ Uso:
 """
 
 import random
-from datetime import timedelta
+from datetime import time, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -17,7 +17,7 @@ from django.utils import timezone
 
 from bookings.models import Booking
 from payments.models import Payment
-from properties.models import Accommodation, Service
+from properties.models import Accommodation, AccommodationFAQ, Service
 from properties.panel_cache import invalidate_admin_dashboard_cache
 from rooms.models import Room
 from rooms.services import calculate_stay_total
@@ -65,6 +65,9 @@ BOOKING_STATUS_WEIGHTS = [
     (Booking.Status.CANCELADA, 20),
     (Booking.Status.PENDIENTE, 10),
 ]
+
+CHECK_IN_TIME = time(13, 0)
+CHECK_OUT_TIME = time(11, 0)
 
 
 class Command(BaseCommand):
@@ -131,6 +134,7 @@ class Command(BaseCommand):
 
         existing = Accommodation.objects.filter(name__startswith=MARKER).count()
         if existing >= acc_count:
+            self._backfill_check_policies()
             invalidate_admin_dashboard_cache()
             self.stdout.write(
                 self.style.WARNING(
@@ -251,9 +255,12 @@ class Command(BaseCommand):
                 region=region,
                 latitude=lat + Decimal(str((idx % 9) * 0.001)),
                 longitude=lng + Decimal(str((idx % 7) * 0.001)),
+                check_in_from=CHECK_IN_TIME,
+                check_out_until=CHECK_OUT_TIME,
             )
             slugs = rng.sample(service_slugs, k=min(2 + idx % 3, len(service_slugs)))
             acc.services.set([service_map[s] for s in slugs])
+            self._ensure_policy_faqs(acc)
 
             room_type = Room.Type.DOBLE if idx % 2 else Room.Type.SIMPLE
             base_price = Decimal(str(60 + (idx % 15) * 10 + (idx % 4) * 5))
@@ -278,6 +285,47 @@ class Command(BaseCommand):
                 ).select_related("accommodation")
             )
         return rooms
+
+    def _ensure_policy_faqs(self, acc: Accommodation) -> None:
+        check_in = acc.check_in_from.strftime("%H:%M")
+        check_out = acc.check_out_until.strftime("%H:%M")
+        policy_faqs = [
+            (
+                "¿A qué hora es el check-in?",
+                f"El check-in es desde las {check_in}. Tras confirmar la reserva, "
+                "el anfitrión envía instrucciones por mensaje.",
+            ),
+            (
+                "¿A qué hora es el check-out?",
+                f"El check-out debe realizarse hasta las {check_out}, salvo acuerdo "
+                "previo con el anfitrión.",
+            ),
+        ]
+        for order, (question, answer) in enumerate(policy_faqs):
+            AccommodationFAQ.objects.get_or_create(
+                accommodation=acc,
+                question=question,
+                defaults={"answer": answer, "order": 90 + order},
+            )
+
+    def _backfill_check_policies(self) -> None:
+        updated = 0
+        for acc in Accommodation.objects.filter(name__startswith=MARKER):
+            fields = []
+            if acc.check_in_from != CHECK_IN_TIME:
+                acc.check_in_from = CHECK_IN_TIME
+                fields.append("check_in_from")
+            if acc.check_out_until != CHECK_OUT_TIME:
+                acc.check_out_until = CHECK_OUT_TIME
+                fields.append("check_out_until")
+            if fields:
+                acc.save(update_fields=fields)
+                updated += 1
+            self._ensure_policy_faqs(acc)
+        if updated:
+            self.stdout.write(
+                f"  Políticas check-in/out actualizadas en {updated} hospedajes seed."
+            )
 
     def _ensure_bookings(self, guests, rooms, booking_count, rng):
         if not rooms:

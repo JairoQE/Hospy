@@ -18,6 +18,10 @@ FAQ_ENTRIES = [
         "answer": "El check-in habitual es desde las **13:00**. El anfitrión envía instrucciones tras confirmar la reserva.",
     },
     {
+        "keys": ["check-out", "checkout", "salida"],
+        "answer": "El check-out habitual es hasta las **11:00**, salvo acuerdo con el anfitrión.",
+    },
+    {
         "keys": ["mascota", "mascotas", "perro", "gato"],
         "answer": "Revisa en la ficha del hospedaje si permite mascotas o pregunta al anfitrión desde el detalle del alojamiento.",
     },

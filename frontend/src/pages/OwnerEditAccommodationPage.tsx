@@ -34,6 +34,8 @@ function detailToForm(d: AccommodationDetail): AccommodationFormData {
     latitude: String(d.latitude),
     longitude: String(d.longitude),
     service_ids: d.services.map((s) => s.id),
+    check_in_from: (d.check_in_from ?? "13:00").slice(0, 5),
+    check_out_until: (d.check_out_until ?? "11:00").slice(0, 5),
     faqs: (d.faqs ?? []).map((f) => ({
       question: f.question,
       answer: f.answer,

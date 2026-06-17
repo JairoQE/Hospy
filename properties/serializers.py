@@ -319,6 +319,8 @@ class AccommodationDetailSerializer(serializers.ModelSerializer):
             "latitude",
             "longitude",
             "average_rating",
+            "check_in_from",
+            "check_out_until",
             "services",
             "fotos",
             "faqs",
@@ -430,6 +432,8 @@ class AccommodationWriteSerializer(serializers.ModelSerializer):
             "latitude",
             "longitude",
             "service_ids",
+            "check_in_from",
+            "check_out_until",
             "faqs",
         )
 

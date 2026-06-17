@@ -47,6 +47,11 @@ export const FAQ_ENTRIES: { keys: string[]; answer: string }[] = [
       "El check-in habitual es desde las **13:00**. El anfitrión te envía instrucciones por mensaje una vez confirmada la reserva.",
   },
   {
+    keys: ["check-out", "checkout", "salida"],
+    answer:
+      "El check-out habitual es hasta las **11:00**, salvo acuerdo previo con el anfitrión.",
+  },
+  {
     keys: ["mascota", "mascotas", "perro", "gato"],
     answer:
       "Filtra hospedajes que indiquen «mascotas permitidas» en la ficha o pregunta al anfitrión desde la página del alojamiento.",
