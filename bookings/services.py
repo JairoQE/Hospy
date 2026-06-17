@@ -152,12 +152,19 @@ def notify_booking_created_safe(booking: Booking) -> None:
         logger.exception("No se pudieron enviar notificaciones de reserva #%s", booking.pk)
 
 
+def _notify_booking_safe(notify_fn, booking: Booking, label: str) -> None:
+    try:
+        notify_fn(booking)
+    except Exception:
+        logger.exception("No se pudieron enviar notificaciones (%s) de reserva #%s", label, booking.pk)
+
+
 def confirm_booking(booking: Booking) -> Booking:
     if booking.status != Booking.Status.PENDIENTE:
         raise ValueError("Solo se pueden confirmar reservas pendientes.")
     booking.status = Booking.Status.CONFIRMADA
     booking.save(update_fields=["status", "updated_at"])
-    notify_booking_confirmed(booking)
+    _notify_booking_safe(notify_booking_confirmed, booking, "confirmada")
     return booking
 
 
@@ -166,7 +173,7 @@ def reject_booking(booking: Booking) -> Booking:
         raise ValueError("Solo se pueden rechazar reservas pendientes.")
     booking.status = Booking.Status.CANCELADA
     booking.save(update_fields=["status", "updated_at"])
-    notify_booking_rejected(booking)
+    _notify_booking_safe(notify_booking_rejected, booking, "rechazada")
     return booking
 
 
@@ -179,7 +186,7 @@ def cancel_booking(booking: Booking, *, actor=None) -> Booking:
         raise ValueError("Esta reserva no puede cancelarse.")
     booking.status = Booking.Status.CANCELADA
     booking.save(update_fields=["status", "updated_at"])
-    notify_booking_cancelled(booking)
+    _notify_booking_safe(notify_booking_cancelled, booking, "cancelada")
     return booking
 
 

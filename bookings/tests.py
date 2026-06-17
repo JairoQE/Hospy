@@ -65,6 +65,32 @@ def test_complete_past_bookings_task(huesped, hospedaje_aprobado):
 
 
 @pytest.mark.django_db
+def test_confirmar_reserva_aun_si_falla_notificacion(
+    api_client, propietario, huesped, hospedaje_aprobado, monkeypatch
+):
+    _, room = hospedaje_aprobado
+    booking = Booking.objects.create(
+        guest=huesped,
+        room=room,
+        check_in=date.today() + timedelta(days=50),
+        check_out=date.today() + timedelta(days=52),
+        total_amount=200,
+        status=Booking.Status.PENDIENTE,
+    )
+
+    def _boom(_booking):
+        raise RuntimeError("correo caído")
+
+    monkeypatch.setattr("bookings.services.notify_booking_confirmed", _boom)
+    api_client.force_authenticate(user=propietario)
+    response = api_client.post(f"/api/v1/reservas/{booking.id}/confirmar/")
+    assert response.status_code == 200
+    assert response.data["status"] == "confirmada"
+    booking.refresh_from_db()
+    assert booking.status == Booking.Status.CONFIRMADA
+
+
+@pytest.mark.django_db
 def test_confirmar_reserva(api_client, propietario, huesped, hospedaje_aprobado):
     _, room = hospedaje_aprobado
     booking = Booking.objects.create(

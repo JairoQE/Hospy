@@ -210,7 +210,10 @@ class BookingViewSet(viewsets.GenericViewSet):
             target_label=f"Reserva #{booking.pk}",
             request=request,
         )
-        return Response(BookingDetailSerializer(booking).data)
+        booking = self.get_queryset().get(pk=booking.pk)
+        return Response(
+            BookingDetailSerializer(booking, context={"request": request}).data
+        )
 
     @action(detail=True, methods=["post"], url_path="rechazar")
     def rechazar(self, request, pk=None):
@@ -227,7 +230,10 @@ class BookingViewSet(viewsets.GenericViewSet):
             target_label=f"Reserva #{booking.pk}",
             request=request,
         )
-        return Response(BookingDetailSerializer(booking).data)
+        booking = self.get_queryset().get(pk=booking.pk)
+        return Response(
+            BookingDetailSerializer(booking, context={"request": request}).data
+        )
 
     @action(detail=True, methods=["post"], url_path="cancelar")
     def cancelar(self, request, pk=None):
@@ -244,7 +250,10 @@ class BookingViewSet(viewsets.GenericViewSet):
             target_label=f"Reserva #{booking.pk}",
             request=request,
         )
-        return Response(BookingDetailSerializer(booking).data)
+        booking = self.get_queryset().get(pk=booking.pk)
+        return Response(
+            BookingDetailSerializer(booking, context={"request": request}).data
+        )
 
     @action(detail=True, methods=["post"], url_path="completar")
     def completar(self, request, pk=None):
@@ -261,4 +270,7 @@ class BookingViewSet(viewsets.GenericViewSet):
             target_label=f"Reserva #{booking.pk}",
             request=request,
         )
-        return Response(BookingDetailSerializer(booking).data)
+        booking = self.get_queryset().get(pk=booking.pk)
+        return Response(
+            BookingDetailSerializer(booking, context={"request": request}).data
+        )

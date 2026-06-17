@@ -152,7 +152,12 @@ export function OwnerPanelPage() {
       clearOwnerPanelBootstrapCache();
       load({ skipCache: true });
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : "Error");
+      clearOwnerPanelBootstrapCache();
+      load({ skipCache: true });
+      const msg = e instanceof ApiError ? e.message : "Error";
+      alert(
+        `${msg}\n\nSi la acción se aplicó, la lista se actualizó. Revisa el estado de la reserva.`,
+      );
     }
   };
 
@@ -169,7 +174,12 @@ export function OwnerPanelPage() {
       clearOwnerPanelBootstrapCache();
       load({ skipCache: true });
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : "Error al confirmar el pago");
+      clearOwnerPanelBootstrapCache();
+      load({ skipCache: true });
+      const msg = e instanceof ApiError ? e.message : "Error al confirmar el pago";
+      alert(
+        `${msg}\n\nSi el pago quedó registrado, la lista se actualizó. Revisa el estado.`,
+      );
     }
   };
 

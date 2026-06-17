@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from rooms.models import Room
@@ -76,8 +77,9 @@ class BookingListSerializer(serializers.ModelSerializer):
         }
 
     def get_payment(self, obj):
-        payment = getattr(obj, "payment", None)
-        if payment is None:
+        try:
+            payment = obj.payment
+        except ObjectDoesNotExist:
             return None
         return {
             "id": payment.id,
@@ -90,19 +92,18 @@ class BookingListSerializer(serializers.ModelSerializer):
 class BookingDetailSerializer(BookingListSerializer):
     room_id = serializers.IntegerField(source="room.id", read_only=True)
     desglose_precio = serializers.SerializerMethodField()
-    payment = serializers.SerializerMethodField()
 
     class Meta(BookingListSerializer.Meta):
         fields = BookingListSerializer.Meta.fields + (
             "room_id",
             "desglose_precio",
-            "payment",
             "updated_at",
         )
 
     def get_payment(self, obj):
-        payment = getattr(obj, "payment", None)
-        if payment is None:
+        try:
+            payment = obj.payment
+        except ObjectDoesNotExist:
             return None
         return {
             "id": payment.id,
