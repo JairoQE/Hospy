@@ -8,10 +8,11 @@ from rest_framework.views import APIView
 from accounts.permissions import IsAdministrador, IsPropietario
 from accounts.serializers import UserSerializer
 from bookings.models import Booking
-from bookings.serializers import BookingListSerializer
+from bookings.serializers import AdminDashboardBookingSerializer, BookingListSerializer
 from properties.models import Accommodation, Service
 from properties.serializers import (
     AccommodationDetailSerializer,
+    AdminDashboardAccommodationSerializer,
     AccommodationListSerializer,
     AccommodationOwnerListSerializer,
     ServiceSerializer,
@@ -79,24 +80,32 @@ class AdminDashboardBootstrapView(APIView):
     """GET /api/v1/admin/dashboard-bootstrap/ — estadísticas del panel admin."""
 
     permission_classes = [IsAdministrador]
+    _BOOKINGS_LIMIT = 400
 
     def get(self, request):
         cache_key = "hospy:admin_dashboard"
         if request.query_params.get("fresh") != "1":
-            cached = cache.get(cache_key)
-            if cached is not None:
-                return Response(cached)
+            try:
+                cached = cache.get(cache_key)
+                if cached is not None:
+                    return Response(cached)
+            except Exception:
+                pass
 
         from accounts.models import User
         from messaging.models import MessageReport
 
         ctx = {"request": request}
-        bookings_qs = Booking.objects.select_related(
-            "room", "room__accommodation", "guest"
-        ).order_by("-created_at")
+        bookings_qs = (
+            Booking.objects.select_related(
+                "room", "room__accommodation", "guest"
+            )
+            .order_by("-created_at")[: self._BOOKINGS_LIMIT]
+        )
         hospedajes_qs = public_accommodations_queryset().order_by(
             "-average_rating", "name"
         )
+        approved_count = hospedajes_qs.count()
         pendientes_qs = (
             Accommodation.objects.filter(
                 is_deleted=False, status=Accommodation.Status.PENDIENTE
@@ -119,13 +128,13 @@ class AdminDashboardBootstrapView(APIView):
         ).count()
 
         payload = {
-            "reservas": BookingListSerializer(
+            "reservas": AdminDashboardBookingSerializer(
                 bookings_qs, many=True, context=ctx
             ).data,
-            "hospedajes": AccommodationListSerializer(
+            "hospedajes": AdminDashboardAccommodationSerializer(
                 hospedajes_qs, many=True, context=ctx
             ).data,
-            "hospedajes_aprobados_total": hospedajes_qs.count(),
+            "hospedajes_aprobados_total": approved_count,
             "pendientes": AccommodationDetailSerializer(
                 pendientes_qs, many=True, context=ctx
             ).data,
@@ -135,5 +144,8 @@ class AdminDashboardBootstrapView(APIView):
             "reportes_chat_pendientes": pending_reports,
             "resenas": ReviewListSerializer(reviews_qs, many=True, context=ctx).data,
         }
-        cache.set(cache_key, payload, 90)
+        try:
+            cache.set(cache_key, payload, 90)
+        except Exception:
+            pass
         return Response(payload)

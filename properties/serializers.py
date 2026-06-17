@@ -223,6 +223,37 @@ class AccommodationListSerializer(serializers.ModelSerializer):
         return media_public_path(foto.image)
 
 
+class AdminDashboardAccommodationSerializer(serializers.ModelSerializer):
+    """Hospedaje ligero para estadísticas del panel admin."""
+
+    precio_desde = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        read_only=True,
+        allow_null=True,
+        required=False,
+    )
+    foto_principal = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Accommodation
+        fields = (
+            "id",
+            "name",
+            "type",
+            "city",
+            "region",
+            "average_rating",
+            "status",
+            "is_active",
+            "precio_desde",
+            "foto_principal",
+        )
+
+    def get_foto_principal(self, obj):
+        return None
+
+
 class OwnerStoreAccommodationSerializer(AccommodationListSerializer):
     """Hospedaje en el perfil público del propietario (más detalle para tarjetas)."""
 

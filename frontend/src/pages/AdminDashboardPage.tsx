@@ -4,6 +4,8 @@ import {
   fetchAdminDashboardBootstrap,
   loadCachedAdminDashboardBootstrap,
 } from "../api/adminDashboardBootstrap";
+import { ApiError } from "../api/client";
+import { formatApiError } from "../api/errors";
 import type {
   AccommodationDetail,
   AccommodationListItem,
@@ -60,16 +62,26 @@ export function AdminDashboardPage() {
 
     fetchAdminDashboardBootstrap({ skipCache })
       .then(apply)
-      .catch(() => {
-        setLoadError(
-          "No se pudieron cargar las estadísticas. Verifica tu sesión de administrador y vuelve a intentar.",
-        );
+      .catch((err: unknown) => {
+        let message =
+          "No se pudieron cargar las estadísticas. Intenta de nuevo en unos segundos.";
+        if (err instanceof ApiError) {
+          if (err.status === 403) {
+            message =
+              "Tu cuenta no tiene rol de administrador en el servidor. Cierra sesión y vuelve a entrar.";
+          } else if (err.status === 401) {
+            message = "Tu sesión expiró. Cierra sesión e inicia sesión de nuevo.";
+          } else {
+            message = formatApiError(err.data);
+          }
+        }
+        setLoadError(message);
         if (!cached) setLoading(false);
       });
   }, []);
 
   useEffect(() => {
-    load({ skipCache: true });
+    load();
   }, [load]);
 
   if (loading) {

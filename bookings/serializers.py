@@ -89,6 +89,41 @@ class BookingListSerializer(serializers.ModelSerializer):
         }
 
 
+class AdminDashboardBookingSerializer(serializers.ModelSerializer):
+    """Reserva ligera para el bootstrap del panel admin (sin consultas extra por fila)."""
+
+    hospedaje = serializers.CharField(source="room.accommodation.name", read_only=True)
+    habitacion = serializers.CharField(source="room.number", read_only=True)
+    ciudad = serializers.CharField(source="room.accommodation.city", read_only=True)
+    accommodation_id = serializers.IntegerField(
+        source="room.accommodation_id", read_only=True
+    )
+    huesped = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Booking
+        fields = (
+            "id",
+            "hospedaje",
+            "habitacion",
+            "ciudad",
+            "accommodation_id",
+            "huesped",
+            "check_in",
+            "check_out",
+            "total_amount",
+            "status",
+            "created_at",
+        )
+
+    def get_huesped(self, obj):
+        return {
+            "id": obj.guest_id,
+            "email": obj.guest.email,
+            "nombre": obj.guest.get_full_name() or obj.guest.username,
+        }
+
+
 class BookingDetailSerializer(BookingListSerializer):
     room_id = serializers.IntegerField(source="room.id", read_only=True)
     desglose_precio = serializers.SerializerMethodField()
