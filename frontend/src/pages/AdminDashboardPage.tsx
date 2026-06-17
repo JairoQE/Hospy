@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  clearAdminDashboardBootstrapCache,
   fetchAdminDashboardBootstrap,
   loadCachedAdminDashboardBootstrap,
 } from "../api/adminDashboardBootstrap";
@@ -22,8 +23,14 @@ export function AdminDashboardPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [approvedCount, setApprovedCount] = useState(0);
   const [region, setRegion] = useState("all");
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const load = useCallback(() => {
+  const load = useCallback((options?: { skipCache?: boolean }) => {
+    const skipCache = options?.skipCache ?? false;
+    if (skipCache) {
+      clearAdminDashboardBootstrapCache();
+    }
+
     const apply = (data: {
       reservas: Booking[];
       hospedajes: AccommodationListItem[];
@@ -40,29 +47,44 @@ export function AdminDashboardPage() {
       setPendingOwners(data.propietarios_pendientes);
       setPendingReports(data.reportes_chat_pendientes);
       setReviews(data.resenas.slice(0, 20));
+      setLoadError(null);
       setLoading(false);
     };
 
-    const cached = loadCachedAdminDashboardBootstrap();
+    const cached = skipCache ? null : loadCachedAdminDashboardBootstrap();
     if (cached) {
       apply(cached);
     } else {
       setLoading(true);
     }
 
-    fetchAdminDashboardBootstrap()
+    fetchAdminDashboardBootstrap({ skipCache })
       .then(apply)
       .catch(() => {
+        setLoadError(
+          "No se pudieron cargar las estadísticas. Verifica tu sesión de administrador y vuelve a intentar.",
+        );
         if (!cached) setLoading(false);
       });
   }, []);
 
   useEffect(() => {
-    load();
+    load({ skipCache: true });
   }, [load]);
 
   if (loading) {
     return <p className="admin-loading">Cargando estadísticas…</p>;
+  }
+
+  if (loadError) {
+    return (
+      <div className="admin-dashboard admin-dashboard--v2">
+        <p className="admin-error">{loadError}</p>
+        <button type="button" className="admin-export-btn" onClick={() => load({ skipCache: true })}>
+          Reintentar
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -76,6 +98,7 @@ export function AdminDashboardPage() {
       approvedCount={approvedCount}
       selectedRegion={region}
       onRegionChange={setRegion}
+      onRefresh={() => load({ skipCache: true })}
     />
   );
 }

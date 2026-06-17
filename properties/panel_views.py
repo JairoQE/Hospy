@@ -16,7 +16,7 @@ from properties.serializers import (
     AccommodationOwnerListSerializer,
     ServiceSerializer,
 )
-from properties.panel_cache import owner_panel_cache_key
+from properties.panel_cache import invalidate_admin_dashboard_cache, owner_panel_cache_key
 from properties.services import public_accommodations_queryset
 from reviews.models import Review
 from reviews.serializers import ReviewListSerializer
@@ -82,9 +82,10 @@ class AdminDashboardBootstrapView(APIView):
 
     def get(self, request):
         cache_key = "hospy:admin_dashboard"
-        cached = cache.get(cache_key)
-        if cached is not None:
-            return Response(cached)
+        if request.query_params.get("fresh") != "1":
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return Response(cached)
 
         from accounts.models import User
         from messaging.models import MessageReport

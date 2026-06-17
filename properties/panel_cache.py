@@ -11,7 +11,10 @@ def invalidate_owner_panel_cache(owner_id: int | None) -> None:
 
 
 def invalidate_admin_dashboard_cache() -> None:
-    cache.delete("hospy:admin_dashboard")
+    try:
+        cache.delete("hospy:admin_dashboard")
+    except Exception:
+        pass
 
 
 def invalidate_booking_panel_caches(booking) -> None:

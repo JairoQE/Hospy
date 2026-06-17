@@ -292,17 +292,25 @@ export function buildAdminDashboard(params: {
   const filterBooking = (b: Booking) => {
     if (!regionMatch(b.ciudad)) return false;
     const acc = accByName.get(b.hospedaje);
-    if (propertyFilter === "active" && acc?.status !== "aprobado") return false;
-    if (propertyFilter === "pending" && acc?.status !== "pendiente") return false;
-    if (propertyFilter === "suspended" && acc?.is_active !== false) return false;
+    if (propertyFilter === "active" && acc && acc.status !== "aprobado") return false;
+    if (propertyFilter === "pending" && acc && acc.status !== "pendiente") return false;
+    if (propertyFilter === "suspended" && acc && acc.is_active !== false) return false;
     return true;
   };
 
+  // Ingresos y conteos por período: fecha de creación de la reserva (como panel propietario).
   const inPeriod = (b: Booking, s: Date, e: Date) =>
+    filterBooking(b) && createdInRange(b, s, e);
+
+  // Ocupación: noches que caen dentro del período según check-in / check-out.
+  const inStayPeriod = (b: Booking, s: Date, e: Date) =>
     filterBooking(b) && overlapsRange(b.check_in, b.check_out, s, e);
 
   const curBookings = bookings.filter((b) => inPeriod(b, start, end));
   const prevBookings = bookings.filter((b) => inPeriod(b, prevStart, prevEnd));
+
+  const curStayBookings = bookings.filter((b) => inStayPeriod(b, start, end));
+  const prevStayBookings = bookings.filter((b) => inStayPeriod(b, prevStart, prevEnd));
 
   const curConfirmed = curBookings.filter((b) => confirmedStatus(b.status));
   const prevConfirmed = prevBookings.filter((b) => confirmedStatus(b.status));
@@ -322,16 +330,14 @@ export function buildAdminDashboard(params: {
     pendingAccommodations.length + pendingOwners.length + pendingReports;
 
   const propCount = Math.max(1, approvedCount + pendingAccommodations.length);
-  const nights = curConfirmed.reduce(
-    (s, b) => s + nightsBetween(b.check_in, b.check_out),
-    0,
-  );
+  const nights = curStayBookings
+    .filter((b) => confirmedStatus(b.status))
+    .reduce((s, b) => s + nightsBetween(b.check_in, b.check_out), 0);
   const capacity = propCount * days;
   const occupancy = Math.min(100, Math.round((nights / capacity) * 100));
-  const prevNights = prevConfirmed.reduce(
-    (s, b) => s + nightsBetween(b.check_in, b.check_out),
-    0,
-  );
+  const prevNights = prevStayBookings
+    .filter((b) => confirmedStatus(b.status))
+    .reduce((s, b) => s + nightsBetween(b.check_in, b.check_out), 0);
   const prevOccupancy = Math.min(100, Math.round((prevNights / capacity) * 100));
 
   const avgRating =
@@ -353,7 +359,7 @@ export function buildAdminDashboard(params: {
       label: "Ingresos totales",
       value: formatPen(curRevenue),
       sublabel: "Reservas confirmadas",
-      tooltip: "Suma de montos de reservas confirmadas o completadas en el período",
+      tooltip: "Suma de montos de reservas confirmadas o completadas creadas en el período",
       trend: trend(curRevenue, prevRevenue).dir,
       trendLabel: trend(curRevenue, prevRevenue).label,
       icon: "pi-wallet",
@@ -373,7 +379,7 @@ export function buildAdminDashboard(params: {
       label: "Reservas activas",
       value: String(curActive),
       sublabel: "Confirmadas y pendientes",
-      tooltip: "Reservas con estado pendiente o confirmada en el período",
+      tooltip: "Reservas con estado pendiente o confirmada creadas en el período",
       trend: trend(curActive, prevActive).dir,
       trendLabel: trend(curActive, prevActive).label,
       icon: "pi-calendar",
@@ -428,7 +434,7 @@ export function buildAdminDashboard(params: {
   const dailySeries: AdminDailyPoint[] = [];
   for (let d = startOfDay(start); d <= end; d = addDays(d, 1)) {
     const dayConfirmed = curBookings.filter(
-      (b) => confirmedStatus(b.status) && overlapsRange(b.check_in, b.check_out, d, d),
+      (b) => confirmedStatus(b.status) && createdInRange(b, d, d),
     );
     const dayCancelled = curBookings.filter(
       (b) => cancelledStatus(b.status) && createdInRange(b, d, d),

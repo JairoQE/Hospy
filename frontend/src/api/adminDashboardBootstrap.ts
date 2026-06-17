@@ -61,10 +61,13 @@ export function clearAdminDashboardBootstrapCache() {
   }
 }
 
-export async function fetchAdminDashboardBootstrap(): Promise<AdminDashboardBootstrapPayload> {
-  const data = await api.get<AdminDashboardBootstrapPayload>(
-    "/admin/dashboard-bootstrap/",
-  );
+export async function fetchAdminDashboardBootstrap(options?: {
+  skipCache?: boolean;
+}): Promise<AdminDashboardBootstrapPayload> {
+  const path = options?.skipCache
+    ? "/admin/dashboard-bootstrap/?fresh=1"
+    : "/admin/dashboard-bootstrap/";
+  const data = await api.get<AdminDashboardBootstrapPayload>(path);
   const payload: AdminDashboardBootstrapPayload = {
     reservas: Array.isArray(data.reservas) ? data.reservas : [],
     hospedajes: Array.isArray(data.hospedajes) ? data.hospedajes : [],

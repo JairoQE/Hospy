@@ -18,6 +18,7 @@ from django.utils import timezone
 from bookings.models import Booking
 from payments.models import Payment
 from properties.models import Accommodation, Service
+from properties.panel_cache import invalidate_admin_dashboard_cache
 from rooms.models import Room
 from rooms.services import calculate_stay_total
 
@@ -130,6 +131,7 @@ class Command(BaseCommand):
 
         existing = Accommodation.objects.filter(name__startswith=MARKER).count()
         if existing >= acc_count:
+            invalidate_admin_dashboard_cache()
             self.stdout.write(
                 self.style.WARNING(
                     f"Ya hay {existing} hospedajes {MARKER}. "
@@ -146,6 +148,7 @@ class Command(BaseCommand):
             )
             self._ensure_bookings(guests, rooms, booking_count, rng)
 
+        invalidate_admin_dashboard_cache()
         self.stdout.write(self.style.SUCCESS("Carga masiva lista."))
         self.stdout.write(f"  Propietarios: {owners_count}  |  Huéspedes: {users_total - owners_count}")
         self.stdout.write(f"  Hospedajes: {acc_count}  |  Reservas: {booking_count}")
@@ -166,6 +169,7 @@ class Command(BaseCommand):
         Booking.objects.filter(id__in=booking_ids).delete()
         Accommodation.objects.filter(id__in=acc_ids).delete()
         deleted_users, _ = seed_users.delete()
+        invalidate_admin_dashboard_cache()
         self.stdout.write(
             self.style.WARNING(
                 f"Datos seed eliminados ({deleted_users} usuarios y dependencias)."

@@ -5,6 +5,7 @@ __pycache__/
 dist/
 build/
 .env
+.env.production.local
 db.sqlite3
 celerybeat-schedule
 celerybeat-schedule-*

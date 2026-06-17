@@ -95,6 +95,7 @@ type Props = {
   approvedCount: number;
   selectedRegion: string;
   onRegionChange: (region: string) => void;
+  onRefresh?: () => void;
 };
 
 function TrendBadge({ dir, label }: { dir: TrendDir; label: string }) {
@@ -171,6 +172,7 @@ export function AdminDashboard({
   approvedCount,
   selectedRegion,
   onRegionChange,
+  onRefresh,
 }: Props) {
   const [period, setPeriod] = useState<AdminPeriod>("30d");
   const [propertyFilter, setPropertyFilter] = useState<AdminPropertyFilter>("all");
@@ -228,14 +230,22 @@ export function AdminDashboard({
               Ingresos, reservas y moderación · Período: {periodLabel}
             </p>
           </div>
-          <button
-            type="button"
-            className="admin-export-btn"
-            onClick={() => exportDashboardCsv(data, periodLabel)}
-          >
-            <PrimeIcon name="pi-download" size={16} />
-            Exportar CSV
-          </button>
+          <div className="admin-dashboard-actions">
+            {onRefresh && (
+              <button type="button" className="admin-export-btn" onClick={onRefresh}>
+                <PrimeIcon name="pi-refresh" size={16} />
+                Actualizar
+              </button>
+            )}
+            <button
+              type="button"
+              className="admin-export-btn"
+              onClick={() => exportDashboardCsv(data, periodLabel)}
+            >
+              <PrimeIcon name="pi-download" size={16} />
+              Exportar CSV
+            </button>
+          </div>
         </div>
 
         <div className="admin-filters-panel admin-filters-panel--dashboard">
