@@ -155,6 +155,10 @@ def _mark_success(payment: Payment, result: GatewayChargeResult, method: str) ->
         booking = payment.booking
         if booking.status == Booking.Status.PENDIENTE:
             confirm_booking(booking)
+        else:
+            from properties.panel_cache import invalidate_booking_panel_caches
+
+            invalidate_booking_panel_caches(booking)
     return payment
 
 
@@ -235,6 +239,9 @@ def request_external_payment(payment: Payment, user) -> Payment:
                 "updated_at",
             ]
         )
+    from properties.panel_cache import invalidate_booking_panel_caches
+
+    invalidate_booking_panel_caches(payment.booking)
     return payment
 
 

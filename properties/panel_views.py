@@ -16,6 +16,7 @@ from properties.serializers import (
     AccommodationOwnerListSerializer,
     ServiceSerializer,
 )
+from properties.panel_cache import owner_panel_cache_key
 from properties.services import public_accommodations_queryset
 from reviews.models import Review
 from reviews.serializers import ReviewListSerializer
@@ -28,7 +29,7 @@ class OwnerPanelBootstrapView(APIView):
 
     def get(self, request):
         user = request.user
-        cache_key = f"hospy:owner_panel:{user.pk}"
+        cache_key = owner_panel_cache_key(user.pk)
         cached = cache.get(cache_key)
         if cached is not None:
             return Response(cached)
@@ -47,7 +48,7 @@ class OwnerPanelBootstrapView(APIView):
         )
         bookings_qs = (
             Booking.objects.filter(room__accommodation__owner=user)
-            .select_related("room", "room__accommodation", "guest")
+            .select_related("room", "room__accommodation", "guest", "payment")
             .order_by("-created_at")
         )
         reviews_qs = (

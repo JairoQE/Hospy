@@ -30,6 +30,10 @@ import { StatusBadge } from "../components/StatusBadge";
 import { OwnerBookingHintBox } from "../components/owner/OwnerBookingHint";
 import { OwnerToastHost, showOwnerToast } from "../components/owner/OwnerToast";
 import {
+  isOwnerBookingStaleActionError,
+  ownerBookingStaleActionToast,
+} from "../utils/ownerBookingActionFeedback";
+import {
   ownerBookingAwaitingExternalPayment,
   ownerBookingHint,
   ownerBookingPaymentLabel,
@@ -80,8 +84,9 @@ export function OwnerPanelPage() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState(emptyAccommodationForm);
+  const [bookingBusy, setBookingBusy] = useState<string | null>(null);
 
-  const load = (options?: { skipCache?: boolean }) => {
+  const load = (options?: { skipCache?: boolean; silent?: boolean }) => {
     if (!ownerApproved) {
       setMine([]);
       setBookings([]);
@@ -104,6 +109,12 @@ export function OwnerPanelPage() {
       setLoading(false);
     };
 
+    if (options?.silent) {
+      if (options.skipCache) clearOwnerPanelBootstrapCache();
+      void fetchOwnerPanelBootstrap().then(apply).catch(() => {});
+      return;
+    }
+
     if (!options?.skipCache) {
       const cached = loadCachedOwnerPanelBootstrap();
       if (cached) {
@@ -112,6 +123,7 @@ export function OwnerPanelPage() {
         setLoading(true);
       }
     } else {
+      clearOwnerPanelBootstrapCache();
       setLoading(true);
     }
 
@@ -126,8 +138,12 @@ export function OwnerPanelPage() {
   };
 
   useEffect(() => {
-    load();
-  }, [ownerApproved]);
+    if (tab === "reservas") {
+      load({ skipCache: true });
+    } else {
+      load();
+    }
+  }, [ownerApproved, tab]);
 
   const createAcc = async (e: FormEvent) => {
     e.preventDefault();
@@ -162,23 +178,62 @@ export function OwnerPanelPage() {
     cancelar: "Reserva cancelada.",
   };
 
+  const patchBookingAfterAction = (
+    id: number,
+    action: "confirmar" | "rechazar" | "completar" | "cancelar",
+  ) => {
+    setBookings((prev) =>
+      prev.map((b) => {
+        if (b.id !== id) return b;
+        if (action === "confirmar") return { ...b, status: "confirmada" };
+        if (action === "rechazar" || action === "cancelar") return { ...b, status: "cancelada" };
+        if (action === "completar") return { ...b, status: "completada" };
+        return b;
+      }),
+    );
+  };
+
+  const patchBookingAfterExternalPayment = (paymentId: number) => {
+    setBookings((prev) =>
+      prev.map((b) => {
+        if (b.payment?.id !== paymentId) return b;
+        return {
+          ...b,
+          status: "confirmada",
+          payment: {
+            ...b.payment,
+            status: "pagado",
+            method: b.payment.method || "externo",
+          },
+        };
+      }),
+    );
+  };
+
   const bookingAction = async (
     id: number,
     action: "confirmar" | "rechazar" | "completar" | "cancelar",
   ) => {
+    const busyKey = `booking-${id}-${action}`;
+    if (bookingBusy) return;
+    setBookingBusy(busyKey);
     try {
       await api.post(`/reservas/${id}/${action}/`);
+      patchBookingAfterAction(id, action);
       clearOwnerPanelBootstrapCache();
-      load({ skipCache: true });
+      load({ skipCache: true, silent: true });
       showOwnerToast(bookingSuccessMessage[action], "success");
     } catch (e) {
-      clearOwnerPanelBootstrapCache();
-      load({ skipCache: true });
       const msg = e instanceof ApiError ? e.message : "No se pudo completar la acción";
-      showOwnerToast(
-        `${msg} Si el estado cambió, revisa la tarjeta actualizada.`,
-        "error",
-      );
+      clearOwnerPanelBootstrapCache();
+      load({ skipCache: true, silent: true });
+      if (isOwnerBookingStaleActionError(msg)) {
+        showOwnerToast(ownerBookingStaleActionToast(msg), "info");
+      } else {
+        showOwnerToast(msg, "error");
+      }
+    } finally {
+      setBookingBusy(null);
     }
   };
 
@@ -190,21 +245,34 @@ export function OwnerPanelPage() {
     ) {
       return;
     }
+    const busyKey = `payment-${paymentId}-externo`;
+    if (bookingBusy) return;
+    setBookingBusy(busyKey);
     try {
       await confirmExternalPayment(paymentId);
+      patchBookingAfterExternalPayment(paymentId);
       clearOwnerPanelBootstrapCache();
-      load({ skipCache: true });
+      load({ skipCache: true, silent: true });
       showOwnerToast("Pago registrado y reserva confirmada.", "success");
     } catch (e) {
-      clearOwnerPanelBootstrapCache();
-      load({ skipCache: true });
       const msg = e instanceof ApiError ? e.message : "Error al confirmar el pago";
-      showOwnerToast(
-        `${msg} Si el pago quedó registrado, revisa la tarjeta actualizada.`,
-        "error",
-      );
+      clearOwnerPanelBootstrapCache();
+      load({ skipCache: true, silent: true });
+      if (isOwnerBookingStaleActionError(msg)) {
+        showOwnerToast(ownerBookingStaleActionToast(msg), "info");
+      } else {
+        showOwnerToast(msg, "error");
+      }
+    } finally {
+      setBookingBusy(null);
     }
   };
+
+  const isBookingCardBusy = (bookingId: number) =>
+    bookingBusy != null && bookingBusy.startsWith(`booking-${bookingId}-`);
+
+  const isPaymentBusy = (paymentId: number) =>
+    bookingBusy === `payment-${paymentId}-externo`;
 
   return (
     <div className="owner-panel-page">
@@ -308,6 +376,9 @@ export function OwnerPanelPage() {
                           b.payment.status === "procesando")) &&
                       b.payment;
 
+                    const cardBusy = isBookingCardBusy(b.id);
+                    const paymentBusy = b.payment ? isPaymentBusy(b.payment.id) : false;
+
                     return (
                     <article key={b.id} className="owner-booking-card">
                       <div className="owner-booking-card-head">
@@ -344,9 +415,10 @@ export function OwnerPanelPage() {
                             <button
                               type="button"
                               className="btn btn-primary"
+                              disabled={Boolean(bookingBusy)}
                               onClick={() => confirmExternalPaymentAction(b.payment!.id)}
                             >
-                              Confirmar pago recibido
+                              {paymentBusy ? "Procesando…" : "Confirmar pago recibido"}
                             </button>
                           )}
                         {showManualConfirm && (
@@ -354,13 +426,15 @@ export function OwnerPanelPage() {
                             <button
                               type="button"
                               className="btn btn-primary"
+                              disabled={Boolean(bookingBusy)}
                               onClick={() => bookingAction(b.id, "confirmar")}
                             >
-                              Confirmar estadía
+                              {cardBusy ? "Procesando…" : "Confirmar estadía"}
                             </button>
                             <button
                               type="button"
                               className="btn btn-ghost"
+                              disabled={Boolean(bookingBusy)}
                               onClick={() => bookingAction(b.id, "rechazar")}
                             >
                               Rechazar
@@ -371,6 +445,7 @@ export function OwnerPanelPage() {
                           <button
                             type="button"
                             className="btn btn-ghost"
+                            disabled={Boolean(bookingBusy)}
                             onClick={() => bookingAction(b.id, "rechazar")}
                           >
                             Rechazar
@@ -381,14 +456,16 @@ export function OwnerPanelPage() {
                             <button
                               type="button"
                               className="btn btn-primary"
+                              disabled={Boolean(bookingBusy)}
                               onClick={() => bookingAction(b.id, "completar")}
                             >
-                              Marcar completada
+                              {cardBusy ? "Procesando…" : "Marcar completada"}
                             </button>
                             {b.can_cancel && (
                               <button
                                 type="button"
                                 className="btn btn-ghost"
+                                disabled={Boolean(bookingBusy)}
                                 onClick={() => {
                                   if (
                                     !confirm(

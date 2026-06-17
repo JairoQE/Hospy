@@ -135,6 +135,36 @@ def test_owner_panel_bootstrap(api_client, propietario, hospedaje_aprobado):
 
 
 @pytest.mark.django_db
+def test_owner_panel_bootstrap_refresca_tras_confirmar(
+    api_client, propietario, huesped, hospedaje_aprobado
+):
+    from datetime import date, timedelta
+
+    from bookings.models import Booking
+
+    _, room = hospedaje_aprobado
+    booking = Booking.objects.create(
+        guest=huesped,
+        room=room,
+        check_in=date.today() + timedelta(days=40),
+        check_out=date.today() + timedelta(days=42),
+        total_amount=200,
+        status=Booking.Status.PENDIENTE,
+    )
+    api_client.force_authenticate(user=propietario)
+
+    first = api_client.get("/api/v1/propietario/panel-bootstrap/")
+    row = next(r for r in first.data["reservas"] if r["id"] == booking.id)
+    assert row["status"] == "pendiente"
+
+    assert api_client.post(f"/api/v1/reservas/{booking.id}/confirmar/").status_code == 200
+
+    second = api_client.get("/api/v1/propietario/panel-bootstrap/")
+    row = next(r for r in second.data["reservas"] if r["id"] == booking.id)
+    assert row["status"] == "confirmada"
+
+
+@pytest.mark.django_db
 def test_admin_dashboard_bootstrap(api_client, admin_user, hospedaje_aprobado):
     api_client.force_authenticate(user=admin_user)
     response = api_client.get("/api/v1/admin/dashboard-bootstrap/")

@@ -141,6 +141,9 @@ def create_booking(guest, room: Room, check_in, check_out) -> Booking:
             total_amount=pricing["total"],
             status=Booking.Status.PENDIENTE,
         )
+    from properties.panel_cache import invalidate_booking_panel_caches
+
+    invalidate_booking_panel_caches(booking)
     return booking
 
 
@@ -164,6 +167,9 @@ def confirm_booking(booking: Booking) -> Booking:
         raise ValueError("Solo se pueden confirmar reservas pendientes.")
     booking.status = Booking.Status.CONFIRMADA
     booking.save(update_fields=["status", "updated_at"])
+    from properties.panel_cache import invalidate_booking_panel_caches
+
+    invalidate_booking_panel_caches(booking)
     _notify_booking_safe(notify_booking_confirmed, booking, "confirmada")
     return booking
 
@@ -173,6 +179,9 @@ def reject_booking(booking: Booking) -> Booking:
         raise ValueError("Solo se pueden rechazar reservas pendientes.")
     booking.status = Booking.Status.CANCELADA
     booking.save(update_fields=["status", "updated_at"])
+    from properties.panel_cache import invalidate_booking_panel_caches
+
+    invalidate_booking_panel_caches(booking)
     _notify_booking_safe(notify_booking_rejected, booking, "rechazada")
     return booking
 
@@ -186,6 +195,9 @@ def cancel_booking(booking: Booking, *, actor=None) -> Booking:
         raise ValueError("Esta reserva no puede cancelarse.")
     booking.status = Booking.Status.CANCELADA
     booking.save(update_fields=["status", "updated_at"])
+    from properties.panel_cache import invalidate_booking_panel_caches
+
+    invalidate_booking_panel_caches(booking)
     _notify_booking_safe(notify_booking_cancelled, booking, "cancelada")
     return booking
 
@@ -195,6 +207,9 @@ def complete_booking(booking: Booking) -> Booking:
         raise ValueError("Solo reservas confirmadas pueden completarse.")
     booking.status = Booking.Status.COMPLETADA
     booking.save(update_fields=["status", "updated_at"])
+    from properties.panel_cache import invalidate_booking_panel_caches
+
+    invalidate_booking_panel_caches(booking)
     return booking
 
 

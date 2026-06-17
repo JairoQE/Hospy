@@ -3,6 +3,7 @@ import os
 # Tests siempre con SQLite en memoria/archivo (independiente del .env local)
 os.environ["USE_SQLITE"] = "true"
 os.environ["CELERY_TASK_ALWAYS_EAGER"] = "true"
+os.environ["REDIS_URL"] = ""
 os.environ.setdefault("DJANGO_SECRET_KEY", "test-secret-key-minimum-32-characters-long")
 
 import pytest
