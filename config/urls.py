@@ -2,7 +2,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from drf_spectacular.utils import extend_schema
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -11,6 +16,15 @@ from rest_framework.response import Response
 from config.health import build_health_payload
 
 
+@extend_schema(
+    tags=["Sistema"],
+    summary="Estado del servicio",
+    description="Comprueba que la API responde y que la base de datos está accesible.",
+    responses={
+        200: {"description": "Servicio operativo"},
+        503: {"description": "Base de datos u otro componente no disponible"},
+    },
+)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def health(request):
@@ -32,6 +46,11 @@ urlpatterns = [
         "api/docs/",
         SpectacularSwaggerView.as_view(url_name="schema"),
         name="swagger-ui",
+    ),
+    path(
+        "api/redoc/",
+        SpectacularRedocView.as_view(url_name="schema"),
+        name="redoc",
     ),
 ]
 

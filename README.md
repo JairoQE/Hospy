@@ -104,8 +104,27 @@ Inicia el servidor API:
 python manage.py runserver
 ```
 
-La API quedará en **http://127.0.0.1:8000/**  
-Documentación interactiva: **http://127.0.0.1:8000/api/docs/**
+La API quedará en **http://127.0.0.1:8000/**
+
+#### Documentación de la API (Swagger / OpenAPI)
+
+El backend usa [drf-spectacular](https://drf-spectacular.readthedocs.io/) para generar el esquema OpenAPI 3 automáticamente desde las vistas de Django REST Framework.
+
+| Recurso | URL local | URL producción |
+|---------|-----------|----------------|
+| **Swagger UI** (probar endpoints) | http://127.0.0.1:8000/api/docs/ | https://hospy-api.onrender.com/api/docs/ |
+| **ReDoc** (lectura cómoda) | http://127.0.0.1:8000/api/redoc/ | https://hospy-api.onrender.com/api/redoc/ |
+| **Esquema JSON** | http://127.0.0.1:8000/api/schema/ | https://hospy-api.onrender.com/api/schema/ |
+
+**Autenticación en Swagger:** pulsa **Authorize**, pega `Bearer <tu_access_token>` (el token lo obtienes con `POST /api/v1/auth/login/`). Swagger recordará el token mientras la pestaña esté abierta.
+
+**Exportar el esquema** (para Postman, Insomnia, etc.):
+
+```bash
+python manage.py spectacular --color --file openapi-schema.yaml
+```
+
+Los endpoints están agrupados por módulo (Autenticación, Hospedajes, Reservas, Pagos, etc.) en `config/openapi.py`.
 
 ### 4. Frontend (React)
 

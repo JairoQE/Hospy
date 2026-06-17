@@ -187,12 +187,63 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,
 }
 
+_API_PUBLIC_HOST = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost:8000").split(",")[0].strip()
+_API_PUBLIC_SCHEME = (
+    "https"
+    if os.environ.get("DJANGO_SETTINGS_MODULE", "").endswith("production")
+    else "http"
+)
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "Hospy API",
-    "DESCRIPTION": "Sistema de Hoteles, Hostales y Hospedajes — SIST",
+    "DESCRIPTION": (
+        "API REST de **Hospy**: búsqueda y reserva de hoteles, hostales y hospedajes en Perú.\n\n"
+        "## Autenticación\n"
+        "La mayoría de endpoints requieren JWT. Obtén tokens con `POST /api/v1/auth/login/` "
+        "y envía el header `Authorization: Bearer <access_token>`.\n\n"
+        "Renueva el access token con `POST /api/v1/auth/token/refresh/` y el refresh token.\n\n"
+        "## Convenciones\n"
+        "- Prefijo base: `/api/v1/`\n"
+        "- Paginación: `?page=` (20 ítems por página)\n"
+        "- Fechas: formato ISO `YYYY-MM-DD`\n"
+        "- Montos: soles peruanos (`PEN`)\n\n"
+        "## Documentación interactiva\n"
+        "- [Swagger UI](/api/docs/)\n"
+        "- [ReDoc](/api/redoc/)\n"
+        "- [Esquema OpenAPI](/api/schema/)"
+    ),
     "VERSION": "1.0.0",
+    "CONTACT": {
+        "name": "Equipo Hospy",
+        "url": os.environ.get("FRONTEND_URL", "https://hospy.pages.dev"),
+    },
+    "LICENSE": {"name": "Uso interno — proyecto académico"},
     "SERVE_INCLUDE_SCHEMA": False,
+    "SCHEMA_PATH_PREFIX": r"/api/v[0-9]",
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SORT_OPERATIONS": False,
+    "TAGS": [],  # se rellena al importar settings
+    "POSTPROCESSING_HOOKS": ["config.openapi.assign_operation_tags"],
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "persistAuthorization": True,
+        "displayRequestDuration": True,
+        "filter": True,
+        "tryItOutEnabled": True,
+    },
+    "SERVERS": [
+        {"url": f"{_API_PUBLIC_SCHEME}://{_API_PUBLIC_HOST}", "description": "Entorno actual"},
+        {"url": "http://localhost:8000", "description": "Desarrollo local"},
+        {"url": "https://hospy-api.onrender.com", "description": "Producción (Render)"},
+    ],
+    "AUTHENTICATION_WHITELIST": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
 }
+
+from config.openapi import OPENAPI_TAGS  # noqa: E402
+
+SPECTACULAR_SETTINGS["TAGS"] = OPENAPI_TAGS
 
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = [

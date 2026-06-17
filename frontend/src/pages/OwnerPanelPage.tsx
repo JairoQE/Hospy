@@ -34,10 +34,10 @@ import {
   ownerBookingStaleActionToast,
 } from "../utils/ownerBookingActionFeedback";
 import {
-  ownerBookingAwaitingExternalPayment,
   ownerBookingHint,
   ownerBookingPaymentLabel,
-  ownerBookingShowManualConfirm,
+  ownerBookingShowReject,
+  ownerCanRecordExternalPayment,
 } from "../utils/ownerBookingHints";
 import { formatCoordinate } from "../utils/coordinates";
 import { formatDate, formatMoney } from "../utils/format";
@@ -168,11 +168,7 @@ export function OwnerPanelPage() {
     }
   };
 
-  const bookingSuccessMessage: Record<
-    "confirmar" | "rechazar" | "completar" | "cancelar",
-    string
-  > = {
-    confirmar: "Estadía confirmada.",
+  const bookingSuccessMessage: Record<"rechazar" | "completar" | "cancelar", string> = {
     rechazar: "Reserva rechazada.",
     completar: "Estadía marcada como completada.",
     cancelar: "Reserva cancelada.",
@@ -180,12 +176,11 @@ export function OwnerPanelPage() {
 
   const patchBookingAfterAction = (
     id: number,
-    action: "confirmar" | "rechazar" | "completar" | "cancelar",
+    action: "rechazar" | "completar" | "cancelar",
   ) => {
     setBookings((prev) =>
       prev.map((b) => {
         if (b.id !== id) return b;
-        if (action === "confirmar") return { ...b, status: "confirmada" };
         if (action === "rechazar" || action === "cancelar") return { ...b, status: "cancelada" };
         if (action === "completar") return { ...b, status: "completada" };
         return b;
@@ -212,7 +207,7 @@ export function OwnerPanelPage() {
 
   const bookingAction = async (
     id: number,
-    action: "confirmar" | "rechazar" | "completar" | "cancelar",
+    action: "rechazar" | "completar" | "cancelar",
   ) => {
     const busyKey = `booking-${id}-${action}`;
     if (bookingBusy) return;
@@ -353,10 +348,10 @@ export function OwnerPanelPage() {
                 <div className="owner-bookings-intro card">
                   <h2 className="owner-bookings-intro-title">Tus reservas</h2>
                   <p className="muted">
-                    Cada tarjeta resume qué hizo el huésped y qué te falta por hacer.{" "}
-                    <strong>Pago en Hospy</strong> = cobró la plataforma.{" "}
-                    <strong>Pago directo</strong> = el huésped te paga por fuera y tú confirmas
-                    cuando recibas el dinero.
+                    Si el huésped paga por la <strong>pasarela de Hospy</strong> (Yape, tarjeta,
+                    PagoEfectivo), la reserva se <strong>confirma sola</strong>. Si paga{" "}
+                    <strong>directo contigo</strong>, usa «Confirmar pago recibido» cuando tengas el
+                    dinero.
                   </p>
                 </div>
                 {bookings.length === 0 ? (
@@ -367,14 +362,8 @@ export function OwnerPanelPage() {
                 ) : (
                   bookings.map((b) => {
                     const hint = ownerBookingHint(b);
-                    const awaitingExternal = ownerBookingAwaitingExternalPayment(b);
-                    const showManualConfirm = ownerBookingShowManualConfirm(b);
-                    const showExternalConfirm =
-                      (awaitingExternal ||
-                        (b.status === "confirmada" &&
-                          b.payment?.method === "externo" &&
-                          b.payment.status === "procesando")) &&
-                      b.payment;
+                    const canRecordPayment = ownerCanRecordExternalPayment(b);
+                    const showReject = ownerBookingShowReject(b);
 
                     const cardBusy = isBookingCardBusy(b.id);
                     const paymentBusy = b.payment ? isPaymentBusy(b.payment.id) : false;
@@ -411,7 +400,7 @@ export function OwnerPanelPage() {
                       )}
                       {hint && <OwnerBookingHintBox hint={hint} />}
                       <div className="owner-booking-card-actions">
-                        {showExternalConfirm && (
+                        {canRecordPayment && b.payment && (
                             <button
                               type="button"
                               className="btn btn-primary"
@@ -421,27 +410,7 @@ export function OwnerPanelPage() {
                               {paymentBusy ? "Procesando…" : "Confirmar pago recibido"}
                             </button>
                           )}
-                        {showManualConfirm && (
-                          <>
-                            <button
-                              type="button"
-                              className="btn btn-primary"
-                              disabled={Boolean(bookingBusy)}
-                              onClick={() => bookingAction(b.id, "confirmar")}
-                            >
-                              {cardBusy ? "Procesando…" : "Confirmar estadía"}
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-ghost"
-                              disabled={Boolean(bookingBusy)}
-                              onClick={() => bookingAction(b.id, "rechazar")}
-                            >
-                              Rechazar
-                            </button>
-                          </>
-                        )}
-                        {awaitingExternal && (
+                        {showReject && (
                           <button
                             type="button"
                             className="btn btn-ghost"

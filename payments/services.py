@@ -245,18 +245,61 @@ def request_external_payment(payment: Payment, user) -> Payment:
     return payment
 
 
+_ONLINE_GATEWAY_METHODS = frozenset(
+    {
+        Payment.Method.YAPE,
+        Payment.Method.CARD,
+        Payment.Method.PAGOEFECTIVO,
+    }
+)
+
+
 def confirm_external_payment(payment: Payment, owner_user) -> Payment:
+    """Propietario registra cobro directo; confirma la reserva si aún está pendiente."""
     owner = payment.booking.room.accommodation.owner
     if owner.id != owner_user.id:
         raise ValueError("No tienes permiso para confirmar este pago.")
-    if payment.method != Payment.Method.EXTERNO:
-        raise ValueError("Este pago no es de tipo directo con anfitrión.")
+    if payment.booking.status == Booking.Status.CANCELADA:
+        raise ValueError("Esta reserva está cancelada.")
     if payment.status == Payment.Status.PAGADO:
-        raise ValueError("Este pago ya fue confirmado.")
-    if payment.status != Payment.Status.PROCESANDO:
-        raise ValueError(
-            "El huésped aún no ha indicado que pagará directamente con el anfitrión."
-        )
+        raise ValueError("Este pago ya fue registrado en Hospy.")
+
+    with transaction.atomic():
+        payment = Payment.objects.select_for_update().get(pk=payment.pk)
+        if payment.status == Payment.Status.PAGADO:
+            raise ValueError("Este pago ya fue registrado en Hospy.")
+
+        if (
+            payment.method in _ONLINE_GATEWAY_METHODS
+            and payment.status == Payment.Status.PROCESANDO
+        ):
+            raise ValueError(
+                "Este pago está en la pasarela de Hospy. "
+                "La reserva se confirmará sola cuando el cobro se complete."
+            )
+
+        if payment.status == Payment.Status.PENDIENTE:
+            payment.method = Payment.Method.EXTERNO
+            payment.status = Payment.Status.PROCESANDO
+            payment.gateway = "externo"
+            payment.expires_at = None
+            payment.failure_message = ""
+            payment.save(
+                update_fields=[
+                    "method",
+                    "status",
+                    "gateway",
+                    "expires_at",
+                    "failure_message",
+                    "updated_at",
+                ]
+            )
+
+        if payment.method != Payment.Method.EXTERNO:
+            raise ValueError("Solo puedes registrar cobros directos con el huésped.")
+        if payment.status != Payment.Status.PROCESANDO:
+            raise ValueError("Este pago no puede registrarse en su estado actual.")
+
     result = GatewayChargeResult(
         ok=True,
         charge_id=f"externo-{payment.pk}",

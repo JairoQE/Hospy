@@ -98,6 +98,42 @@ def test_external_payment_flow(api_client, huesped, hospedaje_aprobado, propieta
 
 
 @pytest.mark.django_db
+def test_owner_registra_pago_directo_sin_paso_huesped(
+    api_client, huesped, hospedaje_aprobado, propietario
+):
+    from datetime import date, timedelta
+
+    _, room = hospedaje_aprobado
+    owner = room.accommodation.owner
+    api_client.force_authenticate(user=huesped)
+    check_in = date.today() + timedelta(days=35)
+    check_out = check_in + timedelta(days=2)
+    booking_res = api_client.post(
+        "/api/v1/reservas/",
+        {
+            "room": room.id,
+            "check_in": check_in.isoformat(),
+            "check_out": check_out.isoformat(),
+        },
+        format="json",
+    )
+    payment_id = booking_res.data["payment"]["id"]
+
+    api_client.force_authenticate(user=owner)
+    confirm_res = api_client.post(
+        f"/api/v1/pagos/{payment_id}/confirmar-externo/",
+        {},
+        format="json",
+    )
+    assert confirm_res.status_code == 200
+    assert confirm_res.data["status"] == "pagado"
+    assert confirm_res.data["method"] == "externo"
+
+    booking = Booking.objects.get(pk=booking_res.data["id"])
+    assert booking.status == Booking.Status.CONFIRMADA
+
+
+@pytest.mark.django_db
 def test_mercadopago_webhook_confirms_pagoefectivo(mocker, huesped, hospedaje_aprobado):
     from datetime import date, timedelta
 
