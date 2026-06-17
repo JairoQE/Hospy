@@ -1228,6 +1228,73 @@ html[data-sidebar-animated="0"] .owner-sidebar-bg {
   color: var(--owner-text-secondary);
 }
 
+.owner-booking-payment {
+  font-weight: 600;
+  color: var(--owner-text);
+}
+
+.owner-bookings-intro {
+  padding: 1rem 1.15rem;
+  border-radius: var(--owner-radius);
+  background: var(--owner-surface);
+  box-shadow: var(--owner-shadow);
+}
+
+.owner-bookings-intro-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.owner-bookings-intro p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.owner-booking-hint {
+  margin-top: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.owner-booking-hint strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.88rem;
+}
+
+.owner-booking-hint p {
+  margin: 0;
+  color: inherit;
+}
+
+.owner-booking-hint--info {
+  background: rgba(44, 125, 160, 0.1);
+  border-color: rgba(44, 125, 160, 0.25);
+  color: #1e4d63;
+}
+
+.owner-booking-hint--warning {
+  background: #fff8e6;
+  border-color: #fcd34d;
+  color: #7a5b00;
+}
+
+.owner-booking-hint--success {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #065f46;
+}
+
+.owner-booking-hint--muted {
+  background: var(--owner-bg, #f4f6f8);
+  border-color: var(--owner-border, #e2e8f0);
+  color: var(--owner-text-secondary);
+}
+
 .owner-booking-card-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1237,6 +1304,62 @@ html[data-sidebar-animated="0"] .owner-sidebar-bg {
 
 .owner-booking-card-actions .btn {
   font-size: 0.875rem;
+}
+
+.owner-toast-host {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  z-index: 1300;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: min(360px, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.owner-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.15);
+  background: #fff;
+  border: 1px solid var(--owner-border, #e2e8f0);
+  animation: owner-toast-in 0.25s ease;
+  pointer-events: auto;
+}
+
+.owner-toast--success {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #065f46;
+}
+
+.owner-toast--error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.owner-toast--info {
+  border-color: #bae6fd;
+  background: #f0f9ff;
+  color: #0c4a6e;
+}
+
+@keyframes owner-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 767px) {

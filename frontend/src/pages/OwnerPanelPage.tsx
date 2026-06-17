@@ -27,6 +27,14 @@ import { OwnerPropertiesList } from "../components/owner/OwnerPropertiesList";
 import { ownerTabPath, tabFromParams } from "../utils/ownerPanelRoutes";
 import { useInboxSummary } from "../hooks/useInboxSummary";
 import { StatusBadge } from "../components/StatusBadge";
+import { OwnerBookingHintBox } from "../components/owner/OwnerBookingHint";
+import { OwnerToastHost, showOwnerToast } from "../components/owner/OwnerToast";
+import {
+  ownerBookingAwaitingExternalPayment,
+  ownerBookingHint,
+  ownerBookingPaymentLabel,
+  ownerBookingShowManualConfirm,
+} from "../utils/ownerBookingHints";
 import { formatCoordinate } from "../utils/coordinates";
 import { formatDate, formatMoney } from "../utils/format";
 import "../styles/owner-panel.css";
@@ -130,6 +138,7 @@ export function OwnerPanelPage() {
       await api.post<AccommodationDetail>("/hospedajes/", formToPayload(form));
       clearOwnerPanelBootstrapCache();
       setMsg("Hospedaje enviado a revisión del administrador.");
+      showOwnerToast("Hospedaje enviado a revisión del administrador.", "success");
       setForm(emptyAccommodationForm());
       goToTab("dashboard");
       load({ skipCache: true });
@@ -143,6 +152,16 @@ export function OwnerPanelPage() {
     }
   };
 
+  const bookingSuccessMessage: Record<
+    "confirmar" | "rechazar" | "completar" | "cancelar",
+    string
+  > = {
+    confirmar: "Estadía confirmada.",
+    rechazar: "Reserva rechazada.",
+    completar: "Estadía marcada como completada.",
+    cancelar: "Reserva cancelada.",
+  };
+
   const bookingAction = async (
     id: number,
     action: "confirmar" | "rechazar" | "completar" | "cancelar",
@@ -151,12 +170,14 @@ export function OwnerPanelPage() {
       await api.post(`/reservas/${id}/${action}/`);
       clearOwnerPanelBootstrapCache();
       load({ skipCache: true });
+      showOwnerToast(bookingSuccessMessage[action], "success");
     } catch (e) {
       clearOwnerPanelBootstrapCache();
       load({ skipCache: true });
-      const msg = e instanceof ApiError ? e.message : "Error";
-      alert(
-        `${msg}\n\nSi la acción se aplicó, la lista se actualizó. Revisa el estado de la reserva.`,
+      const msg = e instanceof ApiError ? e.message : "No se pudo completar la acción";
+      showOwnerToast(
+        `${msg} Si el estado cambió, revisa la tarjeta actualizada.`,
+        "error",
       );
     }
   };
@@ -173,18 +194,21 @@ export function OwnerPanelPage() {
       await confirmExternalPayment(paymentId);
       clearOwnerPanelBootstrapCache();
       load({ skipCache: true });
+      showOwnerToast("Pago registrado y reserva confirmada.", "success");
     } catch (e) {
       clearOwnerPanelBootstrapCache();
       load({ skipCache: true });
       const msg = e instanceof ApiError ? e.message : "Error al confirmar el pago";
-      alert(
-        `${msg}\n\nSi el pago quedó registrado, la lista se actualizó. Revisa el estado.`,
+      showOwnerToast(
+        `${msg} Si el pago quedó registrado, revisa la tarjeta actualizada.`,
+        "error",
       );
     }
   };
 
   return (
     <div className="owner-panel-page">
+      <OwnerToastHost />
       {ownerPending && (          <div className="owner-approval-banner" role="status">
             <h2>Cuenta en revisión</h2>
             <p className="muted">
@@ -258,13 +282,33 @@ export function OwnerPanelPage() {
 
             {tab === "reservas" && !loading && (
               <section className="owner-bookings-section" aria-label="Reservas">
+                <div className="owner-bookings-intro card">
+                  <h2 className="owner-bookings-intro-title">Tus reservas</h2>
+                  <p className="muted">
+                    Cada tarjeta resume qué hizo el huésped y qué te falta por hacer.{" "}
+                    <strong>Pago en Hospy</strong> = cobró la plataforma.{" "}
+                    <strong>Pago directo</strong> = el huésped te paga por fuera y tú confirmas
+                    cuando recibas el dinero.
+                  </p>
+                </div>
                 {bookings.length === 0 ? (
                   <div className="owner-properties-empty owner-properties-empty--compact">
                     <h2>Sin reservas</h2>
                     <p className="muted">Cuando recibas reservas aparecerán aquí.</p>
                   </div>
                 ) : (
-                  bookings.map((b) => (
+                  bookings.map((b) => {
+                    const hint = ownerBookingHint(b);
+                    const awaitingExternal = ownerBookingAwaitingExternalPayment(b);
+                    const showManualConfirm = ownerBookingShowManualConfirm(b);
+                    const showExternalConfirm =
+                      (awaitingExternal ||
+                        (b.status === "confirmada" &&
+                          b.payment?.method === "externo" &&
+                          b.payment.status === "procesando")) &&
+                      b.payment;
+
+                    return (
                     <article key={b.id} className="owner-booking-card">
                       <div className="owner-booking-card-head">
                         <h3>
@@ -290,19 +334,13 @@ export function OwnerPanelPage() {
                         {formatMoney(b.total_amount)}
                       </p>
                       {b.payment && (
-                        <p className="owner-booking-payment muted">
-                          Pago:{" "}
-                          {b.payment.status === "pagado"
-                            ? "recibido"
-                            : b.payment.method === "externo" && b.payment.status === "procesando"
-                              ? "directo pendiente de confirmar"
-                              : b.payment.status}
+                        <p className="owner-booking-payment">
+                          {ownerBookingPaymentLabel(b.payment)}
                         </p>
                       )}
+                      {hint && <OwnerBookingHintBox hint={hint} />}
                       <div className="owner-booking-card-actions">
-                        {b.payment?.method === "externo" &&
-                          b.payment.status === "procesando" &&
-                          b.status === "pendiente" && (
+                        {showExternalConfirm && (
                             <button
                               type="button"
                               className="btn btn-primary"
@@ -311,14 +349,14 @@ export function OwnerPanelPage() {
                               Confirmar pago recibido
                             </button>
                           )}
-                        {b.status === "pendiente" && (
+                        {showManualConfirm && (
                           <>
                             <button
                               type="button"
                               className="btn btn-primary"
                               onClick={() => bookingAction(b.id, "confirmar")}
                             >
-                              Confirmar
+                              Confirmar estadía
                             </button>
                             <button
                               type="button"
@@ -328,6 +366,15 @@ export function OwnerPanelPage() {
                               Rechazar
                             </button>
                           </>
+                        )}
+                        {awaitingExternal && (
+                          <button
+                            type="button"
+                            className="btn btn-ghost"
+                            onClick={() => bookingAction(b.id, "rechazar")}
+                          >
+                            Rechazar
+                          </button>
                         )}
                         {b.status === "confirmada" && (
                           <>
@@ -360,7 +407,8 @@ export function OwnerPanelPage() {
                         )}
                       </div>
                     </article>
-                  ))
+                    );
+                  })
                 )}
               </section>
             )}
