@@ -5,6 +5,11 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
+from accounts.payout import (
+    PAYOUT_ONLINE_INCOMPLETE_MESSAGE,
+    owner_has_online_payout_profile,
+)
+
 from bookings.models import Booking
 from bookings.services import confirm_booking
 
@@ -67,6 +72,12 @@ def get_available_methods() -> list[dict]:
             "description": "Próximamente disponible en checkout.",
             "enabled": False,
         },
+        {
+            "id": "externo",
+            "label": "Pago directo",
+            "description": "Coordina transferencia, Yape o efectivo con el anfitrión.",
+            "enabled": True,
+        },
     ]
     return methods
 
@@ -90,6 +101,12 @@ def create_payment_for_booking(booking: Booking) -> Payment:
     )
 
 
+def _ensure_owner_online_payout(payment: Payment) -> None:
+    owner = payment.booking.room.accommodation.owner
+    if not owner_has_online_payout_profile(owner):
+        raise ValueError(PAYOUT_ONLINE_INCOMPLETE_MESSAGE)
+
+
 def _ensure_payable(payment: Payment, user) -> None:
     if payment.guest_id != user.id:
         raise ValueError("No tienes permiso para pagar esta reserva.")
@@ -97,6 +114,14 @@ def _ensure_payable(payment: Payment, user) -> None:
         raise ValueError("Esta reserva ya no admite pago.")
     if payment.status == Payment.Status.PAGADO:
         raise ValueError("Esta reserva ya fue pagada.")
+    if (
+        payment.method == Payment.Method.EXTERNO
+        and payment.status == Payment.Status.PROCESANDO
+    ):
+        raise ValueError(
+            "Ya solicitaste pago directo con el anfitrión. "
+            "Espera a que confirme el pago o cancela la reserva."
+        )
     if payment.expires_at and timezone.now() > payment.expires_at:
         payment.status = Payment.Status.EXPIRADO
         payment.save(update_fields=["status", "updated_at"])
@@ -191,8 +216,51 @@ def process_mercadopago_webhook(mp_payment_id: str) -> bool:
     return True
 
 
+def request_external_payment(payment: Payment, user) -> Payment:
+    _ensure_payable(payment, user)
+    with transaction.atomic():
+        payment = Payment.objects.select_for_update().get(pk=payment.pk)
+        payment.method = Payment.Method.EXTERNO
+        payment.status = Payment.Status.PROCESANDO
+        payment.gateway = "externo"
+        payment.expires_at = None
+        payment.failure_message = ""
+        payment.save(
+            update_fields=[
+                "method",
+                "status",
+                "gateway",
+                "expires_at",
+                "failure_message",
+                "updated_at",
+            ]
+        )
+    return payment
+
+
+def confirm_external_payment(payment: Payment, owner_user) -> Payment:
+    owner = payment.booking.room.accommodation.owner
+    if owner.id != owner_user.id:
+        raise ValueError("No tienes permiso para confirmar este pago.")
+    if payment.method != Payment.Method.EXTERNO:
+        raise ValueError("Este pago no es de tipo directo con anfitrión.")
+    if payment.status == Payment.Status.PAGADO:
+        raise ValueError("Este pago ya fue confirmado.")
+    if payment.status != Payment.Status.PROCESANDO:
+        raise ValueError(
+            "El huésped aún no ha indicado que pagará directamente con el anfitrión."
+        )
+    result = GatewayChargeResult(
+        ok=True,
+        charge_id=f"externo-{payment.pk}",
+        user_message="Pago confirmado por el anfitrión.",
+    )
+    return _mark_success(payment, result, Payment.Method.EXTERNO)
+
+
 def pay_with_yape(payment: Payment, user, *, phone: str, otp: str) -> Payment:
     _ensure_payable(payment, user)
+    _ensure_owner_online_payout(payment)
     payment.status = Payment.Status.PROCESANDO
     payment.method = Payment.Method.YAPE
     payment.save(update_fields=["status", "method", "updated_at"])
@@ -214,6 +282,7 @@ def pay_with_yape(payment: Payment, user, *, phone: str, otp: str) -> Payment:
 
 def pay_with_card(payment: Payment, user, *, source_id: str) -> Payment:
     _ensure_payable(payment, user)
+    _ensure_owner_online_payout(payment)
     payment.status = Payment.Status.PROCESANDO
     payment.method = Payment.Method.CARD
     payment.save(update_fields=["status", "method", "updated_at"])
@@ -234,6 +303,7 @@ def pay_with_card(payment: Payment, user, *, source_id: str) -> Payment:
 
 def create_pagoefectivo(payment: Payment, user) -> tuple[Payment, str]:
     _ensure_payable(payment, user)
+    _ensure_owner_online_payout(payment)
     gateway_name = get_gateway_name()
     if gateway_name == "mock":
         gateway = mock

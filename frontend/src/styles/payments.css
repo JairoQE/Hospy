@@ -130,6 +130,14 @@
   font-size: 0.9rem;
 }
 
+.payment-owner-contact {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(44, 125, 160, 0.08);
+  font-size: 0.9rem;
+}
+
 .payment-error {
   margin: 0.85rem 0 0;
 }

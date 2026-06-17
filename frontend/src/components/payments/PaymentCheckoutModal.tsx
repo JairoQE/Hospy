@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createPagoEfectivo,
   fetchBookingPayment,
   fetchPaymentMethods,
   payWithCard,
   payWithYape,
+  requestExternalPayment,
   type PaymentMethodOption,
   type PaymentRecord,
 } from "../../api/payments";
@@ -20,9 +21,10 @@ interface Props {
   accommodationName: string;
   onClose: () => void;
   onPaid: () => void;
+  onContactHost?: () => void;
 }
 
-type TabId = "yape" | "card" | "pagoefectivo";
+type TabId = "yape" | "card" | "pagoefectivo" | "externo";
 
 export function PaymentCheckoutModal({
   bookingId,
@@ -30,6 +32,7 @@ export function PaymentCheckoutModal({
   accommodationName,
   onClose,
   onPaid,
+  onContactHost,
 }: Props) {
   const { user } = useAuth();
   const [methods, setMethods] = useState<PaymentMethodOption[]>([]);
@@ -37,7 +40,7 @@ export function PaymentCheckoutModal({
   const [culqiPublicKey, setCulqiPublicKey] = useState("");
   const [mpPublicKey, setMpPublicKey] = useState("");
   const [payment, setPayment] = useState<PaymentRecord | null>(null);
-  const [tab, setTab] = useState<TabId>("yape");
+  const [tab, setTab] = useState<TabId>("externo");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(true);
@@ -60,9 +63,32 @@ export function PaymentCheckoutModal({
         setCulqiPublicKey(methodsRes.culqi_public_key || "");
         setMpPublicKey(methodsRes.mp_public_key || "");
         setPayment(paymentRes);
-        const first = methodsRes.methods.find((m) => m.enabled);
-        if (first && (first.id === "yape" || first.id === "card" || first.id === "pagoefectivo")) {
+
+        const onlineAvailable = paymentRes.online_checkout_available !== false;
+        const onlineIds = new Set(["yape", "card", "pagoefectivo"]);
+        const first = methodsRes.methods.find(
+          (m) =>
+            m.enabled &&
+            (m.id === "externo" || (onlineAvailable && onlineIds.has(m.id))),
+        );
+        if (
+          first &&
+          (first.id === "yape" ||
+            first.id === "card" ||
+            first.id === "pagoefectivo" ||
+            first.id === "externo")
+        ) {
           setTab(first.id);
+        }
+
+        if (
+          paymentRes.method === "externo" &&
+          paymentRes.status === "procesando"
+        ) {
+          setInstruction(
+            paymentRes.instruction ||
+              "Espera a que el anfitrión confirme el pago. Puedes escribirle por el chat.",
+          );
         }
       } catch (e) {
         if (!cancelled) {
@@ -76,6 +102,21 @@ export function PaymentCheckoutModal({
       cancelled = true;
     };
   }, [bookingId]);
+
+  const onlineCheckoutAvailable = payment?.online_checkout_available !== false;
+
+  const tabs = useMemo(
+    () =>
+      methods.filter((m): m is PaymentMethodOption & { id: TabId } => {
+        if (m.id === "externo") return true;
+        if (!onlineCheckoutAvailable) return false;
+        return m.id === "yape" || m.id === "card" || m.id === "pagoefectivo";
+      }),
+    [methods, onlineCheckoutAvailable],
+  );
+
+  const externalPending =
+    payment?.method === "externo" && payment.status === "procesando";
 
   const handleYape = useCallback(async () => {
     if (!payment) return;
@@ -135,10 +176,23 @@ export function PaymentCheckoutModal({
     }
   }, [payment]);
 
-  const tabs = methods.filter(
-    (m): m is PaymentMethodOption & { id: TabId } =>
-      m.id === "yape" || m.id === "card" || m.id === "pagoefectivo",
-  );
+  const handleExternal = useCallback(async () => {
+    if (!payment) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      const result = await requestExternalPayment(payment.id);
+      setPayment(result);
+      setInstruction(
+        result.instruction ||
+          "Contacta al anfitrión para acordar el pago. Cuando lo reciba, confirmará la reserva.",
+      );
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "No se pudo registrar el pago directo.");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [payment]);
 
   return (
     <>
@@ -175,6 +229,13 @@ export function PaymentCheckoutModal({
           <p className="payment-modal-loading">Cargando métodos de pago…</p>
         ) : (
           <>
+            {!onlineCheckoutAvailable && (
+              <p className="payment-mock-hint">
+                Este anfitrión no tiene cobro en línea configurado. Coordina el pago directamente
+                con él (transferencia, Yape o efectivo).
+              </p>
+            )}
+
             <div className="payment-tabs" role="tablist">
               {tabs.map((m) => (
                 <button
@@ -186,7 +247,7 @@ export function PaymentCheckoutModal({
                   onClick={() => {
                     setTab(m.id);
                     setError("");
-                    setInstruction("");
+                    if (m.id !== "externo") setInstruction("");
                   }}
                 >
                   {m.label}
@@ -194,13 +255,13 @@ export function PaymentCheckoutModal({
               ))}
             </div>
 
-            {gateway === "mock" && (
+            {gateway === "mock" && onlineCheckoutAvailable && tab !== "externo" && (
               <p className="payment-mock-hint">
                 Modo prueba: Yape usa OTP <strong>123456</strong>. Tarjeta usa token de prueba.
               </p>
             )}
 
-            {gateway === "mercadopago" && (
+            {gateway === "mercadopago" && onlineCheckoutAvailable && tab !== "externo" && (
               <p className="payment-mock-hint">
                 Mercado Pago (credenciales de prueba): usa un código real de Yape desde tu app.
               </p>
@@ -290,6 +351,67 @@ export function PaymentCheckoutModal({
                 >
                   {submitting ? "Generando…" : "Generar código PagoEfectivo"}
                 </button>
+                {instruction ? (
+                  <p className="payment-instruction">{instruction}</p>
+                ) : null}
+              </div>
+            )}
+
+            {tab === "externo" && (
+              <div className="payment-panel">
+                <p className="payment-panel-help">
+                  Acuerda con el anfitrión transferencia, Yape, Plin o efectivo fuera del checkout
+                  de Hospy. La reserva quedará registrada cuando el anfitrión confirme que recibió
+                  el pago.
+                </p>
+                {payment?.owner_contact?.phone ? (
+                  <p className="payment-owner-contact">
+                    Contacto: <strong>{payment.owner_contact.name}</strong>
+                    {payment.owner_contact.phone ? (
+                      <>
+                        {" "}
+                        · Tel. {payment.owner_contact.phone}
+                      </>
+                    ) : null}
+                  </p>
+                ) : null}
+                {externalPending ? (
+                  <>
+                    <p className="success-msg payment-success">
+                      <PrimeIcon name="pi-clock" size={18} /> Pago directo registrado. Espera la
+                      confirmación del anfitrión.
+                    </p>
+                    {onContactHost ? (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-block"
+                        onClick={onContactHost}
+                      >
+                        Escribir al anfitrión
+                      </button>
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    {onContactHost ? (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-block"
+                        onClick={onContactHost}
+                      >
+                        Contactar anfitrión
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-block payment-submit"
+                      disabled={submitting || payment?.status === "pagado"}
+                      onClick={handleExternal}
+                    >
+                      {submitting ? "Registrando…" : "Registrar pago directo con anfitrión"}
+                    </button>
+                  </>
+                )}
                 {instruction ? (
                   <p className="payment-instruction">{instruction}</p>
                 ) : null}

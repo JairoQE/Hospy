@@ -48,6 +48,53 @@ def test_payment_methods_public(api_client):
     ids = [m["id"] for m in response.data["methods"]]
     assert "yape" in ids
     assert "card" in ids
+    assert "externo" in ids
+
+
+@pytest.mark.django_db
+def test_external_payment_flow(api_client, huesped, hospedaje_aprobado, propietario):
+    from datetime import date, timedelta
+
+    _, room = hospedaje_aprobado
+    owner = room.accommodation.owner
+    owner.payout_mp_email = ""
+    owner.payout_bank_cci = ""
+    owner.save()
+
+    api_client.force_authenticate(user=huesped)
+    check_in = date.today() + timedelta(days=30)
+    check_out = check_in + timedelta(days=2)
+    booking_res = api_client.post(
+        "/api/v1/reservas/",
+        {
+            "room": room.id,
+            "check_in": check_in.isoformat(),
+            "check_out": check_out.isoformat(),
+        },
+        format="json",
+    )
+    assert booking_res.status_code == 201
+    payment_id = booking_res.data["payment"]["id"]
+
+    ext_res = api_client.post(f"/api/v1/pagos/{payment_id}/externo/", {}, format="json")
+    assert ext_res.status_code == 200
+    assert ext_res.data["method"] == "externo"
+    assert ext_res.data["status"] == "procesando"
+
+    booking = Booking.objects.get(pk=booking_res.data["id"])
+    assert booking.status == Booking.Status.PENDIENTE
+
+    api_client.force_authenticate(user=owner)
+    confirm_res = api_client.post(
+        f"/api/v1/pagos/{payment_id}/confirmar-externo/",
+        {},
+        format="json",
+    )
+    assert confirm_res.status_code == 200
+    assert confirm_res.data["status"] == "pagado"
+
+    booking.refresh_from_db()
+    assert booking.status == Booking.Status.CONFIRMADA
 
 
 @pytest.mark.django_db

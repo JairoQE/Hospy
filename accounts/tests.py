@@ -514,12 +514,32 @@ def test_perfil_guarda_payout_incompleto(api_client):
         {
             "phone": "999111222",
             "payout_document_number": "12345678",
-            "payout_mp_email": "owner@mp.test",
         },
         format="json",
     )
     assert response.status_code == 200
     assert response.data["payout_profile_complete"] is True
+
+
+@pytest.mark.django_db
+def test_reserva_permitida_sin_mercado_pago(api_client, huesped, hospedaje_aprobado):
+    _, room = hospedaje_aprobado
+    owner = room.accommodation.owner
+    owner.payout_mp_email = ""
+    owner.payout_bank_cci = ""
+    owner.save()
+
+    api_client.force_authenticate(user=huesped)
+    response = api_client.post(
+        "/api/v1/reservas/preview/",
+        {
+            "room": room.id,
+            "check_in": "2030-06-01",
+            "check_out": "2030-06-03",
+        },
+        format="json",
+    )
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db
@@ -535,11 +555,11 @@ def test_reserva_bloqueada_sin_payout(api_client, huesped, hospedaje_aprobado):
     response = api_client.post(
         "/api/v1/reservas/preview/",
         {
-            "room_id": room.id,
+            "room": room.id,
             "check_in": "2030-06-01",
             "check_out": "2030-06-03",
         },
         format="json",
     )
     assert response.status_code == 400
-    assert "datos de cobro" in str(response.data).lower()
+    assert "datos" in str(response.data).lower()

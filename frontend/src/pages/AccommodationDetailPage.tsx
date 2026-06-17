@@ -943,7 +943,8 @@ export function AccommodationDetailPage() {
               {booking ? t("detail.booking") : t("detail.book")}
             </button>
             <p className="book-note muted">
-              Al reservar podrás pagar con Yape, tarjeta u otras opciones dentro de Hospy.
+              Al reservar podrás pagar en línea (Yape, tarjeta) o coordinar pago directo con el
+              anfitrión.
             </p>
           </div>
         </aside>
@@ -958,6 +959,15 @@ export function AccommodationDetailPage() {
             setCheckoutBooking(null);
             setMsg("Reserva pagada y confirmada.");
             navigate("/mis-reservas");
+          }}
+          onContactHost={() => {
+            openChat({
+              mode: "guest",
+              peerName: acc.propietario_nombre || t("detail.hostDefault"),
+              peerPhotoUrl: acc.propietario_foto_url,
+              hospedajeId: acc.id,
+              hospedajeName: acc.name,
+            });
           }}
         />
       )}

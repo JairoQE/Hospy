@@ -62,21 +62,28 @@ export function OwnerPayoutSection({ user, phone, onUpdated }: OwnerPayoutSectio
     <section className="card profile-form-card owner-payout-card">
       <h2>Datos para cobrar</h2>
       <p className="muted profile-form-hint">
-        Completa esta información para que los huéspedes puedan pagar reservas en tus hospedajes.
-        En modo demo, el cobro pasa por la cuenta de prueba de Hospy; estos datos simulan el perfil
-        de liquidación del anfitrión.
+        Con teléfono y DNI puedes recibir reservas y cobrar directamente al huésped.
+        Para cobro en línea dentro de Hospy (Yape, tarjeta), agrega Mercado Pago o tu CCI bancario.
       </p>
 
       {!complete && (
         <div className="owner-payout-banner" role="status">
-          <strong>Faltan datos de cobro.</strong>{" "}
+          <strong>Faltan datos básicos.</strong>{" "}
           {missing.includes("phone") && "Agrega tu teléfono en el formulario de arriba. "}
-          Completa DNI y correo de Mercado Pago para habilitar reservas pagadas.
+          Completa tu DNI para habilitar reservas (incluye pago directo con huéspedes).
         </div>
       )}
 
       {complete && (
-        <p className="success-msg owner-payout-ready">Perfil de cobro completo. Tus hospedajes aceptan reservas pagadas.</p>
+        <p className="success-msg owner-payout-ready">
+          Datos básicos completos. Tus hospedajes aceptan reservas.
+          {!form.payout_mp_email.trim() && !form.payout_bank_cci.trim() && (
+            <>
+              {" "}
+              Agrega Mercado Pago o CCI para habilitar cobro en línea (Yape/tarjeta).
+            </>
+          )}
+        </p>
       )}
 
       <form className="profile-form owner-payout-form" onSubmit={save}>
@@ -94,7 +101,7 @@ export function OwnerPayoutSection({ user, phone, onUpdated }: OwnerPayoutSectio
           />
         </label>
         <label>
-          Correo de tu cuenta Mercado Pago
+          Correo de Mercado Pago (opcional)
           <input
             type="email"
             value={form.payout_mp_email}
@@ -104,7 +111,7 @@ export function OwnerPayoutSection({ user, phone, onUpdated }: OwnerPayoutSectio
           />
         </label>
         <label>
-          CCI bancario (opcional)
+          CCI bancario (opcional, alternativa a Mercado Pago)
           <input
             inputMode="numeric"
             maxLength={20}

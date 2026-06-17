@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError, api } from "../api/client";
+import { confirmExternalPayment } from "../api/payments";
 import {
   clearOwnerPanelBootstrapCache,
   fetchOwnerPanelBootstrap,
@@ -155,6 +156,23 @@ export function OwnerPanelPage() {
     }
   };
 
+  const confirmExternalPaymentAction = async (paymentId: number) => {
+    if (
+      !confirm(
+        "¿Confirmas que recibiste el pago del huésped? La reserva quedará confirmada en Hospy.",
+      )
+    ) {
+      return;
+    }
+    try {
+      await confirmExternalPayment(paymentId);
+      clearOwnerPanelBootstrapCache();
+      load({ skipCache: true });
+    } catch (e) {
+      alert(e instanceof ApiError ? e.message : "Error al confirmar el pago");
+    }
+  };
+
   return (
     <div className="owner-panel-page">
       {ownerPending && (          <div className="owner-approval-banner" role="status">
@@ -185,8 +203,8 @@ export function OwnerPanelPage() {
               <div className="owner-approval-banner owner-payout-banner-panel" role="alert">
                 <h2>Completa tus datos de cobro</h2>
                 <p className="muted">
-                  Los huéspedes no pueden reservar con pago en tus hospedajes hasta que cargues tu
-                  DNI, teléfono y correo de Mercado Pago.
+                  Los huéspedes no pueden reservar en tus hospedajes hasta que cargues tu
+                  teléfono y DNI. Mercado Pago o CCI son opcionales (solo para cobro en línea).
                 </p>
                 <Link to="/perfil" className="btn btn-primary owner-payout-banner-link">
                   Ir a datos de cobro
@@ -261,7 +279,28 @@ export function OwnerPanelPage() {
                         {formatDate(b.check_in)} → {formatDate(b.check_out)} ·{" "}
                         {formatMoney(b.total_amount)}
                       </p>
+                      {b.payment && (
+                        <p className="owner-booking-payment muted">
+                          Pago:{" "}
+                          {b.payment.status === "pagado"
+                            ? "recibido"
+                            : b.payment.method === "externo" && b.payment.status === "procesando"
+                              ? "directo pendiente de confirmar"
+                              : b.payment.status}
+                        </p>
+                      )}
                       <div className="owner-booking-card-actions">
+                        {b.payment?.method === "externo" &&
+                          b.payment.status === "procesando" &&
+                          b.status === "pendiente" && (
+                            <button
+                              type="button"
+                              className="btn btn-primary"
+                              onClick={() => confirmExternalPaymentAction(b.payment!.id)}
+                            >
+                              Confirmar pago recibido
+                            </button>
+                          )}
                         {b.status === "pendiente" && (
                           <>
                             <button

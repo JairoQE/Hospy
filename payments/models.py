@@ -10,6 +10,7 @@ class Payment(TimeStampedModel):
         CARD = "card", "Tarjeta"
         PAGOEFECTIVO = "pagoefectivo", "PagoEfectivo"
         PLIN = "plin", "Plin"
+        EXTERNO = "externo", "Pago directo con anfitrión"
 
     class Status(models.TextChoices):
         PENDIENTE = "pendiente", "Pendiente"

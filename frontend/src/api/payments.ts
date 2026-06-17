@@ -1,7 +1,7 @@
 import { api } from "./client";
 
 export interface PaymentMethodOption {
-  id: "yape" | "card" | "pagoefectivo" | "plin";
+  id: "yape" | "card" | "pagoefectivo" | "plin" | "externo";
   label: string;
   description: string;
   enabled: boolean;
@@ -34,6 +34,11 @@ export interface PaymentRecord {
   created_at: string;
   instruction?: string;
   ip_risk?: PaymentIpRisk;
+  online_checkout_available?: boolean;
+  owner_contact?: {
+    name: string;
+    phone: string;
+  };
 }
 
 export interface BookingPaymentSummary {
@@ -64,4 +69,12 @@ export function payWithCard(paymentId: number, sourceId: string) {
 
 export function createPagoEfectivo(paymentId: number) {
   return api.post<PaymentRecord>(`/pagos/${paymentId}/pagoefectivo/`, {});
+}
+
+export function requestExternalPayment(paymentId: number) {
+  return api.post<PaymentRecord>(`/pagos/${paymentId}/externo/`, {});
+}
+
+export function confirmExternalPayment(paymentId: number) {
+  return api.post<PaymentRecord>(`/pagos/${paymentId}/confirmar-externo/`, {});
 }

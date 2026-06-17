@@ -26,6 +26,16 @@ urlpatterns = [
         name="payment-pagoefectivo",
     ),
     path(
+        "pagos/<int:payment_id>/externo/",
+        views.PaymentExternalRequestView.as_view(),
+        name="payment-external-request",
+    ),
+    path(
+        "pagos/<int:payment_id>/confirmar-externo/",
+        views.PaymentExternalConfirmView.as_view(),
+        name="payment-external-confirm",
+    ),
+    path(
         "pagos/webhook/mercadopago/",
         MercadoPagoWebhookView.as_view(),
         name="payment-mp-webhook",

@@ -19,6 +19,7 @@ class BookingListSerializer(serializers.ModelSerializer):
     can_cancel = serializers.SerializerMethodField()
     cancel_reason = serializers.SerializerMethodField()
     huesped = serializers.SerializerMethodField()
+    payment = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
@@ -38,6 +39,7 @@ class BookingListSerializer(serializers.ModelSerializer):
             "has_review",
             "can_cancel",
             "cancel_reason",
+            "payment",
         )
 
     def get_can_leave_review(self, obj):
@@ -71,6 +73,17 @@ class BookingListSerializer(serializers.ModelSerializer):
             "id": obj.guest_id,
             "email": obj.guest.email,
             "nombre": obj.guest.get_full_name() or obj.guest.username,
+        }
+
+    def get_payment(self, obj):
+        payment = getattr(obj, "payment", None)
+        if payment is None:
+            return None
+        return {
+            "id": payment.id,
+            "status": payment.status,
+            "method": payment.method or None,
+            "amount": str(payment.amount),
         }
 
 

@@ -4,7 +4,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.permissions import IsHuesped
+from accounts.permissions import IsHuesped, IsPropietario
 
 from audit.services import log_action
 
@@ -18,13 +18,32 @@ from .serializers import (
     YapePaySerializer,
 )
 from .services import (
+    confirm_external_payment,
     create_pagoefectivo,
     create_payment_for_booking,
     get_available_methods,
     get_gateway_name,
     pay_with_card,
     pay_with_yape,
+    request_external_payment,
 )
+
+
+def _payment_response(payment: Payment, request, *, instruction: str = "") -> dict:
+    from accounts.payout import owner_has_online_payout_profile
+
+    from .serializers import PaymentSerializer
+
+    owner = payment.booking.room.accommodation.owner
+    data = PaymentSerializer(payment).data
+    data["online_checkout_available"] = owner_has_online_payout_profile(owner)
+    data["owner_contact"] = {
+        "name": owner.get_full_name() or owner.username,
+        "phone": owner.phone or "",
+    }
+    if instruction:
+        data["instruction"] = instruction
+    return data
 
 
 class PaymentMethodsView(APIView):
@@ -50,23 +69,33 @@ class BookingPaymentView(APIView):
         from bookings.models import Booking
 
         try:
-            booking = Booking.objects.select_related("payment").get(
+            booking = Booking.objects.select_related(
+                "payment",
+                "room__accommodation__owner",
+            ).get(
                 pk=booking_id,
                 guest=request.user,
             )
         except Booking.DoesNotExist as exc:
             raise NotFound("Reserva no encontrada.") from exc
         if not hasattr(booking, "payment"):
-            return create_payment_for_booking(booking)
-        return booking.payment
+            payment = create_payment_for_booking(booking)
+            payment.booking = booking
+            return payment
+        payment = booking.payment
+        payment.booking = booking
+        return payment
 
     def get(self, request, booking_id: int):
         payment = self._get_booking_payment(request, booking_id)
-        return Response(PaymentSerializer(payment).data)
+        return Response(_payment_response(payment, request))
 
     def post(self, request, booking_id: int):
         payment = self._get_booking_payment(request, booking_id)
-        return Response(PaymentSerializer(payment).data, status=status.HTTP_201_CREATED)
+        return Response(
+            _payment_response(payment, request),
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class PaymentYapeView(APIView):
@@ -194,3 +223,77 @@ class PaymentPagoEfectivoView(APIView):
         data["instruction"] = message
         data["ip_risk"] = risk
         return Response(data)
+
+
+class PaymentExternalRequestView(APIView):
+    """Huésped elige coordinar pago directo con el anfitrión."""
+
+    permission_classes = (permissions.IsAuthenticated, IsHuesped)
+
+    def post(self, request, payment_id: int):
+        try:
+            payment = Payment.objects.select_related(
+                "booking",
+                "booking__room__accommodation__owner",
+            ).get(
+                pk=payment_id,
+                guest=request.user,
+            )
+        except Payment.DoesNotExist as exc:
+            raise NotFound("Pago no encontrado.") from exc
+
+        try:
+            payment = request_external_payment(payment, request.user)
+        except ValueError as exc:
+            raise ValidationError({"detail": str(exc)}) from exc
+
+        log_action(
+            actor=request.user,
+            action="payment.external.request",
+            target_type="Payment",
+            target_id=payment.pk,
+            target_label=f"Pago directo reserva #{payment.booking_id}",
+            metadata={"amount": str(payment.amount)},
+            request=request,
+        )
+
+        instruction = (
+            "Contacta al anfitrión para acordar transferencia, Yape o efectivo. "
+            "Cuando reciba el pago, confirmará la reserva en Hospy."
+        )
+        return Response(_payment_response(payment, request, instruction=instruction))
+
+
+class PaymentExternalConfirmView(APIView):
+    """Propietario confirma que recibió el pago externo."""
+
+    permission_classes = (permissions.IsAuthenticated, IsPropietario)
+
+    def post(self, request, payment_id: int):
+        try:
+            payment = Payment.objects.select_related(
+                "booking",
+                "booking__room__accommodation__owner",
+            ).get(pk=payment_id)
+        except Payment.DoesNotExist as exc:
+            raise NotFound("Pago no encontrado.") from exc
+
+        if payment.booking.room.accommodation.owner_id != request.user.id:
+            raise ValidationError({"detail": "No tienes permiso para confirmar este pago."})
+
+        try:
+            payment = confirm_external_payment(payment, request.user)
+        except ValueError as exc:
+            raise ValidationError({"detail": str(exc)}) from exc
+
+        log_action(
+            actor=request.user,
+            action="payment.external.confirm",
+            target_type="Payment",
+            target_id=payment.pk,
+            target_label=f"Pago directo confirmado reserva #{payment.booking_id}",
+            metadata={"amount": str(payment.amount)},
+            request=request,
+        )
+
+        return Response(_payment_response(payment, request))
