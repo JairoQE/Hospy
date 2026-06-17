@@ -3,7 +3,7 @@ import { resolveMediaUrl } from "../../utils/media";
 
 import { PrimeIcon } from "../PrimeIcon";
 import { tileIcon } from "../../utils/tileIcons";
-import { BrowseTileStats } from "./BrowseTileStats";
+import { BrowseTileFooter } from "./BrowseTileFooter";
 
 import { SkeletonBrowseTilesRow } from "../ui/Skeleton";
 
@@ -74,35 +74,25 @@ export function BrowseTilesSection({ title, subtitle, tiles, loading = false, on
 
               >
 
-                <span
+                <span className="browse-tile-image browse-tile-image--v2">
 
-                  className="browse-tile-image browse-tile-image--v2"
-
-                  style={
-
-                    imageUrl
-
-                      ? { backgroundImage: `url(${imageUrl})` }
-
-                      : { background: gradient }
-
-                  }
-
-                >
+                  {imageUrl ? (
+                    <img src={imageUrl} alt="" loading="lazy" decoding="async" />
+                  ) : (
+                    <span
+                      className="browse-tile-image-fallback"
+                      style={{ background: gradient }}
+                    />
+                  )}
 
                   <PrimeIcon name={iconName} className="browse-tile-emoji" />
 
                 </span>
 
-                <span className="browse-tile-label">{tile.title}</span>
-
-                <BrowseTileStats tile={tile} />
-
-                {tile.subtitle && !(tile.hotels_count && tile.hotels_count > 0) && (
-
-                  <span className="browse-tile-sub">{tile.subtitle}</span>
-
-                )}
+                <div className="browse-tile-body">
+                  <span className="browse-tile-label">{tile.title}</span>
+                  <BrowseTileFooter tile={tile} />
+                </div>
 
               </button>
 

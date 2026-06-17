@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
+import { preloadTurnstileScript } from "../utils/loadTurnstile";
 
 export type CaptchaConfig = {
   enabled: boolean;
@@ -27,6 +28,9 @@ export function useCaptchaConfig(): CaptchaConfig {
           siteKey,
           loading: false,
         });
+        if (data.enabled && siteKey) {
+          preloadTurnstileScript();
+        }
       })
       .catch(() => {
         if (cancelled) return;
@@ -35,6 +39,9 @@ export function useCaptchaConfig(): CaptchaConfig {
           siteKey: envKey,
           loading: false,
         });
+        if (envKey) {
+          preloadTurnstileScript();
+        }
       });
     return () => {
       cancelled = true;

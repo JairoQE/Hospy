@@ -44,6 +44,16 @@ export async function fetchDistrictCatalogForSearch(
   if (!Array.isArray(places) || places.length === 0) return [];
 
   const target = normalizePlaceText(ciudad);
+  const provinciaMatch = places.find(
+    (p) => p.tipo === "provincia" && normalizePlaceText(p.nombre) === target,
+  );
+  if (provinciaMatch?.provincia) {
+    const q = new URLSearchParams({ provincia: provinciaMatch.provincia });
+    if (provinciaMatch.departamento) q.set("departamento", provinciaMatch.departamento);
+    const data = await getJson<UbigeoItem[]>(`/ubigeo/distritos/?${q}`);
+    return Array.isArray(data) ? data : [];
+  }
+
   const exact =
     places.find((p) => normalizePlaceText(p.nombre) === target) ?? places[0];
 

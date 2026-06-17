@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AccommodationListItem } from "../../api/types";
 import type { SearchFilters } from "../SearchBar";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
@@ -8,6 +8,11 @@ import { EmptyState } from "../ui/EmptyState";
 import { SkeletonAccGrid } from "../ui/Skeleton";
 import type { UbigeoItem } from "./LocationExplorer";
 import { cityMatchesDistritoName } from "../../utils/normalizePlaceText";
+import {
+  DistrictJumpChips,
+  districtSectionDomId,
+  type DistrictChip,
+} from "./DistrictJumpChips";
 
 const EMPTY_DISTRICT_KEY = "__empty__";
 
@@ -31,9 +36,9 @@ function groupItemsByDistrict(
     .map(([key, group]) => ({ key, label: key, items: group }));
 }
 
-type UbigeoSection = {
+type DisplaySection = {
   key: string;
-  distritoNombre: string;
+  label: string;
   provinciaLine?: string;
   isOtherBucket: boolean;
   items: AccommodationListItem[];
@@ -43,9 +48,9 @@ function buildUbigeoSections(
   catalog: UbigeoItem[],
   items: AccommodationListItem[],
   otherTitle: string,
-): UbigeoSection[] {
+): DisplaySection[] {
   const usedIds = new Set<number>();
-  const sections: UbigeoSection[] = catalog.map((d) => {
+  const sections: DisplaySection[] = catalog.map((d) => {
     const nombre = d.nombre;
     const group: AccommodationListItem[] = [];
     for (const item of items) {
@@ -57,7 +62,7 @@ function buildUbigeoSections(
     }
     return {
       key: String(d.id ?? d.codigo ?? nombre),
-      distritoNombre: nombre,
+      label: nombre,
       provinciaLine: d.provincia_nombre || undefined,
       isOtherBucket: false,
       items: group,
@@ -67,13 +72,13 @@ function buildUbigeoSections(
   if (unmatched.length) {
     sections.push({
       key: "__other__",
-      distritoNombre: otherTitle,
+      label: otherTitle,
       provinciaLine: undefined,
       isOtherBucket: true,
       items: unmatched,
     });
   }
-  return sections;
+  return sections.filter((section) => section.items.length > 0);
 }
 
 type Props = {
@@ -83,9 +88,7 @@ type Props = {
   error: string;
   filters: SearchFilters | null;
   hasBrowse: boolean;
-  /** Búsqueda por departamento, provincia o destino amplio: mostrar bloques por distrito. */
   groupByDistrito?: boolean;
-  /** Catálogo UBIGEO: vacío [] = no hay padrón (solo agrupar por resultados); con ítems = listar todos los distritos. */
   districtCatalog?: UbigeoItem[];
   districtCatalogLoading?: boolean;
   showBackToHome?: boolean;
@@ -109,32 +112,102 @@ export function SearchResultsSection({
   onClear,
   onRetry,
 }: Props) {
-  const { t, language } = useLocaleCurrency();
+  const { t, tVars, language } = useLocaleCurrency();
   const firstCardRef = useRef<HTMLAnchorElement>(null);
+  const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const [activeDistrictKey, setActiveDistrictKey] = useState<string | null>(null);
   const sortLocale = language === "en" ? "en" : "es-PE";
 
   const showFullUbigeoList =
     groupByDistrito &&
     !districtCatalogLoading &&
+    Boolean(filters?.provincia?.trim()) &&
     districtCatalog !== undefined &&
     districtCatalog.length > 0;
 
-  const districtGroups = useMemo(() => {
-    if (!groupByDistrito || items.length === 0 || showFullUbigeoList) return null;
-    return groupItemsByDistrict(items, sortLocale);
-  }, [groupByDistrito, items, sortLocale, showFullUbigeoList]);
+  const displaySections = useMemo((): DisplaySection[] | null => {
+    if (!groupByDistrito || items.length === 0) return null;
 
-  const ubigeoSections = useMemo(() => {
-    if (!showFullUbigeoList || !districtCatalog?.length) return null;
-    return buildUbigeoSections(districtCatalog, items, t("home.districtOtherResults"));
-  }, [showFullUbigeoList, districtCatalog, items, t]);
+    if (showFullUbigeoList && districtCatalog?.length) {
+      return buildUbigeoSections(districtCatalog, items, t("home.districtOtherResults"));
+    }
+
+    return groupItemsByDistrict(items, sortLocale).map((group) => ({
+      key: group.key,
+      label: group.key === EMPTY_DISTRICT_KEY ? t("home.distritoUnknown") : group.label,
+      provinciaLine: undefined,
+      isOtherBucket: group.key === EMPTY_DISTRICT_KEY,
+      items: group.items,
+    }));
+  }, [
+    groupByDistrito,
+    items,
+    showFullUbigeoList,
+    districtCatalog,
+    sortLocale,
+    t,
+  ]);
+
+  const districtChips = useMemo((): DistrictChip[] => {
+    if (!displaySections) return [];
+    return displaySections.map((section) => ({
+      key: section.key,
+      label: section.label,
+      count: section.items.length,
+    }));
+  }, [displaySections]);
 
   const showNoResultsEmpty =
     !loading &&
     !error &&
     items.length === 0 &&
-    !ubigeoSections &&
     !(groupByDistrito && districtCatalogLoading);
+
+  const districtSummary = useMemo(() => {
+    if (!displaySections?.length || items.length === 0) return null;
+    return tVars("home.resultsDistrictSummary", {
+      count: String(items.length),
+      districts: String(displaySections.length),
+    });
+  }, [displaySections, items.length, tVars]);
+
+  useEffect(() => {
+    if (displaySections?.length) {
+      setActiveDistrictKey(displaySections[0].key);
+    } else {
+      setActiveDistrictKey(null);
+    }
+  }, [displaySections]);
+
+  useEffect(() => {
+    if (!displaySections || displaySections.length < 2) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        const top = visible[0]?.target as HTMLElement | undefined;
+        const key = top?.dataset.districtKey;
+        if (key) setActiveDistrictKey(key);
+      },
+      { rootMargin: "-12% 0px -58% 0px", threshold: [0.12, 0.35, 0.6] },
+    );
+
+    for (const section of displaySections) {
+      const node = sectionRefs.current.get(section.key);
+      if (node) observer.observe(node);
+    }
+
+    return () => observer.disconnect();
+  }, [displaySections]);
+
+  const scrollToDistrict = useCallback((key: string) => {
+    setActiveDistrictKey(key);
+    const node =
+      sectionRefs.current.get(key) ?? document.getElementById(districtSectionDomId(key));
+    node?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   useEffect(() => {
     if (!loading && !error && items.length > 0) {
@@ -145,15 +218,12 @@ export function SearchResultsSection({
 
   if (!title) return null;
 
-  const firstCardId = (() => {
-    if (ubigeoSections) {
-      for (const s of ubigeoSections) {
-        if (s.items[0]) return s.items[0].id;
-      }
-    }
-    if (districtGroups?.[0]?.items[0]) return districtGroups[0].items[0].id;
-    return items[0]?.id;
-  })();
+  const firstCardId = displaySections?.[0]?.items[0]?.id ?? items[0]?.id;
+
+  const setSectionRef = (key: string) => (node: HTMLElement | null) => {
+    if (node) sectionRefs.current.set(key, node);
+    else sectionRefs.current.delete(key);
+  };
 
   return (
     <section
@@ -163,7 +233,12 @@ export function SearchResultsSection({
       aria-busy={loading}
     >
       <div className="home-results-head">
-        <h2 className="home-block-title">{title}</h2>
+        <div className="home-results-head-main">
+          <h2 className="home-block-title">{title}</h2>
+          {districtSummary && !loading && !error && (
+            <p className="home-results-summary">{districtSummary}</p>
+          )}
+        </div>
         <div className="home-results-actions">
           {showBackToHome && onBackToHome && (
             <button type="button" className="btn btn-outline btn-sm" onClick={onBackToHome}>
@@ -179,15 +254,20 @@ export function SearchResultsSection({
         </div>
       </div>
 
-      {!loading && groupByDistrito && !error && (
-        <>
-          {(items.length > 0 || ubigeoSections) && (
-            <p className="muted home-results-group-hint">{t("home.resultsGroupedByDistrito")}</p>
-          )}
-          {districtCatalogLoading && !ubigeoSections && (
-            <p className="muted home-results-catalog-loading">{t("home.districtCatalogLoading")}</p>
-          )}
-        </>
+      {!loading && groupByDistrito && !error && displaySections && items.length > 0 && (
+        <p className="muted home-results-group-hint">{t("home.resultsGroupedByDistrito")}</p>
+      )}
+
+      {!loading && !error && displaySections && items.length > 0 && (
+        <DistrictJumpChips
+          districts={districtChips}
+          activeKey={activeDistrictKey}
+          onSelect={scrollToDistrict}
+        />
+      )}
+
+      {districtCatalogLoading && (
+        <p className="muted home-results-catalog-loading">{t("home.districtCatalogLoading")}</p>
       )}
 
       {loading && <SkeletonAccGrid count={6} />}
@@ -224,64 +304,44 @@ export function SearchResultsSection({
         </div>
       )}
 
-      {!loading && !error && ubigeoSections && (
+      {!loading && !error && displaySections && (
         <div className="home-results-by-district">
-          {ubigeoSections.map((section) => (
-            <section key={section.key} className="home-results-district-block">
-              <h3 className="home-results-district-heading">
-                {!section.isOtherBucket && (
-                  <span className="home-results-district-kind">{t("home.distritoLabel")}</span>
-                )}
-                <span className="home-results-district-name">{section.distritoNombre}</span>
-              </h3>
-              {section.provinciaLine && !section.isOtherBucket && (
-                <p className="muted home-results-district-prov">{section.provinciaLine}</p>
-              )}
-              {section.items.length === 0 ? (
-                <p className="muted home-results-district-empty">{t("home.noStaysInDistrict")}</p>
-              ) : (
-                <div className="acc-grid">
-                  {section.items.map((item) => (
-                    <AccommodationCard
-                      key={item.id}
-                      item={item}
-                      checkIn={filters?.entrada}
-                      checkOut={filters?.salida}
-                      cardRef={item.id === firstCardId ? firstCardRef : undefined}
-                    />
-                  ))}
+          {displaySections.map((section) => (
+            <section
+              key={section.key}
+              id={districtSectionDomId(section.key)}
+              ref={setSectionRef(section.key)}
+              data-district-key={section.key}
+              className="home-results-district-card"
+            >
+              <header className="home-results-district-card-head">
+                <div className="home-results-district-card-titles">
+                  {!section.isOtherBucket && (
+                    <span className="home-results-district-kind">{t("home.distritoLabel")}</span>
+                  )}
+                  <h3 className="home-results-district-name">{section.label}</h3>
+                  {section.provinciaLine && !section.isOtherBucket && (
+                    <span className="home-results-district-prov">{section.provinciaLine}</span>
+                  )}
                 </div>
-              )}
+                <span className="home-results-district-count">
+                  {section.items.length}{" "}
+                  {section.items.length === 1 ? t("home.staySingular") : t("home.staysAbbr")}
+                </span>
+              </header>
+              <div className="acc-grid">
+                {section.items.map((item) => (
+                  <AccommodationCard
+                    key={item.id}
+                    item={item}
+                    checkIn={filters?.entrada}
+                    checkOut={filters?.salida}
+                    cardRef={item.id === firstCardId ? firstCardRef : undefined}
+                  />
+                ))}
+              </div>
             </section>
           ))}
-        </div>
-      )}
-
-      {!loading && !error && items.length > 0 && !ubigeoSections && districtGroups && (
-        <div className="home-results-by-district">
-          {districtGroups.map((group) => {
-            const heading =
-              group.key === EMPTY_DISTRICT_KEY ? t("home.distritoUnknown") : group.label;
-            return (
-              <section key={group.key} className="home-results-district-block">
-                <h3 className="home-results-district-heading">
-                  <span className="home-results-district-kind">{t("home.distritoLabel")}</span>
-                  <span className="home-results-district-name">{heading}</span>
-                </h3>
-                <div className="acc-grid">
-                  {group.items.map((item) => (
-                    <AccommodationCard
-                      key={item.id}
-                      item={item}
-                      checkIn={filters?.entrada}
-                      checkOut={filters?.salida}
-                      cardRef={item.id === firstCardId ? firstCardRef : undefined}
-                    />
-                  ))}
-                </div>
-              </section>
-            );
-          })}
         </div>
       )}
     </section>

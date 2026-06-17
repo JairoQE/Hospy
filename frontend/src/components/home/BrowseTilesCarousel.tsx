@@ -4,7 +4,7 @@ import { resolveMediaUrl } from "../../utils/media";
 
 import { PrimeIcon } from "../PrimeIcon";
 import { tileIcon } from "../../utils/tileIcons";
-import { BrowseTileStats } from "./BrowseTileStats";
+import { BrowseTileFooter } from "./BrowseTileFooter";
 
 import { BrowseCarousel } from "./BrowseCarousel";
 
@@ -91,13 +91,10 @@ export function BrowseTilesCarousel({ tiles, onSelect, ariaLabel, loading = fals
 
             </span>
 
-            <span className="browse-tile-label">{tile.title}</span>
-
-            <BrowseTileStats tile={tile} />
-
-            {tile.subtitle && !(tile.hotels_count && tile.hotels_count > 0) && (
-              <span className="browse-tile-sub">{tile.subtitle}</span>
-            )}
+            <div className="browse-tile-body">
+              <span className="browse-tile-label">{tile.title}</span>
+              <BrowseTileFooter tile={tile} />
+            </div>
 
           </button>
 

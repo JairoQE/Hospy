@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError, api } from "../api/client";
 import type { PublicUserProfile, User } from "../api/types";
 import { ProfileHero } from "../components/profile/ProfileHero";
+import { PublicProfileSection } from "../components/profile/PublicProfileSection";
 import { PhoneInput, formatPhoneDisplay } from "../components/profile/PhoneInput";
 import { ProfileSecuritySection } from "../components/profile/ProfileSecuritySection";
 import { OwnerPayoutSection } from "../components/profile/OwnerPayoutSection";
@@ -349,17 +350,9 @@ export function ProfilePage() {
             <ProfileSecuritySection user={me!} onUpdated={refreshUser} />
           </div>
         ) : (
-          <section className="card profile-public-note">
-            <p className="muted">
-              Perfil público en Hospy.{" "}
-              {me ? (
-                <Link to="/perfil">Ver mi perfil</Link>
-              ) : (
-                <Link to="/login">Inicia sesión</Link>
-              )}{" "}
-              para seguir a este usuario.
-            </p>
-          </section>
+          publicProfile && (
+            <PublicProfileSection profile={publicProfile} isLoggedIn={!!me} />
+          )
         )}
       </div>
     </div>

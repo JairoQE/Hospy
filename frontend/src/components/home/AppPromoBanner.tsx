@@ -1,78 +1,52 @@
-import { useState } from "react";
-import { Bell, Apple } from "lucide-react";
+import { Link } from "react-router-dom";
+import { MapPin, MessageCircle, Search, Sparkles } from "lucide-react";
 
-import {
-  appPromoUrl,
-  appStoreUrl,
-  googlePlayUrl,
-  isAppPromoEnabled,
-  qrCodeImageUrl,
-} from "../../config/appPromo";
+import { isAppPromoEnabled } from "../../config/appPromo";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { HospyLogo } from "../brand/HospyLogo";
 import { IconCheck } from "../icons";
 
-function StoreBadgeGoogle({ href }: { href: string }) {
-  return (
-    <a
-      href={href}
-      className="app-promo-store-badge app-promo-store-badge--google"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      <span className="app-promo-store-badge-icon" aria-hidden>
-        ▶
-      </span>
-      <span className="app-promo-store-badge-text">
-        <small>DISPONIBLE EN</small>
-        <strong>Google Play</strong>
-      </span>
-    </a>
-  );
-}
-
-function StoreBadgeApple({ href }: { href: string }) {
-  return (
-    <a
-      href={href}
-      className="app-promo-store-badge app-promo-store-badge--apple"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      <span className="app-promo-store-badge-icon" aria-hidden>
-        <Apple size={22} strokeWidth={2} />
-      </span>
-      <span className="app-promo-store-badge-text">
-        <small>Descárgalo en el</small>
-        <strong>App Store</strong>
-      </span>
-    </a>
-  );
-}
-
-function PromoPhoneMockup() {
+function PromoWebShowcase() {
   const { t } = useLocaleCurrency();
 
   return (
-    <div className="app-promo-phone" aria-hidden>
-      <div className="app-promo-phone-shell">
-        <div className="app-promo-phone-notch" />
-        <div className="app-promo-phone-screen">
-          <div className="app-promo-phone-header">
-            <HospyLogo height={22} variant="full" className="app-promo-phone-logo" />
+    <div className="app-promo-showcase" aria-hidden>
+      <div className="app-promo-showcase-orbit app-promo-showcase-orbit--a" />
+      <div className="app-promo-showcase-orbit app-promo-showcase-orbit--b" />
+      <div className="app-promo-showcase-orbit app-promo-showcase-orbit--c" />
+
+      <div className="app-promo-browser">
+        <div className="app-promo-browser-chrome">
+          <span className="app-promo-browser-dot" />
+          <span className="app-promo-browser-dot" />
+          <span className="app-promo-browser-dot" />
+          <span className="app-promo-browser-url">hospy.pe</span>
+        </div>
+        <div className="app-promo-browser-body">
+          <HospyLogo height={24} variant="full" className="app-promo-browser-logo" />
+          <div className="app-promo-browser-search">
+            <Search size={15} strokeWidth={2.5} />
+            <span>{t("home.appPromoSearchHint")}</span>
           </div>
-          <div className="app-promo-phone-alert">
-            <Bell size={16} strokeWidth={2.5} />
-            <span>{t("home.appPromoPhoneAlert")}</span>
-          </div>
-          <div className="app-promo-phone-card">
-            <div className="app-promo-phone-card-image" />
-            <div className="app-promo-phone-card-caption">
-              <strong>{t("home.appPromoPhoneHotel")}</strong>
-              <span>★★★★</span>
-            </div>
+          <div className="app-promo-browser-grid">
+            <div className="app-promo-browser-card app-promo-browser-card--1" />
+            <div className="app-promo-browser-card app-promo-browser-card--2" />
+            <div className="app-promo-browser-card app-promo-browser-card--3" />
           </div>
         </div>
+      </div>
+
+      <div className="app-promo-float-card app-promo-float-card--offer">
+        <Sparkles size={15} strokeWidth={2.5} />
+        <span>{t("home.appPromoFloatOffer")}</span>
+      </div>
+      <div className="app-promo-float-card app-promo-float-card--place">
+        <MapPin size={15} strokeWidth={2.5} />
+        <span>{t("home.appPromoFloatPlace")}</span>
+      </div>
+      <div className="app-promo-float-card app-promo-float-card--chat">
+        <MessageCircle size={15} strokeWidth={2.5} />
+        <span>{t("home.appPromoFloatChat")}</span>
       </div>
     </div>
   );
@@ -80,18 +54,13 @@ function PromoPhoneMockup() {
 
 export function AppPromoBanner() {
   const { t } = useLocaleCurrency();
-  const [qrFailed, setQrFailed] = useState(false);
 
   if (!isAppPromoEnabled()) return null;
-
-  const promoUrl = appPromoUrl();
-  const playUrl = googlePlayUrl();
-  const iosUrl = appStoreUrl();
-  const hasStoreLinks = Boolean(playUrl || iosUrl);
 
   const features = [
     t("home.appPromoFeature1"),
     t("home.appPromoFeature2"),
+    t("home.appPromoFeature3"),
   ];
 
   return (
@@ -101,13 +70,18 @@ export function AppPromoBanner() {
     >
       <div className="app-promo-banner-inner">
         <div className="app-promo-banner-copy">
+          <p className="app-promo-eyebrow">{t("home.appPromoEyebrow")}</p>
           <h2 id="app-promo-title" className="app-promo-banner-title">
             {t("home.appPromoTitle")}
           </h2>
 
           <ul className="app-promo-features">
-            {features.map((line) => (
-              <li key={line}>
+            {features.map((line, index) => (
+              <li
+                key={line}
+                className="app-promo-feature-item"
+                style={{ animationDelay: `${index * 120}ms` }}
+              >
                 <span className="app-promo-feature-icon" aria-hidden>
                   <IconCheck size={18} />
                 </span>
@@ -116,63 +90,29 @@ export function AppPromoBanner() {
             ))}
           </ul>
 
-          <div className="app-promo-cta-row">
-            <a
-              href={promoUrl}
-              className="app-promo-qr-link"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={t("home.appPromoQrAria")}
-            >
-              {!qrFailed ? (
-                <img
-                  src={qrCodeImageUrl(promoUrl)}
-                  alt=""
-                  width={168}
-                  height={168}
-                  className="app-promo-qr-image"
-                  loading="lazy"
-                  decoding="async"
-                  onError={() => setQrFailed(true)}
-                />
-              ) : (
-                <span className="app-promo-qr-fallback">
-                  <HospyLogo height={36} variant="mark" />
-                  <span>{t("home.appPromoQrFallback")}</span>
-                </span>
-              )}
-            </a>
-
-            <div className="app-promo-stats">
-              <div className="app-promo-stat">
-                <strong>{t("home.appPromoStat1Value")}</strong>
-                <span>{t("home.appPromoStat1Label")}</span>
-              </div>
-              <div className="app-promo-stat-divider" aria-hidden />
-              <div className="app-promo-stat">
-                <strong>{t("home.appPromoStat2Value")}</strong>
-                <span>{t("home.appPromoStat2Label")}</span>
-              </div>
+          <div className="app-promo-stats app-promo-stats--inline">
+            <div className="app-promo-stat app-promo-stat--pulse">
+              <strong>{t("home.appPromoStat1Value")}</strong>
+              <span>{t("home.appPromoStat1Label")}</span>
+            </div>
+            <div className="app-promo-stat-divider" aria-hidden />
+            <div className="app-promo-stat app-promo-stat--pulse">
+              <strong>{t("home.appPromoStat2Value")}</strong>
+              <span>{t("home.appPromoStat2Label")}</span>
             </div>
           </div>
 
-          <div className="app-promo-stores">
-            {playUrl && <StoreBadgeGoogle href={playUrl} />}
-            {iosUrl && <StoreBadgeApple href={iosUrl} />}
-            {!hasStoreLinks && (
-              <a
-                href={promoUrl}
-                className="app-promo-web-btn"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t("home.appPromoWebCta")}
-              </a>
-            )}
+          <div className="app-promo-actions">
+            <Link to="/#destinos" className="app-promo-primary-btn">
+              {t("home.appPromoCtaExplore")}
+            </Link>
+            <Link to="/?ofertas=1" className="app-promo-secondary-btn">
+              {t("home.appPromoCtaOffers")}
+            </Link>
           </div>
         </div>
 
-        <PromoPhoneMockup />
+        <PromoWebShowcase />
       </div>
     </section>
   );

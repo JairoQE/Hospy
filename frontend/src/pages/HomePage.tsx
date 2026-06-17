@@ -561,7 +561,9 @@ export function HomePage() {
   }, [filters]);
 
   useEffect(() => {
-    if (!groupResultsByDistrito || !filters) {
+    const shouldLoadCatalog =
+      groupResultsByDistrito && Boolean((filters?.provincia ?? "").trim());
+    if (!shouldLoadCatalog || !filters) {
       setDistrictCatalog(undefined);
       setDistrictCatalogLoading(false);
       return;
@@ -610,15 +612,13 @@ export function HomePage() {
 
       <div className="container home-content">
 
-        <GeoLocationBanner
-
-          status={geo.status}
-
-          onActivate={geo.request}
-
-          onSkip={geo.skip}
-
-        />
+        {showBrowseSections && (
+          <GeoLocationBanner
+            status={geo.status}
+            onActivate={geo.request}
+            onSkip={geo.skip}
+          />
+        )}
 
 
 

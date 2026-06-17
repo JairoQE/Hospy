@@ -127,11 +127,9 @@ export function ProfileHero({
                         <strong>{formatCount(followersCount)}</strong>
                         {followersCount === 1 ? " seguidor" : " seguidores"}
                       </span>
-                      {isOwn && followingCount > 0 && (
-                        <span className="profile-stat-chip">
-                          <strong>{formatCount(followingCount)}</strong> siguiendo
-                        </span>
-                      )}
+                      <span className="profile-stat-chip">
+                        <strong>{formatCount(followingCount)}</strong> siguiendo
+                      </span>
                     </div>
                     {showEmail && email && <p className="profile-email">{email}</p>}
                     {roleCategory && (

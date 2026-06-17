@@ -8,7 +8,9 @@ declare global {
         options: {
           sitekey: string;
           theme?: "light" | "dark" | "auto";
-          size?: "normal" | "compact";
+          size?: "normal" | "compact" | "flexible";
+          retry?: "auto" | "never";
+          "refresh-expired"?: "auto" | "manual" | "never";
           callback?: (token: string) => void;
           "expired-callback"?: () => void;
           "error-callback"?: () => void;

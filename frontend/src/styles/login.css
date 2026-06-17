@@ -428,6 +428,45 @@
   min-height: 65px;
 }
 
+.auth-captcha-widget--loading {
+  opacity: 0.35;
+}
+
+.auth-captcha-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted, #64748b);
+}
+
+.auth-captcha-error-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.auth-captcha-retry {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--primary, #0d6e6e);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-captcha-retry:hover {
+  background: #f8fafc;
+  border-color: var(--primary, #0d6e6e);
+}
+
 .auth-captcha-widget > * {
   margin-inline: auto;
 }

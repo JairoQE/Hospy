@@ -49,8 +49,6 @@ def _search_params_for_city(city: str) -> dict:
     name = (city or "").strip()
     if not name:
         return {}
-    if resolve_departamento(name):
-        return {"departamento": name}
     prov = resolve_provincia(name, None)
     if prov:
         params: dict = {"provincia": prov["nombre"]}
@@ -58,6 +56,8 @@ def _search_params_for_city(city: str) -> dict:
         if depto:
             params["departamento"] = depto
         return params
+    if resolve_departamento(name):
+        return {"departamento": name}
     return {"ciudad": name}
 
 

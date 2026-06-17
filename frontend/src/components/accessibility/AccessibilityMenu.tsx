@@ -5,6 +5,7 @@ import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import type { Language } from "../../i18n/translations";
 import type { A11yLevel, A11yProfile } from "../../utils/accessibilityPreference";
 import { IconClose } from "../icons";
+import { AccessibilityIcon } from "./AccessibilityIcon";
 
 type AccordionId = "language" | "profile" | null;
 
@@ -82,13 +83,7 @@ export function AccessibilityMenu() {
         aria-labelledby="a11y-panel-title"
       >
         <header className="a11y-panel-head">
-          <svg className="a11y-panel-head-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="6" r="2.2" fill="currentColor" />
-            <path
-              fill="currentColor"
-              d="M7 11.5c0-.8.7-1.5 1.5-1.5h9c.8 0 1.5.7 1.5 1.5v1c0 .8-.7 1.5-1.5 1.5h-9A1.5 1.5 0 0 1 7 12.5v-1z"
-            />
-          </svg>
+          <AccessibilityIcon className="a11y-panel-head-icon" />
           <h2 id="a11y-panel-title" className="a11y-panel-title">
             {t("a11y.title")}
           </h2>

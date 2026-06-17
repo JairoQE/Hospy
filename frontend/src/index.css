@@ -375,16 +375,16 @@ img {
 
 .profile-identity-card {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 20px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
-  padding: 1rem 1.5rem 1.35rem;
+  padding: 1.15rem 1.5rem 1.35rem;
   overflow: visible;
 }
 
 .profile-identity-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1.25rem;
   padding-top: 0.15rem;
 }
@@ -392,11 +392,12 @@ img {
 .profile-identity-col {
   flex: 1;
   min-width: 0;
+  padding-top: 0.65rem;
 }
 
 .profile-identity-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
   width: 100%;
@@ -405,16 +406,17 @@ img {
 .profile-identity-actions {
   display: flex;
   flex-shrink: 0;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
+  padding-top: 0.35rem;
 }
 
 .profile-avatar-wrap {
   position: relative;
   flex-shrink: 0;
-  align-self: center;
-  margin-top: -4.25rem;
-  margin-bottom: 0.25rem;
+  align-self: flex-start;
+  margin-top: -3.75rem;
+  margin-bottom: 0;
 }
 
 .profile-avatar-wrap .profile-avatar.user-avatar-xl {
@@ -565,7 +567,7 @@ img {
   gap: 0.45rem;
   min-height: 40px;
   padding: 0 1.15rem;
-  border-radius: 8px;
+  border-radius: 999px;
   border: none;
   background: var(--primary, #0d6e6e);
   color: #fff;
@@ -628,6 +630,111 @@ img {
 
 .profile-public-note {
   padding: 1.25rem 1.5rem;
+}
+
+.profile-public-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.profile-public-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.profile-public-bio-card,
+.profile-public-stats-card,
+.profile-public-cta-card {
+  padding: 1.35rem 1.5rem;
+  border-radius: 20px;
+}
+
+.profile-public-bio {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: #475569;
+  white-space: pre-wrap;
+}
+
+.profile-public-bio--empty {
+  font-style: italic;
+}
+
+.profile-public-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin: 0;
+}
+
+.profile-public-stat {
+  padding: 0.85rem 0.95rem;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.profile-public-stat dt {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.profile-public-stat dd {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.profile-public-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.profile-public-cta-card {
+  text-align: center;
+}
+
+.profile-public-cta-card--subtle {
+  text-align: left;
+}
+
+.profile-public-cta-icon {
+  display: block;
+  margin: 0 auto 0.65rem;
+  color: var(--primary, #0d6e6e);
+}
+
+.profile-public-cta-text {
+  margin: 0.35rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.profile-public-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.profile-public-cta-actions .btn {
+  flex: 1 1 120px;
 }
 
 .profile-grid {
@@ -883,6 +990,10 @@ img {
     text-align: center;
   }
 
+  .profile-identity-col {
+    padding-top: 0;
+  }
+
   .profile-identity-row {
     flex-direction: column;
     align-items: center;
@@ -892,6 +1003,7 @@ img {
     width: 100%;
     justify-content: center;
     flex-wrap: wrap;
+    padding-top: 0;
   }
 
   .profile-card-toolbar {
@@ -903,7 +1015,15 @@ img {
   }
 
   .profile-avatar-wrap {
-    margin-top: -3.5rem;
+    margin-top: -3.25rem;
+  }
+
+  .profile-public-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-public-stats {
+    grid-template-columns: 1fr;
   }
 
   .profile-follow-btn,
@@ -1234,6 +1354,13 @@ img {
 .browse-carousel-slide {
   flex: 0 0 auto;
   scroll-snap-align: center;
+  display: flex;
+  align-items: stretch;
+}
+
+.browse-carousel-marquee-track .browse-carousel-slide {
+  display: flex;
+  align-items: stretch;
 }
 
 /* Carrusel en movimiento continuo */
@@ -1341,6 +1468,9 @@ html[data-browse-marquee="0"] .browse-carousel-marquee {
   overflow: hidden;
   transition: transform 0.25s ease;
   transform-origin: center center;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .browse-tile:hover {
@@ -1357,10 +1487,11 @@ html[data-browse-marquee="0"] .browse-carousel-marquee {
   min-width: 220px;
   max-width: 220px;
   text-align: center;
+  align-items: stretch;
 }
 
 .browse-tile-image-lg {
-  height: 160px;
+  height: 150px;
 }
 
 .browse-carousel-track:has(.browse-tile-carousel) {
@@ -1377,13 +1508,15 @@ html[data-browse-marquee="0"] .browse-carousel-marquee {
 .browse-tile-image {
   display: block;
   width: 100%;
-  height: 140px;
+  height: 150px;
+  flex-shrink: 0;
   border-radius: 12px;
   overflow: hidden;
   background-color: var(--bg);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  position: relative;
 }
 
 .browse-tile-image img {
@@ -1401,45 +1534,116 @@ html[data-browse-marquee="0"] .browse-carousel-marquee {
 }
 
 .browse-tile-lg .browse-tile-image {
-  height: 160px;
+  height: 150px;
 }
 
 .browse-tile-label {
-  display: block;
-  margin-top: 0.5rem;
+  display: -webkit-box;
+  margin-top: 0;
   font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  flex-shrink: 0;
+  min-height: 2.55rem;
+  line-height: 1.25;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.browse-tile-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-height: 5.35rem;
+  margin-top: 0.5rem;
+  gap: 0.15rem;
+}
+
+.browse-tile-footer {
+  display: grid;
+  grid-template-rows: 1.15rem 1.3rem;
+  gap: 0.2rem;
+  min-height: 2.65rem;
+  margin-top: auto;
+  width: 100%;
+}
+
+.browse-tile-footer-line {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+}
+
+.browse-tile-footer-line--primary.browse-tile-footer-line--sub {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.browse-tile-footer-line--primary.browse-tile-footer-line--meta {
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+
+.browse-tile-footer-line--primary.browse-tile-footer-line--meta strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.browse-tile-footer-line--secondary.browse-tile-footer-line--price {
+  font-size: 0.92rem;
   font-weight: 700;
   color: var(--text);
 }
 
+.browse-tile-footer-line--secondary:not(.browse-tile-footer-line--price) {
+  visibility: hidden;
+}
+
+.browse-tile-line--ghost {
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
 .browse-tile-carousel .browse-tile-label,
-.browse-tile-carousel .browse-tile-sub {
+.browse-tile-carousel .browse-tile-sub,
+.browse-tile-carousel .browse-tile-meta,
+.browse-tile-carousel .browse-tile-price,
+.browse-tile-carousel .browse-tile-footer,
+.browse-tile-carousel .browse-tile-body,
+.browse-tile-carousel .browse-tile-footer-line {
   text-align: center;
   width: 100%;
 }
 
 .browse-tile-sub {
   display: block;
-  margin-top: 0.2rem;
   font-size: 0.8rem;
   color: var(--muted);
   line-height: 1.35;
+  min-height: 1.08rem;
 }
 
 .browse-tile-meta {
   display: block;
-  margin-top: 0.2rem;
   font-size: 0.86rem;
   color: var(--muted);
   line-height: 1.35;
+  min-height: 1.16rem;
 }
 
 .browse-tile-price {
   display: block;
-  margin-top: 0.25rem;
   font-size: 0.92rem;
   font-weight: 700;
   color: var(--text);
+  line-height: 1.35;
+  min-height: 1.24rem;
 }
 
 .browse-tile-carousel .browse-tile-meta,
@@ -1455,19 +1659,18 @@ html[data-browse-marquee="0"] .browse-carousel-marquee {
   grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: 1rem;
   width: 100%;
+  align-items: stretch;
 }
 
 .browse-tile-fill {
   flex: none;
   width: 100%;
   max-width: none;
+  height: 100%;
 }
 
 .browse-tile-fill .browse-tile-image {
   height: 150px;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
 }
 
 @media (max-width: 640px) {
