@@ -195,6 +195,32 @@ def test_detalle_bootstrap_agrupa_datos(api_client, hospedaje_aprobado):
 
 
 @pytest.mark.django_db
+def test_detalle_bootstrap_incluye_ofertas_vigentes(api_client, hospedaje_aprobado):
+    from decimal import Decimal
+
+    from django.utils import timezone
+
+    from properties.models import AccommodationOffer
+
+    acc, room = hospedaje_aprobado
+    offer = AccommodationOffer.objects.create(
+        accommodation=acc,
+        discount_percent=Decimal("20"),
+        start_date=timezone.localdate(),
+        duration_days=7,
+        is_active=True,
+        title="Promo verano",
+    )
+    offer.rooms.set([room.id])
+
+    response = api_client.get(f"/api/v1/hospedajes/{acc.id}/detalle-bootstrap/")
+    assert response.status_code == 200
+    assert len(response.data["ofertas_vigentes"]) == 1
+    assert response.data["ofertas_vigentes"][0]["discount_percent"] == "20.00"
+    assert response.data["precios_display"]["oferta_activa"] is True
+
+
+@pytest.mark.django_db
 def test_cotizacion_habitaciones(api_client, hospedaje_aprobado):
     acc, _room = hospedaje_aprobado
     response = api_client.get(

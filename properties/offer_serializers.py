@@ -138,3 +138,28 @@ class AccommodationOfferSerializer(serializers.ModelSerializer):
         if room_ids is not None:
             offer.rooms.set(self._resolve_rooms(room_ids))
         return offer
+
+
+class PublicAccommodationOfferSerializer(serializers.ModelSerializer):
+    """Oferta vigente para ficha pública del hospedaje."""
+
+    vigente = serializers.SerializerMethodField()
+    dias_restantes = serializers.SerializerMethodField()
+    rooms = OfferRoomSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = AccommodationOffer
+        fields = (
+            "id",
+            "title",
+            "discount_percent",
+            "start_date",
+            "duration_days",
+            "end_date",
+            "rooms",
+            "vigente",
+            "dias_restantes",
+        )
+
+    get_vigente = AccommodationOfferSerializer.get_vigente
+    get_dias_restantes = AccommodationOfferSerializer.get_dias_restantes

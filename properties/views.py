@@ -13,7 +13,7 @@ from audit.services import log_action
 from config.permissions import IsIntegrationClient
 
 from .models import Accommodation, Service
-from .offer_serializers import AccommodationOfferSerializer
+from .offer_serializers import AccommodationOfferSerializer, PublicAccommodationOfferSerializer
 from .permissions import IsAccommodationOwner
 from .serializers import (
     AccommodationApprovalSerializer,
@@ -464,6 +464,17 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             .select_related("author", "booking", "booking__room")
             .order_by("-created_at")
         )
+        from django.utils import timezone
+
+        from .offer_services import _active_offers_qs, get_accommodation_display_prices
+
+        today = timezone.localdate()
+        active_offers = list(
+            _active_offers_qs(today)
+            .filter(accommodation_id=accommodation.pk)
+            .prefetch_related("rooms")
+            .order_by("-discount_percent", "-start_date")
+        )
         payload = {
             "hospedaje": AccommodationDetailSerializer(
                 accommodation, context=ctx
@@ -474,6 +485,10 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             "resenas": ReviewListSerializer(
                 reviews_qs, many=True, context=ctx
             ).data,
+            "ofertas_vigentes": PublicAccommodationOfferSerializer(
+                active_offers, many=True
+            ).data,
+            "precios_display": get_accommodation_display_prices(accommodation, today),
         }
         cache.set(cache_key, payload, 180)
         return Response(payload)

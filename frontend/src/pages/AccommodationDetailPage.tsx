@@ -16,16 +16,19 @@ import { CheckInCheckOutPolicySection } from "../components/bookings/CheckInChec
 import { RefundPolicySection } from "../components/bookings/RefundPolicySection";
 import { PaymentCheckoutModal } from "../components/payments/PaymentCheckoutModal";
 import { AccommodationFaqSection } from "../components/AccommodationFaqSection";
+import { PropertyOffersShowcase } from "../components/property/PropertyOffersShowcase";
 import { PriceTrendSection } from "../components/property/PriceTrendSection";
 import { PhotoGallery } from "../components/PhotoGallery";
 import { LazyPropertyMap } from "../components/LazyPropertyMap";
 import type {
   AccommodationDetail,
+  AccommodationOffer,
   PriceBreakdown,
   Review,
   RoomPublic,
   Booking,
 } from "../api/types";
+import type { AccommodationDisplayPrices } from "../api/detailBootstrap";
 import { useAuth } from "../context/AuthContext";
 import { useChatDock } from "../context/ChatDockContext";
 import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
@@ -61,6 +64,32 @@ function serviceIcon(slug: string, name: string): string {
   return SERVICE_ICONS[slug] ?? name.slice(0, 12);
 }
 
+function quoteBeforeDiscountTotal(quote: PriceBreakdown): number | null {
+  if (!quote.offer_applied) return null;
+  type NightRow = {
+    price_before_discount?: string | number;
+    price?: string | number;
+    precio?: string | number;
+  };
+  const rows: NightRow[] =
+    (quote as PriceBreakdown & { nights?: NightRow[] }).nights ??
+    (quote.desglose as NightRow[] | undefined) ??
+    [];
+  if (!rows.length) return null;
+  let total = 0;
+  let hasDiscount = false;
+  for (const row of rows) {
+    const before = row.price_before_discount;
+    if (before != null) {
+      total += Number(before);
+      hasDiscount = true;
+    } else {
+      total += Number(row.price ?? row.precio ?? 0);
+    }
+  }
+  return hasDiscount ? total : null;
+}
+
 export function AccommodationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -75,6 +104,8 @@ export function AccommodationDetailPage() {
   const [acc, setAcc] = useState<AccommodationDetail | null>(null);
   const [rooms, setRooms] = useState<RoomPublic[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [activeOffers, setActiveOffers] = useState<AccommodationOffer[]>([]);
+  const [displayPrices, setDisplayPrices] = useState<AccommodationDisplayPrices | null>(null);
   const [roomQuotes, setRoomQuotes] = useState<Record<number, PriceBreakdown | null>>({});
   const [quoteErrors, setQuoteErrors] = useState<Record<number, string>>({});
   const [quotesLoading, setQuotesLoading] = useState(false);
@@ -132,11 +163,15 @@ export function AccommodationDetailPage() {
       hospedaje: AccommodationDetail;
       habitaciones: RoomPublic[];
       resenas: Review[];
+      ofertas_vigentes?: AccommodationOffer[];
+      precios_display?: AccommodationDisplayPrices;
     }) => {
       if (cancelled) return;
       setAcc(payload.hospedaje);
       setRooms(payload.habitaciones);
       setReviews(payload.resenas);
+      setActiveOffers(payload.ofertas_vigentes ?? []);
+      setDisplayPrices(payload.precios_display ?? null);
       if (payload.habitaciones.length) {
         setSelectedRoom(payload.habitaciones[0].id);
       }
@@ -273,9 +308,26 @@ export function AccommodationDetailPage() {
         .map((q) => Number(q!.total));
       return totals.length ? Math.min(...totals) : null;
     }
+    if (displayPrices?.precio_desde != null) {
+      return Number(displayPrices.precio_desde);
+    }
     const bases = rooms.map((r) => Number(r.base_price));
     return bases.length ? Math.min(...bases) : null;
-  }, [hasDates, roomQuotes, rooms]);
+  }, [hasDates, roomQuotes, rooms, displayPrices]);
+
+  const minPriceOriginal = useMemo(() => {
+    if (hasDates) return null;
+    if (displayPrices?.precio_desde_original == null) return null;
+    return Number(displayPrices.precio_desde_original);
+  }, [hasDates, displayPrices]);
+
+  const maxDiscountPercent = useMemo(() => {
+    if (displayPrices?.descuento_porcentaje != null) {
+      return Number(displayPrices.descuento_porcentaje);
+    }
+    if (!activeOffers.length) return null;
+    return Math.max(...activeOffers.map((o) => Number(o.discount_percent) || 0));
+  }, [displayPrices, activeOffers]);
 
   const scrollTo = (sectionId: string) => {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
@@ -366,6 +418,16 @@ export function AccommodationDetailPage() {
                 </span>
               )}
               <span className="property-type-badge">{typeLabel(acc.type)}</span>
+              {maxDiscountPercent != null && maxDiscountPercent > 0 && (
+                <span className="property-offer-header-badge">
+                  <PrimeIcon name="pi-tag" size={12} />
+                  {tVars("detail.headerOfferBadge", {
+                    percent: Number.isInteger(maxDiscountPercent)
+                      ? maxDiscountPercent
+                      : maxDiscountPercent.toFixed(0),
+                  })}
+                </span>
+              )}
             </div>
             <p className="property-address-line">
               <IconMapPin size={18} className="pin-icon" />
@@ -401,6 +463,18 @@ export function AccommodationDetailPage() {
       <div className="container property-gallery-wrap">
         <PhotoGallery fotos={acc.fotos ?? []} name={acc.name} />
       </div>
+
+      {activeOffers.length > 0 && (
+        <div className="container">
+          <PropertyOffersShowcase
+            offers={activeOffers}
+            maxDiscountPercent={maxDiscountPercent}
+            priceFrom={minPrice}
+            priceFromOriginal={minPriceOriginal}
+            onViewPrices={() => scrollTo("disponibilidad")}
+          />
+        </div>
+      )}
 
       {(acc.services ?? []).length > 0 && (
         <div className="container property-amenities-bar">
@@ -442,7 +516,11 @@ export function AccommodationDetailPage() {
               <h2>{t("detail.availability")}</h2>
               {minPrice != null && (
                 <p className="price-from">
-                  {t("detail.fromPrice")} <strong>{formatMoney(minPrice)}</strong>
+                  {t("detail.fromPrice")}{" "}
+                  {minPriceOriginal != null && minPriceOriginal > minPrice && (
+                    <span className="price-from-old">{formatMoney(minPriceOriginal)}</span>
+                  )}
+                  <strong>{formatMoney(minPrice)}</strong>
                   {hasDates
                     ? wholeUnit
                       ? t("detail.perStay")
@@ -558,10 +636,21 @@ export function AccommodationDetailPage() {
                             {quotesLoading ? (
                               <span className="muted">Calculando…</span>
                             ) : price != null ? (
-                              <>
+                              <div className={quote?.offer_applied ? "room-price--offer" : undefined}>
+                                {quote?.offer_applied && quoteBeforeDiscountTotal(quote) != null && (
+                                  <span className="room-price-before">
+                                    {formatMoney(quoteBeforeDiscountTotal(quote)!)}
+                                  </span>
+                                )}
                                 <span className="room-price room-price--total">
                                   {formatMoney(price)}
                                 </span>
+                                {quote?.offer_applied && (
+                                  <span className="room-price-offer-tag">
+                                    <PrimeIcon name="pi-tag" size={11} />
+                                    {t("detail.offerApplied")}
+                                  </span>
+                                )}
                                 {hasDates && unavailable && (
                                   <small className="room-price-unavailable-hint">
                                     {quoteErrors[r.id]}
@@ -594,7 +683,7 @@ export function AccommodationDetailPage() {
                                     )}
                                   </small>
                                 )}
-                              </>
+                              </div>
                             ) : unavailable ? (
                               <span className="room-price-unavailable" title={quoteErrors[r.id]}>
                                 {quoteErrors[r.id]}

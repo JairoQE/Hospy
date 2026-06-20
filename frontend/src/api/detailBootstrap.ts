@@ -1,5 +1,6 @@
 import type {
   AccommodationDetail,
+  AccommodationOffer,
   PriceBreakdown,
   Review,
   RoomPublic,
@@ -10,6 +11,15 @@ export type DetailBootstrapPayload = {
   hospedaje: AccommodationDetail;
   habitaciones: RoomPublic[];
   resenas: Review[];
+  ofertas_vigentes?: AccommodationOffer[];
+  precios_display?: AccommodationDisplayPrices;
+};
+
+export type AccommodationDisplayPrices = {
+  precio_desde: number | string | null;
+  precio_desde_original: number | string | null;
+  oferta_activa: boolean;
+  descuento_porcentaje: number | string | null;
 };
 
 export type CotizacionPayload = {
@@ -65,6 +75,8 @@ export async function fetchDetailBootstrap(
     hospedaje: data.hospedaje,
     habitaciones: Array.isArray(data.habitaciones) ? data.habitaciones : [],
     resenas: Array.isArray(data.resenas) ? data.resenas : [],
+    ofertas_vigentes: Array.isArray(data.ofertas_vigentes) ? data.ofertas_vigentes : [],
+    precios_display: data.precios_display ?? undefined,
   };
   writeCache(id, payload);
   return payload;

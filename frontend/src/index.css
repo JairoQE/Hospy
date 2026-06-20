@@ -4007,6 +4007,13 @@ textarea:focus {
   color: var(--primary);
 }
 
+.price-from-old {
+  margin-right: 0.35rem;
+  text-decoration: line-through;
+  color: var(--muted);
+  font-weight: 500;
+}
+
 /* Sidebar */
 
 .property-sidebar {
