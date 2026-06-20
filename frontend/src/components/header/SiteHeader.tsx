@@ -173,7 +173,7 @@ export function SiteHeader() {
             </label>
 
             {user && (
-              <div className="header-inbox-wrap">
+              <div className="header-inbox-wrap" data-tour="header-inbox">
                 <InboxHeaderButtons />
               </div>
             )}

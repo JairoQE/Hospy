@@ -15,6 +15,8 @@ import { AccessibilityProvider } from "./context/AccessibilityContext";
 import { AccessibilityMenu } from "./components/accessibility/AccessibilityMenu";
 import { ReadingMaskOverlay } from "./components/accessibility/ReadingMaskOverlay";
 import { ThemeProvider } from "./context/ThemeContext";
+import { ProductTourProvider } from "./context/ProductTourContext";
+import { ProductTourLauncher } from "./components/productTour/ProductTourLauncher";
 import { FloatingChatHeads } from "./components/chat/FloatingChatHeads";
 import { GlobalChatDock } from "./components/GlobalChatDock";
 import { HospixWidget } from "./components/hospix/HospixWidget";
@@ -55,6 +57,7 @@ function AppTree() {
       <SiteDesignProvider>
       <ChatDockProvider>
         <BrowserRouter>
+        <ProductTourProvider>
         <HospixChatProvider>
           <Routes>
             <Route element={<Layout />}>
@@ -148,7 +151,9 @@ function AppTree() {
           <HospixWidget />
           <AccessibilityMenu />
           <ReadingMaskOverlay />
+          <ProductTourLauncher />
         </HospixChatProvider>
+        </ProductTourProvider>
         </BrowserRouter>
       </ChatDockProvider>
       </SiteDesignProvider>

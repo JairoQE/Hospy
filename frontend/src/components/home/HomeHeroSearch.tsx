@@ -148,7 +148,7 @@ export function HomeHeroSearch({ onSearch }: Props) {
   };
 
   return (
-    <form className="hero-search hero-search--v2" onSubmit={submit}>
+    <form className="hero-search hero-search--v2" onSubmit={submit} data-tour="home-search">
       <div className="hero-search-carousel">
         <div
           ref={trackRef}

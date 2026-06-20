@@ -126,6 +126,52 @@ export const translations = {
       level: "Nivel",
       reset: "Restablecer",
     },
+    tour: {
+      progress: "{{current}} de {{total}}",
+      next: "Siguiente",
+      prev: "Anterior",
+      done: "Entendido",
+      launcherLabel: "Ver tour guiado",
+      launcherShort: "Tour",
+      homeWelcomeTitle: "Bienvenido a Hospy",
+      homeWelcomeDesc:
+        "Te mostramos en pocos pasos cómo buscar hospedaje, explorar destinos y usar las herramientas del sitio.",
+      homeSearchTitle: "Busca tu estadía",
+      homeSearchDesc:
+        "Indica destino y fechas para ver hoteles, hostales y hospedajes verificados en todo el Perú.",
+      homeBrowseTitle: "Explora por categoría",
+      homeBrowseDesc:
+        "También puedes descubrir opciones por tipo de alojamiento, región o departamento.",
+      mobileNavTitle: "Navegación rápida",
+      mobileNavDescGuest:
+        "Desde la barra inferior accedes a inicio, alertas, mensajes, reservas y tu perfil.",
+      mobileNavDescOwner:
+        "La barra inferior te lleva al inicio, bandeja y panel sin salir de la app.",
+      hospixTitle: "Hospix, tu asistente",
+      hospixDesc:
+        "Toca el robot para hacer preguntas, recibir ayuda con reservas o explorar el sitio en cualquier momento.",
+      hospixDescOwner:
+        "Hospix conoce tu panel: pídele un resumen, accesos rápidos o ayuda con tus hospedajes.",
+      guestWelcomeTitle: "Tu espacio en Hospy",
+      guestWelcomeDesc:
+        "Como huésped puedes buscar alojamiento, gestionar reservas y recibir alertas en un solo lugar.",
+      inboxTitle: "Alertas y mensajes",
+      inboxDesc:
+        "Las campanas del encabezado muestran notificaciones de reservas y conversaciones con anfitriones.",
+      bookingsTitle: "Mis reservas",
+      bookingsDesc: "Consulta confirmaciones, fechas y detalles de tus estadías desde aquí.",
+      ownerWelcomeTitle: "Tu panel de propietario",
+      ownerWelcomeDesc:
+        "Administra hospedajes, reservas, consultas y rendimiento desde este espacio.",
+      ownerNavTitle: "Menú del panel",
+      ownerNavDescDesktop:
+        "Usa el menú lateral para ir al dashboard, tus locales, reservas, consultas y crear un nuevo hospedaje.",
+      ownerNavDescMobile:
+        "En móvil abre el menú ☰ para acceder a dashboard, hospedajes, reservas y consultas.",
+      ownerDashboardTitle: "Resumen de rendimiento",
+      ownerDashboardDesc:
+        "Aquí ves ocupación, ingresos, reservas confirmadas y tendencias según el período que elijas.",
+    },
     home: {
       heroTitle: "Encuentra tu próxima",
       heroHighlight: "estancia",
@@ -569,6 +615,52 @@ export const translations = {
       lineHeight: "Line spacing",
       level: "Level",
       reset: "Reset",
+    },
+    tour: {
+      progress: "{{current}} of {{total}}",
+      next: "Next",
+      prev: "Back",
+      done: "Got it",
+      launcherLabel: "View guided tour",
+      launcherShort: "Tour",
+      homeWelcomeTitle: "Welcome to Hospy",
+      homeWelcomeDesc:
+        "A quick walkthrough to search stays, browse destinations, and use the site tools.",
+      homeSearchTitle: "Search your stay",
+      homeSearchDesc:
+        "Pick a destination and dates to find verified hotels, hostels, and guesthouses across Peru.",
+      homeBrowseTitle: "Browse by category",
+      homeBrowseDesc:
+        "You can also explore listings by property type, region, or department.",
+      mobileNavTitle: "Quick navigation",
+      mobileNavDescGuest:
+        "The bottom bar gives you home, alerts, messages, bookings, and profile.",
+      mobileNavDescOwner:
+        "The bottom bar keeps home, inbox, and your owner panel one tap away.",
+      hospixTitle: "Hospix assistant",
+      hospixDesc:
+        "Tap the robot anytime for help with bookings, questions, or exploring the site.",
+      hospixDescOwner:
+        "Hospix knows your panel—ask for summaries, shortcuts, or help with your listings.",
+      guestWelcomeTitle: "Your Hospy space",
+      guestWelcomeDesc:
+        "As a guest you can search stays, manage bookings, and get alerts in one place.",
+      inboxTitle: "Alerts and messages",
+      inboxDesc:
+        "Header bells show booking notifications and conversations with hosts.",
+      bookingsTitle: "My bookings",
+      bookingsDesc: "Check confirmations, dates, and stay details from here.",
+      ownerWelcomeTitle: "Your owner panel",
+      ownerWelcomeDesc:
+        "Manage listings, bookings, inquiries, and performance from this workspace.",
+      ownerNavTitle: "Panel menu",
+      ownerNavDescDesktop:
+        "Use the sidebar for dashboard, listings, bookings, inquiries, and new properties.",
+      ownerNavDescMobile:
+        "On mobile, open the ☰ menu for dashboard, listings, bookings, and inquiries.",
+      ownerDashboardTitle: "Performance summary",
+      ownerDashboardDesc:
+        "Track occupancy, revenue, confirmed bookings, and trends for the period you select.",
     },
     home: {
       heroTitle: "Find your next",

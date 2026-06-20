@@ -635,7 +635,7 @@ export function HomePage() {
 
             <RecentlyViewedSection items={recentItems} />
 
-            <div id="tipos">
+            <div id="tipos" data-tour="home-browse">
 
               <BrowseTilesSection
                 title={t("home.browseByType")}

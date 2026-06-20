@@ -224,7 +224,7 @@ export function MobileBottomNav() {
   const items = buildItems(isRole, Boolean(user), summary);
 
   return (
-    <nav className="mobile-bottom-nav" aria-label="Navegación principal">
+    <nav className="mobile-bottom-nav" aria-label="Navegación principal" data-tour="mobile-bottom-nav">
       {items.map((item) => {
         const active = item.isActive
           ? item.isActive(pathname, search)
@@ -236,6 +236,7 @@ export function MobileBottomNav() {
             to={item.to}
             className={() => `mobile-tab${active ? " is-active" : ""}`}
             aria-current={active ? "page" : undefined}
+            {...(item.label === "Reservas" ? { "data-tour": "nav-bookings" } : {})}
           >
             <span className="mobile-tab-indicator" aria-hidden />
             <span className="mobile-tab-icon">

@@ -128,7 +128,7 @@ export function OwnerDashboard({
   const showPropertyFilter = properties.length > 1;
 
   return (
-    <div className="owner-dashboard">
+    <div className="owner-dashboard" data-tour="owner-dashboard">
       <header className="owner-dashboard-header">
         <div>
           <h2 className="owner-dashboard-title">Resumen de rendimiento</h2>

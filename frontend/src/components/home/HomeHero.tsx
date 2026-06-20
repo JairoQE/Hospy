@@ -17,7 +17,7 @@ export function HomeHero({ onSearch, geoStatus, geoHint }: Props) {
   const waveAnim = heroWaveAnimated(design.hero_animation_style, design.hero_animated);
 
   return (
-    <section className="home-hero home-hero--v2" aria-labelledby="home-hero-title">
+    <section className="home-hero home-hero--v2" aria-labelledby="home-hero-title" data-tour="home-hero">
       <HeroBackground />
       <div className="container home-hero-inner">
         <h1 id="home-hero-title" className="home-hero-title">

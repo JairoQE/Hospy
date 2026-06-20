@@ -1,0 +1,118 @@
+/* Product tour — estilos Hospy sobre driver.js */
+
+.hospy-product-tour-popover.driver-popover {
+  background: var(--surface, #fff);
+  color: var(--text, #111827);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+  max-width: min(360px, calc(100vw - 2rem));
+}
+
+.hospy-product-tour-popover .driver-popover-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text, #111827);
+}
+
+.hospy-product-tour-popover .driver-popover-description {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--muted, #6b7280);
+}
+
+.hospy-product-tour-popover .driver-popover-progress-text {
+  font-size: 0.75rem;
+  color: var(--muted, #6b7280);
+}
+
+.hospy-product-tour-popover .driver-popover-navigation-btns button {
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.45rem 0.9rem;
+  text-shadow: none;
+}
+
+.hospy-product-tour-popover .driver-popover-next-btn,
+.hospy-product-tour-popover .driver-popover-done-btn {
+  background: var(--primary, #2c7da0) !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+.hospy-product-tour-popover .driver-popover-prev-btn {
+  background: transparent !important;
+  color: var(--text, #111827) !important;
+  border: 1px solid var(--border, #e5e7eb) !important;
+}
+
+.hospy-product-tour-popover .driver-popover-close-btn {
+  color: var(--muted, #6b7280) !important;
+}
+
+.driver-active-element {
+  border-radius: 12px !important;
+}
+
+/* Botón flotante para relanzar el tour */
+
+.product-tour-launcher {
+  position: fixed;
+  left: 16px;
+  bottom: var(--floating-above-nav, 4.5rem);
+  z-index: 1180;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem 0.45rem 0.55rem;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 999px;
+  background: var(--surface, #fff);
+  color: var(--primary, #2c7da0);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.product-tour-launcher:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.16);
+}
+
+.product-tour-launcher-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary, #2c7da0) 12%, transparent);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.product-tour-launcher-text {
+  padding-right: 0.15rem;
+}
+
+@media (max-width: 520px) {
+  .product-tour-launcher-text {
+    display: none;
+  }
+
+  .product-tour-launcher {
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+}
+
+@media (min-width: 769px) {
+  .product-tour-launcher {
+    bottom: 1.25rem;
+  }
+}

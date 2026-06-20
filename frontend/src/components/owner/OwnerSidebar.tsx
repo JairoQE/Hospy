@@ -68,7 +68,7 @@ export function OwnerSidebar({
         </div>
 
         {ownerApproved && (
-          <nav className="owner-sidebar-nav">
+          <nav className="owner-sidebar-nav" data-tour="owner-sidebar-nav">
             <ul>
               {NAV.map((item) => (
                 <li key={item.id}>

@@ -48,6 +48,7 @@ export function OwnerLayout() {
               type="button"
               className="owner-menu-toggle"
               aria-label="Abrir menú"
+              data-tour="owner-menu-toggle"
               onClick={() => setMobileNavOpen((v) => !v)}
             >
               <PrimeIcon name="pi-bars" size={22} />
