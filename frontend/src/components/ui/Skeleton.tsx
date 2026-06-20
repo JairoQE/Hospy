@@ -211,6 +211,51 @@ export function SkeletonInboxList({ count = 5 }: { count?: number }) {
   );
 }
 
+export function SkeletonOwnerInquiries() {
+  return (
+    <div
+      className="owner-inquiries skeleton-owner-inquiries"
+      aria-busy="true"
+      aria-label="Cargando consultas"
+    >
+      <ul className="owner-inquiries-list">
+        {Array.from({ length: 5 }, (_, i) => (
+          <li key={i}>
+            <div className="skeleton-inquiry-item">
+              <Skeleton className="skeleton-line" style={{ width: "62%", height: "0.95rem" }} />
+              <Skeleton className="skeleton-line" style={{ width: "78%", height: "0.75rem" }} />
+              <Skeleton
+                className="skeleton-line"
+                style={{ width: i % 2 === 0 ? "90%" : "55%", height: "0.7rem" }}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <div className="skeleton-messenger-panel card">
+        <div className="skeleton-messenger-header">
+          <Skeleton className="skeleton-inbox-avatar" />
+          <div className="skeleton-messenger-header-text">
+            <Skeleton className="skeleton-line" style={{ width: "8rem", height: "1rem" }} />
+            <Skeleton className="skeleton-line" style={{ width: "10rem", height: "0.75rem" }} />
+          </div>
+        </div>
+        <div className="skeleton-messenger-thread">
+          <Skeleton className="skeleton-chat-bubble skeleton-chat-bubble--in" />
+          <Skeleton className="skeleton-chat-bubble skeleton-chat-bubble--out" />
+          <Skeleton className="skeleton-chat-bubble skeleton-chat-bubble--in skeleton-chat-bubble--short" />
+          <Skeleton className="skeleton-chat-bubble skeleton-chat-bubble--out skeleton-chat-bubble--short" />
+        </div>
+        <div className="skeleton-messenger-compose">
+          <Skeleton className="skeleton-messenger-input" />
+          <Skeleton className="skeleton-messenger-send" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SkeletonOwnerPanel() {
   return (
     <div className="skeleton-owner-panel" aria-busy="true" aria-label="Cargando panel">

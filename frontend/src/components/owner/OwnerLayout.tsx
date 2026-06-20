@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { displayName } from "../../utils/format";
+import { displayName, roleLabel } from "../../utils/format";
 import { PrimeIcon } from "../PrimeIcon";
 import { UserAvatar } from "../UserAvatar";
 import { OwnerSidebar } from "./OwnerSidebar";
@@ -53,7 +53,7 @@ export function OwnerLayout() {
               <PrimeIcon name="pi-bars" size={22} />
             </button>
             <span className="owner-topbar-title">Panel del propietario</span>
-            <Link to="/" className="owner-topbar-home-link">
+            <Link to="/" className="owner-topbar-home-link" title="Ir al inicio">
               <PrimeIcon name="pi-home" size={16} />
               <span>Ir al inicio</span>
             </Link>
@@ -62,12 +62,20 @@ export function OwnerLayout() {
           <div className="owner-topbar-user">
             <Link to="/perfil" className="owner-user-chip">
               {user ? <UserAvatar user={user} size="sm" /> : null}
-              <span className="owner-user-name">
-                {user ? displayName(user) : "Propietario"}
+              <span className="owner-user-meta">
+                <span className="owner-user-name">
+                  {user ? displayName(user) : "Propietario"}
+                </span>
+                {user && (
+                  <span className="owner-user-role">{roleLabel(user.role)}</span>
+                )}
               </span>
             </Link>
             <button type="button" className="owner-logout-btn" onClick={handleLogout}>
-              Cerrar sesión
+              <span className="owner-logout-btn-label">Cerrar sesión</span>
+              <span className="owner-logout-btn-short" aria-hidden>
+                Salir
+              </span>
             </button>
           </div>
         </header>

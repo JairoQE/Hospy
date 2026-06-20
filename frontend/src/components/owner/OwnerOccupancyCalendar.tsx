@@ -16,14 +16,17 @@ import { formatDate } from "../../utils/format";
 
 type Props = {
   properties: AccommodationListItem[];
+  initialAccommodationId?: number | null;
 };
 
-export function OwnerOccupancyCalendar({ properties }: Props) {
+export function OwnerOccupancyCalendar({ properties, initialAccommodationId = null }: Props) {
   const today = toDateString(new Date());
   const initial = parseDateString(today) ?? new Date();
   const [viewYear, setViewYear] = useState(initial.getFullYear());
   const [viewMonth, setViewMonth] = useState(initial.getMonth());
-  const [filterId, setFilterId] = useState<number | "">("");
+  const [filterId, setFilterId] = useState<number | "">(() =>
+    initialAccommodationId != null ? initialAccommodationId : "",
+  );
   const [days, setDays] = useState<OwnerCalendarDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -51,6 +54,12 @@ export function OwnerOccupancyCalendar({ properties }: Props) {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (initialAccommodationId != null) {
+      setFilterId(initialAccommodationId);
+    }
+  }, [initialAccommodationId]);
+
   const dayMap = useMemo(() => new Map(days.map((d) => [d.date, d])), [days]);
 
   const navigateMonth = (delta: number) => {
@@ -63,7 +72,11 @@ export function OwnerOccupancyCalendar({ properties }: Props) {
   const selectedDay = selectedDate ? dayMap.get(selectedDate) : null;
 
   return (
-    <section className="owner-occupancy-calendar card" aria-label="Calendario de ocupación">
+    <section
+      className="owner-occupancy-calendar card"
+      id="calendario-ocupacion"
+      aria-label="Calendario de ocupación"
+    >
       <div className="owner-occupancy-calendar-head">
         <div>
           <h2 className="owner-occupancy-calendar-title">Calendario de ocupación</h2>

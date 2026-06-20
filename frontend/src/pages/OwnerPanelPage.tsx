@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError, api } from "../api/client";
 import { confirmExternalPayment } from "../api/payments";
@@ -79,6 +79,12 @@ export function OwnerPanelPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tab = tabFromParams(searchParams);
+  const calendarPropertyId = useMemo(() => {
+    const raw = searchParams.get("hospedaje");
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }, [searchParams]);
   const goToTab = (next: Parameters<typeof ownerTabPath>[0]) => {
     navigate(ownerTabPath(next));
   };
@@ -152,6 +158,15 @@ export function OwnerPanelPage() {
       load();
     }
   }, [ownerApproved, tab]);
+
+  useEffect(() => {
+    if (loading || tab !== "reservas" || calendarPropertyId == null) return;
+    const el = document.getElementById("calendario-ocupacion");
+    if (!el) return;
+    window.requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [loading, tab, calendarPropertyId]);
 
   const createAcc = async (e: FormEvent) => {
     e.preventDefault();
@@ -361,7 +376,10 @@ export function OwnerPanelPage() {
             {tab === "reservas" && !loading && (
               <section className="owner-bookings-section" aria-label="Reservas">
                 <OwnerCheckInAlerts bookings={bookings} />
-                <OwnerOccupancyCalendar properties={mine} />
+                <OwnerOccupancyCalendar
+                  properties={mine}
+                  initialAccommodationId={calendarPropertyId}
+                />
                 <div className="owner-bookings-intro card">
                   <h2 className="owner-bookings-intro-title">Tus reservas</h2>
                   <p className="muted">

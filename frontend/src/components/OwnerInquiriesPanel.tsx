@@ -9,6 +9,7 @@ import {
 import type { ChatMessage, Conversation } from "../api/types";
 import { useInboxSummary } from "../hooks/useInboxSummary";
 import { MessengerChatUI } from "./MessengerChatUI";
+import { SkeletonOwnerInquiries } from "./ui/Skeleton";
 
 type Props = {
   initialConversationId?: number | null;
@@ -93,7 +94,7 @@ export function OwnerInquiriesPanel({ initialConversationId = null }: Props) {
   };
 
   if (loading && conversations.length === 0) {
-    return <p className="muted">Cargando consultas…</p>;
+    return <SkeletonOwnerInquiries />;
   }
 
   if (conversations.length === 0) {

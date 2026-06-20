@@ -4,7 +4,7 @@ import type { Booking } from "../../api/types";
 import { PrimeIcon } from "../PrimeIcon";
 import { addDaysStr, compareDateStr, toDateString } from "../../utils/calendarDates";
 import { formatDate } from "../../utils/format";
-import { ownerTabPath } from "../../utils/ownerPanelRoutes";
+import { ownerCalendarPath } from "../../utils/ownerPanelRoutes";
 
 type Props = {
   bookings: Booking[];
@@ -45,7 +45,7 @@ export function OwnerCheckInAlerts({ bookings }: Props) {
           </li>
         ))}
       </ul>
-      <Link to={ownerTabPath("reservas")} className="owner-checkin-alerts-link">
+      <Link to={ownerCalendarPath()} className="owner-checkin-alerts-link">
         Ver calendario y reservas
       </Link>
     </div>

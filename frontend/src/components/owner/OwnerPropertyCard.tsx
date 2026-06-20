@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { AccommodationListItem } from "../../api/types";
 import { formatDate, typeLabel } from "../../utils/format";
 import { resolveMediaUrl } from "../../utils/media";
+import { ownerCalendarPath } from "../../utils/ownerPanelRoutes";
 import type { PropertyStats } from "../../utils/ownerPropertyStats";
 import { PrimeIcon } from "../PrimeIcon";
 import { OwnerPropertyStatusPill } from "./OwnerPropertyStatusPill";
@@ -79,6 +80,13 @@ export function OwnerPropertyCard({ property, stats }: Props) {
           >
             <PrimeIcon name="pi-pencil" size={18} />
             Editar
+          </Link>
+          <Link
+            to={ownerCalendarPath(property.id)}
+            className="owner-property-btn owner-property-btn--calendar"
+          >
+            <PrimeIcon name="pi-calendar" size={18} />
+            Calendario
           </Link>
           <Link
             to={`/hospedajes/${property.id}`}
