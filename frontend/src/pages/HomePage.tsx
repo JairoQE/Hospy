@@ -33,6 +33,8 @@ import { FeaturedSearchesSection } from "../components/home/FeaturedSearchesSect
 import { RecentlyViewedSection } from "../components/home/RecentlyViewedSection";
 
 import { SearchResultsSection } from "../components/home/SearchResultsSection";
+import type { ResultsToolbarValues } from "../components/home/SearchResultsToolbar";
+import { DEFAULT_RESULTS_PAGE_SIZE } from "../utils/resultsPagination";
 
 import { ScrollToTopButton } from "../components/ui/ScrollToTopButton";
 
@@ -101,6 +103,7 @@ type BrowseMeta = {
   departamento?: string;
   provincia?: string;
   distrito?: string;
+  lockedTipo?: string;
 };
 
 
@@ -131,6 +134,16 @@ export function HomePage() {
   const [nearbyLoading, setNearbyLoading] = useState(false);
 
   const [items, setItems] = useState<AccommodationListItem[]>([]);
+
+  const [listMeta, setListMeta] = useState<{
+    count: number;
+    page: number;
+    pageSize: number;
+  } | null>(null);
+
+  const [activeQuery, setActiveQuery] = useState<
+    Record<string, string | number | undefined | null> | null
+  >(null);
 
   const [loading, setLoading] = useState(false);
 
@@ -166,57 +179,78 @@ export function HomePage() {
   );
 
   const loadList = useCallback(
-
     async (
-
       query: Record<string, string | number | undefined | null>,
-
       title: string,
-
+      opts?: { scroll?: boolean },
     ) => {
+      const page = Math.max(1, Number(query.page) || 1);
+      const pageSize = Math.max(
+        1,
+        Number(query.page_size) || DEFAULT_RESULTS_PAGE_SIZE,
+      );
+      const fullQuery = { ...query, page, page_size: pageSize };
 
-      lastQueryRef.current = { query, title };
-
+      lastQueryRef.current = { query: fullQuery, title };
+      setActiveQuery(fullQuery);
       setLoading(true);
-
       setError("");
-
       setResultsTitle(title);
 
-      setItems([]);
-
       try {
-
-        const q = buildQuery(query);
-
+        const q = buildQuery(fullQuery);
         const data = await api.get<Paginated<AccommodationListItem>>(
-
           `/hospedajes/${q}`,
-
           false,
-
         );
-
         setItems(data.results);
-
-        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-
+        setListMeta({ count: data.count, page, pageSize });
+        if (opts?.scroll !== false) {
+          resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
       } catch (e) {
-
         setError(e instanceof Error ? e.message : "Error al cargar");
-
         setItems([]);
-
+        setListMeta(null);
       } finally {
-
         setLoading(false);
-
       }
-
     },
-
     [],
+  );
 
+  const updateResultsQuery = useCallback(
+    (patch: Partial<ResultsToolbarValues>, resetPage = true) => {
+      const last = lastQueryRef.current;
+      if (!last) return;
+      const next: Record<string, string | number | undefined | null> = {
+        ...last.query,
+      };
+      if (patch.search !== undefined) {
+        next.search = patch.search.trim() || undefined;
+      }
+      if (patch.ordenar !== undefined) next.ordenar = patch.ordenar;
+      if (patch.tipo !== undefined) next.tipo = patch.tipo || undefined;
+      if (patch.precio_min !== undefined) {
+        next.precio_min = patch.precio_min || undefined;
+      }
+      if (patch.precio_max !== undefined) {
+        next.precio_max = patch.precio_max || undefined;
+      }
+      if (patch.page_size !== undefined) next.page_size = patch.page_size;
+      if (resetPage) next.page = 1;
+      loadList(next, last.title, { scroll: false });
+    },
+    [loadList],
+  );
+
+  const goToResultsPage = useCallback(
+    (page: number) => {
+      const last = lastQueryRef.current;
+      if (!last) return;
+      loadList({ ...last.query, page }, last.title, { scroll: true });
+    },
+    [loadList],
   );
 
 
@@ -367,10 +401,13 @@ export function HomePage() {
         salida: f.salida,
         tipo: f.tipo,
         precio_max: f.precio_max,
-        ordenar: f.ordenar,
+        precio_min: f.precio_min,
+        ordenar: f.ordenar || "-rating",
         departamento: f.departamento,
         provincia: f.provincia,
         distrito: f.distrito,
+        page: 1,
+        page_size: DEFAULT_RESULTS_PAGE_SIZE,
       },
       placeLabel
         ? tVars("home.resultsInPlace", { place: placeLabel })
@@ -381,13 +418,12 @@ export function HomePage() {
 
 
   const onBrowseType = (tipo: string, label: string) => {
-
     setFilters(null);
-
-    setBrowse({ label });
-
-    loadList({ tipo, ordenar: "-rating" }, label);
-
+    setBrowse({ label, lockedTipo: tipo });
+    loadList(
+      { tipo, ordenar: "-rating", page: 1, page_size: DEFAULT_RESULTS_PAGE_SIZE },
+      label,
+    );
   };
 
 
@@ -397,8 +433,10 @@ export function HomePage() {
     setFilters(null);
 
     setBrowse({ label, zona });
-
-    loadList({ zona, ordenar: "-rating" }, tVars("home.staysInRegion", { region: label }));
+    loadList(
+      { zona, ordenar: "-rating", page: 1, page_size: DEFAULT_RESULTS_PAGE_SIZE },
+      tVars("home.staysInRegion", { region: label }),
+    );
   };
 
 
@@ -437,19 +475,14 @@ export function HomePage() {
     });
 
     loadList(
-
       {
-
         ciudad: params.ciudad,
-
         departamento: params.departamento,
-
         provincia: params.provincia,
-
         distrito: params.distrito,
-
         ordenar: "-rating",
-
+        page: 1,
+        page_size: DEFAULT_RESULTS_PAGE_SIZE,
       },
 
       tVars("home.staysInPlace", { place: params.label }),
@@ -470,6 +503,8 @@ export function HomePage() {
       distrito: item.search.distrito,
       zona: item.search.zona,
       ordenar: "-rating",
+      page: 1,
+      page_size: DEFAULT_RESULTS_PAGE_SIZE,
     };
 
     setFilters({
@@ -504,15 +539,12 @@ export function HomePage() {
 
 
   const clearResults = () => {
-
     setFilters(null);
-
     setBrowse(null);
-
     setResultsTitle(null);
-
     setItems([]);
-
+    setListMeta(null);
+    setActiveQuery(null);
     setError("");
 
     setDistrictCatalog(undefined);
@@ -526,7 +558,10 @@ export function HomePage() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get("ofertas") === "1") {
-      loadList({ ofertas: 1, ordenar: "-rating" }, t("home.offersTitle"));
+      loadList(
+        { ofertas: 1, ordenar: "-rating", page: 1, page_size: DEFAULT_RESULTS_PAGE_SIZE },
+        t("home.offersTitle"),
+      );
       return;
     }
     if (lastQueryRef.current?.query.ofertas === 1) {
@@ -597,6 +632,18 @@ export function HomePage() {
     navigate("/", { replace: true });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const toolbarValues = useMemo((): ResultsToolbarValues | null => {
+    if (!activeQuery) return null;
+    return {
+      search: String(activeQuery.search ?? ""),
+      ordenar: String(activeQuery.ordenar ?? "-rating"),
+      tipo: String(activeQuery.tipo ?? browse?.lockedTipo ?? ""),
+      precio_min: String(activeQuery.precio_min ?? ""),
+      precio_max: String(activeQuery.precio_max ?? ""),
+      page_size: Number(activeQuery.page_size) || DEFAULT_RESULTS_PAGE_SIZE,
+    };
+  }, [activeQuery, browse?.lockedTipo]);
 
   const showBrowseSections = !filters && !browse && !resultsTitle;
 
@@ -694,33 +741,24 @@ export function HomePage() {
         <section ref={resultsRef}>
 
           <SearchResultsSection
-
             title={resultsTitle}
-
             items={items}
-
             loading={loading}
-
             error={error}
-
             filters={filters}
-
             hasBrowse={Boolean(browse)}
-
             groupByDistrito={groupResultsByDistrito}
-
             districtCatalog={districtCatalog}
-
             districtCatalogLoading={districtCatalogLoading}
-
             showBackToHome={isOfertasView}
-
             onBackToHome={backToHome}
-
             onClear={clearResults}
-
             onRetry={retrySearch}
-
+            listMeta={listMeta}
+            toolbarValues={toolbarValues}
+            lockedTipo={browse?.lockedTipo}
+            onToolbarApply={updateResultsQuery}
+            onPageChange={goToResultsPage}
           />
 
         </section>

@@ -13,6 +13,11 @@ import {
   districtSectionDomId,
   type DistrictChip,
 } from "./DistrictJumpChips";
+import {
+  SearchResultsPagination,
+  SearchResultsToolbar,
+  type ResultsToolbarValues,
+} from "./SearchResultsToolbar";
 
 const EMPTY_DISTRICT_KEY = "__empty__";
 
@@ -81,6 +86,12 @@ function buildUbigeoSections(
   return sections.filter((section) => section.items.length > 0);
 }
 
+type ListMeta = {
+  count: number;
+  page: number;
+  pageSize: number;
+};
+
 type Props = {
   title: string | null;
   items: AccommodationListItem[];
@@ -95,6 +106,11 @@ type Props = {
   onBackToHome?: () => void;
   onClear: () => void;
   onRetry: () => void;
+  listMeta?: ListMeta | null;
+  toolbarValues?: ResultsToolbarValues | null;
+  lockedTipo?: string;
+  onToolbarApply?: (patch: Partial<ResultsToolbarValues>, resetPage?: boolean) => void;
+  onPageChange?: (page: number) => void;
 };
 
 export function SearchResultsSection({
@@ -111,6 +127,11 @@ export function SearchResultsSection({
   onBackToHome,
   onClear,
   onRetry,
+  listMeta = null,
+  toolbarValues = null,
+  lockedTipo,
+  onToolbarApply,
+  onPageChange,
 }: Props) {
   const { t, tVars, language } = useLocaleCurrency();
   const firstCardRef = useRef<HTMLAnchorElement>(null);
@@ -163,13 +184,18 @@ export function SearchResultsSection({
     items.length === 0 &&
     !(groupByDistrito && districtCatalogLoading);
 
+  const resultsCountLabel = useMemo(() => {
+    if (!listMeta || listMeta.count <= 0) return null;
+    return tVars("home.resultsTotalCount", { n: listMeta.count });
+  }, [listMeta, tVars]);
+
   const districtSummary = useMemo(() => {
     if (!displaySections?.length || items.length === 0) return null;
     return tVars("home.resultsDistrictSummary", {
-      count: String(items.length),
+      count: String(listMeta?.count ?? items.length),
       districts: String(displaySections.length),
     });
-  }, [displaySections, items.length, tVars]);
+  }, [displaySections, items.length, listMeta?.count, tVars]);
 
   useEffect(() => {
     if (displaySections?.length) {
@@ -235,6 +261,9 @@ export function SearchResultsSection({
       <div className="home-results-head">
         <div className="home-results-head-main">
           <h2 className="home-block-title">{title}</h2>
+          {resultsCountLabel && !loading && !error && (
+            <p className="home-results-total muted">{resultsCountLabel}</p>
+          )}
           {districtSummary && !loading && !error && (
             <p className="home-results-summary">{districtSummary}</p>
           )}
@@ -253,6 +282,17 @@ export function SearchResultsSection({
           )}
         </div>
       </div>
+
+      {toolbarValues && onToolbarApply && onPageChange && (
+        <SearchResultsToolbar
+          values={toolbarValues}
+          listMeta={listMeta}
+          lockedTipo={lockedTipo}
+          loading={loading}
+          onApply={onToolbarApply}
+          onPageChange={onPageChange}
+        />
+      )}
 
       {!loading && groupByDistrito && !error && displaySections && items.length > 0 && (
         <p className="muted home-results-group-hint">{t("home.resultsGroupedByDistrito")}</p>
@@ -343,6 +383,14 @@ export function SearchResultsSection({
             </section>
           ))}
         </div>
+      )}
+
+      {!loading && !error && listMeta && onPageChange && (
+        <SearchResultsPagination
+          listMeta={listMeta}
+          loading={loading}
+          onPageChange={onPageChange}
+        />
       )}
     </section>
   );
