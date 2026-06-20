@@ -18,6 +18,7 @@ export function Layout() {
     pathname === "/login" ||
     pathname.startsWith("/registro") ||
     pathname.startsWith("/recuperar");
+  const hideBottomNav = isAdminRoute || isAuthMinimal;
 
   return (
     <div
@@ -47,7 +48,7 @@ export function Layout() {
         </>
       )}
       {!isPanelShellRoute && <SiteFooter />}
-      {!isPanelShellRoute && <MobileBottomNav />}
+      {!hideBottomNav && <MobileBottomNav />}
     </div>
   );
 }

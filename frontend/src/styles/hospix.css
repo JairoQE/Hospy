@@ -60,8 +60,9 @@
 
 .hospix-fab-badge {
   position: absolute;
-  top: -2px;
-  right: -2px;
+  top: -4px;
+  right: -4px;
+  z-index: 5;
   min-width: 18px;
   height: 18px;
   padding: 0 4px;
@@ -70,9 +71,12 @@
   color: #fff;
   font-size: 0.65rem;
   font-weight: 700;
+  line-height: 1;
   display: grid;
   place-items: center;
   border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
 }
 
 @keyframes hospix-pulse {

@@ -20,6 +20,7 @@
   position: relative;
   width: 56px;
   height: 56px;
+  overflow: visible;
 }
 
 .chat-head-bubble-wrap:hover .chat-head-bubble-close,
@@ -82,8 +83,9 @@
 
 .chat-head-bubble-badge {
   position: absolute;
-  top: -2px;
-  right: -2px;
+  top: -4px;
+  right: -4px;
+  z-index: 5;
   min-width: 18px;
   height: 18px;
   padding: 0 4px;
@@ -92,9 +94,12 @@
   color: #fff;
   font-size: 0.65rem;
   font-weight: 700;
+  line-height: 1;
   border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   display: grid;
   place-items: center;
+  pointer-events: none;
 }
 
 .chat-head-bubble-close {

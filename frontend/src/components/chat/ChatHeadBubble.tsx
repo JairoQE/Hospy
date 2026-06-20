@@ -34,12 +34,12 @@ export function ChatHeadBubble({
         title={label}
       >
         {children}
-        {badge != null && badge > 0 && (
-          <span className="chat-head-bubble-badge" aria-hidden>
-            {badge > 9 ? "9+" : badge}
-          </span>
-        )}
       </button>
+      {badge != null && badge > 0 && (
+        <span className="chat-head-bubble-badge" aria-hidden>
+          {badge > 9 ? "9+" : badge}
+        </span>
+      )}
       {onClose != null && (
         <button
           type="button"
