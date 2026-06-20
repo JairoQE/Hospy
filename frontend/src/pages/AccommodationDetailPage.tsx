@@ -25,6 +25,7 @@ import type {
   AccommodationOffer,
   PriceBreakdown,
   Review,
+  ReviewInsights,
   RoomPublic,
   Booking,
 } from "../api/types";
@@ -42,7 +43,7 @@ import { getPricingModel, isWholeUnitPricing } from "../utils/pricingModel";
 import { resolveMediaUrl } from "../utils/media";
 import { IconCheck, IconEye, IconMapPin, IconUser } from "../components/icons";
 import { PrimeIcon } from "../components/PrimeIcon";
-import { ReviewStayMeta } from "../components/reviews/ReviewStayMeta";
+import { PropertyReviewsSection } from "../components/reviews/PropertyReviewsSection";
 import { StarRating } from "../components/StarRating";
 import { SkeletonPropertyDetail } from "../components/ui/Skeleton";
 import { ratingLabel, ratingStars, toTenPointScore } from "../utils/rating";
@@ -104,6 +105,7 @@ export function AccommodationDetailPage() {
   const [acc, setAcc] = useState<AccommodationDetail | null>(null);
   const [rooms, setRooms] = useState<RoomPublic[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewInsights, setReviewInsights] = useState<ReviewInsights | null>(null);
   const [activeOffers, setActiveOffers] = useState<AccommodationOffer[]>([]);
   const [displayPrices, setDisplayPrices] = useState<AccommodationDisplayPrices | null>(null);
   const [roomQuotes, setRoomQuotes] = useState<Record<number, PriceBreakdown | null>>({});
@@ -165,11 +167,13 @@ export function AccommodationDetailPage() {
       resenas: Review[];
       ofertas_vigentes?: AccommodationOffer[];
       precios_display?: AccommodationDisplayPrices;
+      resenas_insights?: ReviewInsights;
     }) => {
       if (cancelled) return;
       setAcc(payload.hospedaje);
       setRooms(payload.habitaciones);
       setReviews(payload.resenas);
+      setReviewInsights(payload.resenas_insights ?? null);
       setActiveOffers(payload.ofertas_vigentes ?? []);
       setDisplayPrices(payload.precios_display ?? null);
       if (payload.habitaciones.length) {
@@ -878,42 +882,11 @@ export function AccommodationDetailPage() {
             faqs={acc.faqs ?? []}
           />
 
-          <section className="property-section" id="resenas" data-tour="property-reviews">
-            <div className="section-head-row">
-              <h2>{t("detail.reviewsTitle")}</h2>
-              {reviews.length > 0 && (
-                <span className="reviews-count">
-                  {tVars("detail.reviewsCount", { n: reviews.length })}
-                </span>
-              )}
-            </div>
-            {reviews.length === 0 ? (
-              <p className="muted">{t("detail.noReviews")}</p>
-            ) : (
-              <div className="reviews-grid">
-                {reviews.slice(0, 6).map((r) => (
-                  <article key={r.id} className="review-card">
-                    <div className="review-card-head">
-                      <p className="review-author">{r.autor_nombre}</p>
-                      <StarRating
-                        rating={Number(r.rating)}
-                        size="sm"
-                        showValue={false}
-                      />
-                    </div>
-                    <ReviewStayMeta
-                      habitacion={r.habitacion}
-                      checkIn={r.check_in}
-                      checkOut={r.check_out}
-                      totalAmount={r.total_amount}
-                    />
-                    <p className="review-text">{r.comment}</p>
-                    <time className="muted">{formatDate(r.created_at.slice(0, 10))}</time>
-                  </article>
-                ))}
-              </div>
-            )}
-          </section>
+          <PropertyReviewsSection
+            reviews={reviews}
+            insights={reviewInsights}
+            city={acc.city}
+          />
 
           {(acc.otros_mismo_propietario?.length ?? 0) > 0 && (
             <section className="property-section owner-more-section" id="mismo-propietario">

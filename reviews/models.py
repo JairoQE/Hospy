@@ -28,6 +28,7 @@ class Review(TimeStampedModel):
         related_name="resenas",
     )
     rating = models.PositiveSmallIntegerField()  # 1-5
+    category_ratings = models.JSONField(default=dict, blank=True)
     comment = models.TextField()
     status = models.CharField(
         max_length=20,

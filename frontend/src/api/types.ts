@@ -381,8 +381,30 @@ export interface Review {
   check_out?: string | null;
   total_amount?: string | number | null;
   rating: number;
+  category_ratings?: Partial<Record<string, number>>;
   comment: string;
   created_at: string;
+}
+
+export interface ReviewCategoryScore {
+  key: string;
+  score: number;
+}
+
+export interface ReviewDistributionRow {
+  key: string;
+  count: number;
+  percent: number;
+}
+
+export interface ReviewInsights {
+  total: number;
+  average_ten: number | null;
+  above_average_in_city: boolean;
+  city?: string;
+  destacadas: ReviewCategoryScore[];
+  otras: ReviewCategoryScore[];
+  distribution: ReviewDistributionRow[];
 }
 
 export interface AuthTokens {

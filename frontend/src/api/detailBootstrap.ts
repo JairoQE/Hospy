@@ -3,6 +3,7 @@ import type {
   AccommodationOffer,
   PriceBreakdown,
   Review,
+  ReviewInsights,
   RoomPublic,
 } from "./types";
 import { api } from "./client";
@@ -13,6 +14,7 @@ export type DetailBootstrapPayload = {
   resenas: Review[];
   ofertas_vigentes?: AccommodationOffer[];
   precios_display?: AccommodationDisplayPrices;
+  resenas_insights?: ReviewInsights;
 };
 
 export type AccommodationDisplayPrices = {
@@ -77,6 +79,7 @@ export async function fetchDetailBootstrap(
     resenas: Array.isArray(data.resenas) ? data.resenas : [],
     ofertas_vigentes: Array.isArray(data.ofertas_vigentes) ? data.ofertas_vigentes : [],
     precios_display: data.precios_display ?? undefined,
+    resenas_insights: data.resenas_insights ?? undefined,
   };
   writeCache(id, payload);
   return payload;

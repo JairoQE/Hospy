@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from bookings.models import Booking
 
+from .categories import REVIEW_CATEGORY_KEYS, normalize_category_ratings
 from .models import Review
 from .services import (
     booking_for_review,
@@ -30,6 +31,7 @@ class ReviewListSerializer(serializers.ModelSerializer):
             "check_out",
             "total_amount",
             "rating",
+            "category_ratings",
             "comment",
             "created_at",
         )
@@ -73,20 +75,43 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
+    category_ratings = serializers.JSONField(required=False)
 
     class Meta:
         model = Review
-        fields = ("accommodation", "booking", "rating", "comment")
+        fields = ("accommodation", "booking", "rating", "category_ratings", "comment")
 
     def validate_rating(self, value):
         if value < 1 or value > 5:
             raise serializers.ValidationError("La puntuación debe estar entre 1 y 5.")
         return value
 
+    def validate_category_ratings(self, value):
+        cleaned = normalize_category_ratings(value)
+        if value and not cleaned:
+            raise serializers.ValidationError(
+                "Las puntuaciones por categoría deben ser números del 1 al 5."
+            )
+        missing = [k for k in REVIEW_CATEGORY_KEYS if k not in cleaned]
+        if missing and value:
+            raise serializers.ValidationError(
+                f"Califica todas las categorías ({len(REVIEW_CATEGORY_KEYS)} aspectos)."
+            )
+        return cleaned
+
     def validate(self, data):
         user = self.context["request"].user
         accommodation = data["accommodation"]
         booking_ref = data.get("booking")
+        categories = data.get("category_ratings") or {}
+        if not categories or len(categories) < len(REVIEW_CATEGORY_KEYS):
+            raise serializers.ValidationError(
+                {
+                    "category_ratings": (
+                        "Califica todos los aspectos de tu estadía antes de enviar."
+                    )
+                }
+            )
 
         if not guest_has_completed_stay(user, accommodation.id):
             raise serializers.ValidationError(
@@ -132,6 +157,7 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
             rating=validated_data["rating"],
             comment=validated_data["comment"],
             booking=booking,
+            category_ratings=validated_data.get("category_ratings"),
         )
 
 

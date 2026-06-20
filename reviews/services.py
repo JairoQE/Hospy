@@ -84,8 +84,11 @@ def create_guest_review(
     rating: int,
     comment: str,
     booking: Booking | None = None,
+    category_ratings: dict | None = None,
 ) -> Review:
     """Crea reseña; publica de inmediato si REVIEWS_AUTO_APPROVE está activo."""
+    from .categories import normalize_category_ratings
+
     status = (
         Review.Status.APROBADA
         if reviews_auto_approve_enabled()
@@ -97,6 +100,7 @@ def create_guest_review(
         booking=booking,
         rating=rating,
         comment=comment,
+        category_ratings=normalize_category_ratings(category_ratings),
         status=status,
     )
     if status == Review.Status.APROBADA:

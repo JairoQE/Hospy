@@ -468,6 +468,8 @@ class AccommodationViewSet(viewsets.ModelViewSet):
 
         from .offer_services import _active_offers_qs, get_accommodation_display_prices
 
+        from reviews.insights import build_accommodation_review_insights
+
         today = timezone.localdate()
         active_offers = list(
             _active_offers_qs(today)
@@ -489,6 +491,7 @@ class AccommodationViewSet(viewsets.ModelViewSet):
                 active_offers, many=True
             ).data,
             "precios_display": get_accommodation_display_prices(accommodation, today),
+            "resenas_insights": build_accommodation_review_insights(accommodation),
         }
         cache.set(cache_key, payload, 180)
         return Response(payload)
