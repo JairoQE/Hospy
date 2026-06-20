@@ -42,6 +42,7 @@ import {
 import { formatCoordinate } from "../utils/coordinates";
 import { formatDate, formatMoney } from "../utils/format";
 import "../styles/owner-panel.css";
+import { SkeletonOwnerPanel } from "../components/ui/Skeleton";
 
 function faqsPayload(form: AccommodationFormData) {
   return form.faqs
@@ -53,11 +54,16 @@ function faqsPayload(form: AccommodationFormData) {
 }
 
 function formToPayload(form: AccommodationFormData) {
+  const hours =
+    form.refund_policy_type === "flexible" && form.refund_hours_before_full.trim()
+      ? Number(form.refund_hours_before_full)
+      : null;
   return {
     ...form,
     latitude: formatCoordinate(form.latitude),
     longitude: formatCoordinate(form.longitude),
     service_ids: form.service_ids,
+    refund_hours_before_full: hours,
     faqs: faqsPayload(form),
   };
 }
@@ -314,7 +320,11 @@ export function OwnerPanelPage() {
               {error && <p className="owner-panel-msg owner-panel-msg--error">{error}</p>}
             </div>
 
-            {loading && <p className="owner-panel-loading">Cargando…</p>}
+            {loading && (
+              <div className="owner-panel-loading-wrap">
+                <SkeletonOwnerPanel />
+              </div>
+            )}
 
             {tab === "dashboard" && !loading && (
               <OwnerDashboard

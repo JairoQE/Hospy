@@ -57,7 +57,7 @@ export function OwnerStoreAbout({ store, ownerName }: Props) {
       )}
 
       <p className="owner-store-cta-soft">
-        <Link to="/legal/terminos-y-condiciones" className="owner-store-text-link">
+        <Link to="/legal/terminos" className="owner-store-text-link">
           {t("ownerStorePage.cancellationPolicy")}
         </Link>
       </p>

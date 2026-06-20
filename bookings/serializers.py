@@ -21,6 +21,7 @@ class BookingListSerializer(serializers.ModelSerializer):
     cancel_reason = serializers.SerializerMethodField()
     huesped = serializers.SerializerMethodField()
     payment = serializers.SerializerMethodField()
+    refund_if_cancel_now = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
@@ -41,6 +42,7 @@ class BookingListSerializer(serializers.ModelSerializer):
             "can_cancel",
             "cancel_reason",
             "payment",
+            "refund_if_cancel_now",
         )
 
     def get_can_leave_review(self, obj):
@@ -86,6 +88,19 @@ class BookingListSerializer(serializers.ModelSerializer):
             "status": payment.status,
             "method": payment.method or None,
             "amount": str(payment.amount),
+        }
+
+    def get_refund_if_cancel_now(self, obj):
+        if obj.status not in (Booking.Status.PENDIENTE, Booking.Status.CONFIRMADA):
+            return None
+        from properties.refund_policy import estimate_refund_percent
+
+        acc = obj.room.accommodation
+        est = estimate_refund_percent(acc, check_in=obj.check_in)
+        return {
+            "percent": est.percent,
+            "label": est.label,
+            "policy_type": est.policy_type,
         }
 
 

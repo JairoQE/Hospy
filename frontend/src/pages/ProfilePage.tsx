@@ -11,6 +11,7 @@ import { useAuth } from "../context/AuthContext";
 import { formatDate, profileHeading, roleLabel } from "../utils/format";
 import { formatLastAccessRelative } from "../utils/relativeTime";
 import { resolveMediaUrl } from "../utils/media";
+import { SkeletonProfilePage } from "../components/ui/Skeleton";
 
 export function ProfilePage() {
   const { userId: userIdParam } = useParams<{ userId?: string }>();
@@ -87,7 +88,7 @@ export function ProfilePage() {
     return null;
   }
   if (!displayUser) {
-    return <div className="container page muted">Cargando perfil…</div>;
+    return <SkeletonProfilePage />;
   }
 
   const { title, showEmail } = profileHeading(

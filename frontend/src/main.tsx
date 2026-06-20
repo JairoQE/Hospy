@@ -12,6 +12,7 @@ import "./styles/accessibility.css";
 import "./styles/footer.css";
 import "./styles/ads.css";
 import "./styles/payments.css";
+import "./styles/loading-states.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

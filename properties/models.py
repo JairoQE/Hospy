@@ -93,6 +93,50 @@ class Accommodation(TimeStampedModel):
         default=time(11, 0),
         help_text="Hora estándar de salida (política Hospy por defecto 11:00).",
     )
+    check_in_instructions = models.TextField(
+        "instrucciones de check-in",
+        blank=True,
+        max_length=2000,
+        help_text="Texto visible en la ficha: cómo llegar, recepción, llaves, etc.",
+    )
+    check_out_instructions = models.TextField(
+        "instrucciones de check-out",
+        blank=True,
+        max_length=2000,
+        help_text="Texto visible en la ficha: horario de salida, entrega de llaves, etc.",
+    )
+    cancellation_policy_notes = models.TextField(
+        "política de cancelación del local",
+        blank=True,
+        max_length=2000,
+        help_text="Condiciones propias del anfitrión (complementa las reglas de Hospy).",
+    )
+
+    class RefundPolicyType(models.TextChoices):
+        FLEXIBLE = "flexible", "Flexible"
+        MODERATE = "moderate", "Moderada"
+        STRICT = "strict", "Estricta"
+        NON_REFUNDABLE = "non_refundable", "No reembolsable"
+        CUSTOM = "custom", "Personalizada"
+
+    refund_policy_type = models.CharField(
+        "tipo de reembolso",
+        max_length=20,
+        choices=RefundPolicyType.choices,
+        default=RefundPolicyType.FLEXIBLE,
+    )
+    refund_hours_before_full = models.PositiveSmallIntegerField(
+        "horas para reembolso completo",
+        null=True,
+        blank=True,
+        help_text="Solo política flexible. Vacío = 48 h (estándar Hospy).",
+    )
+    refund_policy_notes = models.TextField(
+        "detalle de reembolso",
+        blank=True,
+        max_length=2000,
+        help_text="Texto libre; obligatorio recomendado si el tipo es Personalizada.",
+    )
 
     class Meta:
         verbose_name = "hospedaje"

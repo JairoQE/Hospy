@@ -4,6 +4,7 @@ import { InboxItemRow } from "../components/inbox/InboxItemRow";
 import { useAuth } from "../context/AuthContext";
 import { useInboxChannel } from "../hooks/useInboxChannel";
 import type { InboxCanal } from "../types/inbox";
+import { SkeletonInboxList } from "../components/ui/Skeleton";
 
 export function InboxPage() {
   const { user, isRole } = useAuth();
@@ -63,7 +64,7 @@ export function InboxPage() {
         </div>
       )}
 
-      {loading && <p className="muted">Cargando…</p>}
+      {loading && <SkeletonInboxList count={6} />}
 
       {!loading && items.length === 0 && (
         <div className="card inbox-empty">
@@ -78,6 +79,7 @@ export function InboxPage() {
         </div>
       )}
 
+      {!loading && (
       <ul className="inbox-list">
         {items.map((item) => (
           <li key={item.id}>
@@ -85,6 +87,7 @@ export function InboxPage() {
           </li>
         ))}
       </ul>
+      )}
     </div>
   );
 }

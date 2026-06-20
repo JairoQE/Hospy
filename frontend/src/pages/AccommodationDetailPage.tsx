@@ -13,6 +13,7 @@ import { OwnerStoreBanner } from "../components/owner/OwnerStoreBanner";
 import { MapModal } from "../components/MapModal";
 import { CancellationPolicySection } from "../components/bookings/CancellationPolicySection";
 import { CheckInCheckOutPolicySection } from "../components/bookings/CheckInCheckOutPolicySection";
+import { RefundPolicySection } from "../components/bookings/RefundPolicySection";
 import { PaymentCheckoutModal } from "../components/payments/PaymentCheckoutModal";
 import { AccommodationFaqSection } from "../components/AccommodationFaqSection";
 import { PriceTrendSection } from "../components/property/PriceTrendSection";
@@ -39,6 +40,7 @@ import { IconCheck, IconEye, IconMapPin, IconUser } from "../components/icons";
 import { PrimeIcon } from "../components/PrimeIcon";
 import { ReviewStayMeta } from "../components/reviews/ReviewStayMeta";
 import { StarRating } from "../components/StarRating";
+import { SkeletonPropertyDetail } from "../components/ui/Skeleton";
 import { ratingLabel, ratingStars, toTenPointScore } from "../utils/rating";
 
 const SERVICE_ICONS: Record<string, string> = {
@@ -318,7 +320,7 @@ export function AccommodationDetailPage() {
   };
 
   if (loading) {
-    return <div className="container page page-loading">{t("detail.loading")}</div>;
+    return <SkeletonPropertyDetail />;
   }
   if (!acc) {
     return (
@@ -755,9 +757,16 @@ export function AccommodationDetailPage() {
           <CheckInCheckOutPolicySection
             checkInFrom={acc.check_in_from}
             checkOutUntil={acc.check_out_until}
+            checkInInstructions={acc.check_in_instructions}
+            checkOutInstructions={acc.check_out_instructions}
           />
 
-          <CancellationPolicySection />
+          <CancellationPolicySection ownerNotes={acc.cancellation_policy_notes} />
+
+          <RefundPolicySection
+            policyType={acc.refund_policy_type}
+            bullets={acc.refund_policy_bullets}
+          />
 
           <AccommodationFaqSection
             propertyName={acc.name}

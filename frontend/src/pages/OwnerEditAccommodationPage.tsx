@@ -20,6 +20,7 @@ import {
 import { OwnerOffersPanel } from "../components/OwnerOffersPanel";
 import { RoomManagerPanel } from "../components/RoomManagerPanel";
 import { StatusBadge } from "../components/StatusBadge";
+import { SkeletonFormPage } from "../components/ui/Skeleton";
 import "../styles/owner-panel.css";
 
 function detailToForm(d: AccommodationDetail): AccommodationFormData {
@@ -36,6 +37,13 @@ function detailToForm(d: AccommodationDetail): AccommodationFormData {
     service_ids: d.services.map((s) => s.id),
     check_in_from: (d.check_in_from ?? "13:00").slice(0, 5),
     check_out_until: (d.check_out_until ?? "11:00").slice(0, 5),
+    check_in_instructions: d.check_in_instructions ?? "",
+    check_out_instructions: d.check_out_instructions ?? "",
+    cancellation_policy_notes: d.cancellation_policy_notes ?? "",
+    refund_policy_type: (d.refund_policy_type ?? "flexible") as AccommodationFormData["refund_policy_type"],
+    refund_hours_before_full:
+      d.refund_hours_before_full != null ? String(d.refund_hours_before_full) : "48",
+    refund_policy_notes: d.refund_policy_notes ?? "",
     faqs: (d.faqs ?? []).map((f) => ({
       question: f.question,
       answer: f.answer,
@@ -53,11 +61,16 @@ function faqsPayload(form: AccommodationFormData) {
 }
 
 function formToPayload(form: AccommodationFormData) {
+  const hours =
+    form.refund_policy_type === "flexible" && form.refund_hours_before_full.trim()
+      ? Number(form.refund_hours_before_full)
+      : null;
   return {
     ...form,
     latitude: formatCoordinate(form.latitude),
     longitude: formatCoordinate(form.longitude),
     service_ids: form.service_ids,
+    refund_hours_before_full: hours,
     faqs: faqsPayload(form),
   };
 }
@@ -168,7 +181,7 @@ export function OwnerEditAccommodationPage() {
   if (loading) {
     return (
       <div className="owner-panel-page">
-        <p className="owner-panel-loading">Cargando hospedaje…</p>
+        <SkeletonFormPage fields={10} />
       </div>
     );
   }

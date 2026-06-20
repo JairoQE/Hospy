@@ -14,6 +14,7 @@ import type {
   User,
 } from "../api/types";
 import { AdminDashboard } from "../components/admin/AdminDashboard";
+import { SkeletonAdminStats } from "../components/ui/Skeleton";
 
 export function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -85,7 +86,11 @@ export function AdminDashboardPage() {
   }, [load]);
 
   if (loading) {
-    return <p className="admin-loading">Cargando estadísticas…</p>;
+    return (
+      <div className="admin-dashboard admin-dashboard--v2">
+        <SkeletonAdminStats />
+      </div>
+    );
   }
 
   if (loadError) {

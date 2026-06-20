@@ -11,6 +11,7 @@ import {
 import { OwnerStoreHero } from "../components/owner-store/OwnerStoreHero";
 import { OwnerStorePropertyCard } from "../components/owner-store/OwnerStorePropertyCard";
 import { OwnerStoreReviews } from "../components/owner-store/OwnerStoreReviews";
+import { SkeletonOwnerStorePage } from "../components/ui/Skeleton";
 import { PrimeIcon } from "../components/PrimeIcon";
 import { useAuth } from "../context/AuthContext";
 import { useChatDock } from "../context/ChatDockContext";
@@ -199,13 +200,7 @@ export function OwnerStorePage() {
   };
 
   if (loading) {
-    return (
-      <div className="owner-store-page">
-        <div className="owner-store-shell">
-          <p className="owner-store-loading muted">{t("ownerStorePage.loading")}</p>
-        </div>
-      </div>
-    );
+    return <SkeletonOwnerStorePage />;
   }
 
   if (!store) {

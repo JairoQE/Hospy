@@ -2861,6 +2861,21 @@ textarea:focus {
   font-size: 0.88rem;
 }
 
+.cancellation-policy-intro {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.cancellation-policy-owner {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--surface-muted, #f4f7f7);
+  border-radius: var(--radius-md, 12px);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 .leave-review-overlay {
   position: fixed;
   inset: 0;

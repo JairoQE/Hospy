@@ -4,6 +4,7 @@ import type { AccommodationFaqInput, Service } from "../api/types";
 import { AccommodationFaqEditor } from "./AccommodationFaqEditor";
 import { LocationPickerModal, type LocationPickResult } from "./LocationPickerModal";
 import { formatCoordinate } from "../utils/coordinates";
+import { REFUND_POLICY_OPTIONS, type RefundPolicyType } from "../utils/refundPolicy";
 
 export interface AccommodationFormData {
   name: string;
@@ -18,6 +19,12 @@ export interface AccommodationFormData {
   service_ids: number[];
   check_in_from: string;
   check_out_until: string;
+  check_in_instructions: string;
+  check_out_instructions: string;
+  cancellation_policy_notes: string;
+  refund_policy_type: RefundPolicyType;
+  refund_hours_before_full: string;
+  refund_policy_notes: string;
   faqs: AccommodationFaqInput[];
 }
 
@@ -34,6 +41,12 @@ export const emptyAccommodationForm = (): AccommodationFormData => ({
   service_ids: [],
   check_in_from: "13:00",
   check_out_until: "11:00",
+  check_in_instructions: "",
+  check_out_instructions: "",
+  cancellation_policy_notes: "",
+  refund_policy_type: "flexible",
+  refund_hours_before_full: "48",
+  refund_policy_notes: "",
   faqs: [],
 });
 
@@ -252,7 +265,11 @@ export function AccommodationForm({
         />
       </label>
       <div className="full location-fields check-policy-fields">
-        <p className="location-fields-label">Políticas de entrada y salida</p>
+        <p className="location-fields-label">Políticas de entrada y salida (este hospedaje)</p>
+        <p className="hint">
+          Cada local tiene sus propias reglas. Si administras varios hospedajes, configúralas por
+          separado al editar cada uno.
+        </p>
         <div className="location-fields-row">
           <label>
             Check-in desde
@@ -274,8 +291,87 @@ export function AccommodationForm({
           </label>
         </div>
         <p className="hint">
-          Estándar Hospy: entrada 13:00 y salida 11:00. Puedes ajustarlos según tu operación.
+          Horarios por defecto: entrada 13:00 y salida 11:00. Ajusta según tu operación.
         </p>
+        <label className="full">
+          Instrucciones de check-in (opcional)
+          <textarea
+            rows={3}
+            value={value.check_in_instructions}
+            onChange={(e) => set("check_in_instructions", e.target.value)}
+            placeholder="Ej.: Recepción en planta baja. Presentar DNI. Llaves en locker con código."
+          />
+        </label>
+        <label className="full">
+          Instrucciones de check-out (opcional)
+          <textarea
+            rows={3}
+            value={value.check_out_instructions}
+            onChange={(e) => set("check_out_instructions", e.target.value)}
+            placeholder="Ej.: Dejar llaves en recepción. Avisar con 1 h de anticipación."
+          />
+        </label>
+        <label className="full">
+          Política de cancelación de tu local (opcional)
+          <textarea
+            rows={3}
+            value={value.cancellation_policy_notes}
+            onChange={(e) => set("cancellation_policy_notes", e.target.value)}
+            placeholder="Ej.: No reembolsable en temporada alta. Cambio de fecha sin costo con 7 días de aviso."
+          />
+        </label>
+      </div>
+      <div className="full location-fields check-policy-fields">
+        <p className="location-fields-label">Política de reembolso (este hospedaje)</p>
+        <p className="hint">
+          No se hereda de otros locales del mismo propietario: aplica solo a las reservas de este
+          alojamiento.
+        </p>
+        <label className="full">
+          Tipo de reembolso
+          <select
+            value={value.refund_policy_type}
+            onChange={(e) => set("refund_policy_type", e.target.value as RefundPolicyType)}
+          >
+            {REFUND_POLICY_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="hint">
+          {
+            REFUND_POLICY_OPTIONS.find((o) => o.value === value.refund_policy_type)?.hint
+          }
+        </p>
+        {value.refund_policy_type === "flexible" && (
+          <label>
+            Horas de anticipación para reembolso completo
+            <input
+              type="number"
+              min={1}
+              max={720}
+              value={value.refund_hours_before_full}
+              onChange={(e) => set("refund_hours_before_full", e.target.value)}
+            />
+          </label>
+        )}
+        <label className="full">
+          Detalle adicional de reembolso{" "}
+          {value.refund_policy_type === "custom" ? "(obligatorio)" : "(opcional)"}
+          <textarea
+            rows={3}
+            value={value.refund_policy_notes}
+            onChange={(e) => set("refund_policy_notes", e.target.value)}
+            placeholder={
+              value.refund_policy_type === "custom"
+                ? "Ej.: 70 % hasta 72 h antes; transferencia en 5 días hábiles."
+                : "Ej.: Reembolsos solo por transferencia bancaria. Temporada alta sin devolución."
+            }
+            required={value.refund_policy_type === "custom"}
+          />
+        </label>
       </div>
       <div className="full location-fields">
         <p className="location-fields-label">Ubicación GPS</p>

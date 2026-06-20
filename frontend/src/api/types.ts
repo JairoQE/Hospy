@@ -204,6 +204,13 @@ export interface AccommodationDetail {
   average_rating: string | number;
   check_in_from?: string;
   check_out_until?: string;
+  check_in_instructions?: string;
+  check_out_instructions?: string;
+  cancellation_policy_notes?: string;
+  refund_policy_type?: string;
+  refund_hours_before_full?: number | null;
+  refund_policy_notes?: string;
+  refund_policy_bullets?: string[];
   services: Service[];
   fotos: AccommodationPhoto[];
   faqs?: AccommodationFaq[];
@@ -348,6 +355,11 @@ export interface Booking {
   has_review?: boolean;
   can_cancel?: boolean;
   cancel_reason?: string | null;
+  refund_if_cancel_now?: {
+    percent: number | null;
+    label: string;
+    policy_type: string;
+  } | null;
   room_id?: number;
   desglose_precio?: PriceBreakdown | null;
   updated_at?: string;

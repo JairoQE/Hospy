@@ -5,12 +5,26 @@ const CANCEL_HOURS = 48;
 
 type Props = {
   className?: string;
+  /** Texto libre del propietario para este local. */
+  ownerNotes?: string | null;
 };
 
-export function CancellationPolicySection({ className = "property-section" }: Props) {
+export function CancellationPolicySection({
+  className = "property-section",
+  ownerNotes,
+}: Props) {
+  const custom = (ownerNotes ?? "").trim();
+
   return (
     <section className={className} id="politica-cancelacion" aria-labelledby="cancel-policy-title">
       <h2 id="cancel-policy-title">Política de cancelación</h2>
+      {custom ? (
+        <p className="cancellation-policy-owner">{custom}</p>
+      ) : (
+        <p className="muted cancellation-policy-intro">
+          El anfitrión no ha indicado condiciones adicionales. Aplican las reglas de la plataforma.
+        </p>
+      )}
       <ul className="cancellation-policy-list">
         <li>
           <PrimeIcon name="pi-calendar-times" size={18} />
@@ -22,7 +36,7 @@ export function CancellationPolicySection({ className = "property-section" }: Pr
         <li>
           <PrimeIcon name="pi-clock" size={18} />
           <span>
-            Como huésped, la cancelación gratuita aplica hasta{" "}
+            En Hospy, la cancelación gratuita del huésped aplica hasta{" "}
             <strong>{CANCEL_HOURS} horas antes</strong> del check-in.
           </span>
         </li>
@@ -33,17 +47,9 @@ export function CancellationPolicySection({ className = "property-section" }: Pr
             pueden anular desde la app.
           </span>
         </li>
-        <li>
-          <PrimeIcon name="pi-wallet" size={18} />
-          <span>
-            El reembolso depende del acuerdo con el anfitrión y del método de pago usado al
-            reservar.
-          </span>
-        </li>
       </ul>
       <p className="muted cancellation-policy-more">
-        Más información en{" "}
-        <Link to="/legal/terminos-y-condiciones">términos y condiciones</Link> y en el{" "}
+        Más información en <Link to="/legal/terminos">términos y condiciones</Link> y en el{" "}
         <Link to="/centro-ayuda">centro de ayuda</Link>.
       </p>
     </section>

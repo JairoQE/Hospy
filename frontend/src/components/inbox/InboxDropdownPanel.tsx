@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useInboxChannel } from "../../hooks/useInboxChannel";
 import type { InboxCanal } from "../../types/inbox";
+import { LoadingSpinner } from "../ui/LoadingSpinner";
 import { InboxItemRow } from "./InboxItemRow";
 
 const PREVIEW_LIMIT = 8;
@@ -91,7 +92,11 @@ export function InboxDropdownPanel({ canal, open, onClose }: Props) {
         </div>
 
         <div className="inbox-dropdown-list">
-          {loading && <p className="inbox-dropdown-empty muted">Cargando…</p>}
+          {loading && (
+            <div className="inbox-dropdown-loading">
+              <LoadingSpinner size="sm" label="Cargando…" centered />
+            </div>
+          )}
           {!loading && preview.length === 0 && (
             <p className="inbox-dropdown-empty muted">
               {filter === "no_leidas"

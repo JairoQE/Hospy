@@ -64,8 +64,10 @@ type Props = {
 export function InfoPage({ pageId }: Props) {
   const { slug } = useParams<{ slug: string }>();
   const key = pageId ?? slug ?? "";
+  const normalizedKey =
+    key === "terminos-y-condiciones" ? "terminos" : key;
 
-  const page = STATIC_PAGES[key] ?? LEGAL_CONTENT[key];
+  const page = STATIC_PAGES[normalizedKey] ?? LEGAL_CONTENT[normalizedKey];
 
   if (!page) {
     return (

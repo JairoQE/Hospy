@@ -6,8 +6,10 @@ import { LeaveReviewModal } from "../components/reviews/LeaveReviewModal";
 import { StatusBadge } from "../components/StatusBadge";
 import { PrimeIcon } from "../components/PrimeIcon";
 import { bookingCancelHint } from "../utils/bookingCancellation";
+import { formatRefundIfCancelNow, refundCancelConfirmMessage } from "../utils/refundEstimate";
 import { formatApiError } from "../api/errors";
 import { formatDate, formatMoney } from "../utils/format";
+import { SkeletonBookingList } from "../components/ui/Skeleton";
 
 type ReviewTarget = {
   bookingId: number;
@@ -42,9 +44,7 @@ export function MyBookingsPage() {
   }, []);
 
   const cancel = async (b: Booking) => {
-    const msg =
-      "¿Cancelar esta reserva?\n\nSi ya pagaste, el reembolso dependerá del acuerdo con el anfitrión.";
-    if (!confirm(msg)) return;
+    if (!confirm(refundCancelConfirmMessage(b))) return;
     try {
       await api.post(`/reservas/${b.id}/cancelar/`);
       load();
@@ -66,13 +66,14 @@ export function MyBookingsPage() {
           {reviewMsg}
         </p>
       )}
-      {loading && <p className="muted">Cargando…</p>}
+      {loading && <SkeletonBookingList count={4} />}
       {error && <p className="error-msg">{error}</p>}
       {!loading && bookings.length === 0 && (
         <p className="muted">
           Aún no tienes reservas. <Link to="/">Explorar hospedajes</Link>
         </p>
       )}
+      {!loading && (
       <ul className="booking-list">
         {bookings.map((b) => (
           <li key={b.id} className="card booking-item">
@@ -126,9 +127,17 @@ export function MyBookingsPage() {
                 </p>
               )}
               {b.can_cancel && (
-                <button type="button" className="btn btn-ghost" onClick={() => void cancel(b)}>
-                  Cancelar reserva
-                </button>
+                <>
+                  {formatRefundIfCancelNow(b.refund_if_cancel_now, b.total_amount) && (
+                    <p className="booking-refund-hint muted">
+                      <PrimeIcon name="pi-wallet" size={16} />
+                      {formatRefundIfCancelNow(b.refund_if_cancel_now, b.total_amount)}
+                    </p>
+                  )}
+                  <button type="button" className="btn btn-ghost" onClick={() => void cancel(b)}>
+                    Cancelar reserva
+                  </button>
+                </>
               )}
               {!b.can_cancel && bookingCancelHint(b) && (
                 <p className="booking-cancel-hint muted">{bookingCancelHint(b)}</p>
@@ -137,6 +146,7 @@ export function MyBookingsPage() {
           </li>
         ))}
       </ul>
+      )}
 
       {reviewTarget && (
         <LeaveReviewModal

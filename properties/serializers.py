@@ -301,6 +301,7 @@ class AccommodationDetailSerializer(serializers.ModelSerializer):
     propietario_calificacion = serializers.SerializerMethodField()
     propietario_resenas_total = serializers.SerializerMethodField()
     otros_mismo_propietario = serializers.SerializerMethodField()
+    refund_policy_bullets = serializers.SerializerMethodField()
 
     class Meta:
         model = Accommodation
@@ -321,6 +322,13 @@ class AccommodationDetailSerializer(serializers.ModelSerializer):
             "average_rating",
             "check_in_from",
             "check_out_until",
+            "check_in_instructions",
+            "check_out_instructions",
+            "cancellation_policy_notes",
+            "refund_policy_type",
+            "refund_hours_before_full",
+            "refund_policy_notes",
+            "refund_policy_bullets",
             "services",
             "fotos",
             "faqs",
@@ -407,6 +415,11 @@ class AccommodationDetailSerializer(serializers.ModelSerializer):
             others, many=True, context=self.context
         ).data
 
+    def get_refund_policy_bullets(self, obj):
+        from .refund_policy import refund_policy_bullets
+
+        return refund_policy_bullets(obj)
+
 
 class AccommodationWriteSerializer(serializers.ModelSerializer):
     latitude = CoordinateField()
@@ -434,8 +447,38 @@ class AccommodationWriteSerializer(serializers.ModelSerializer):
             "service_ids",
             "check_in_from",
             "check_out_until",
+            "check_in_instructions",
+            "check_out_instructions",
+            "cancellation_policy_notes",
+            "refund_policy_type",
+            "refund_hours_before_full",
+            "refund_policy_notes",
             "faqs",
         )
+
+    def validate_refund_hours_before_full(self, value):
+        if value is not None and value < 1:
+            raise serializers.ValidationError("Debe ser al menos 1 hora.")
+        if value is not None and value > 24 * 30:
+            raise serializers.ValidationError("Máximo 720 horas (30 días).")
+        return value
+
+    def validate(self, data):
+        refund_type = data.get(
+            "refund_policy_type",
+            getattr(self.instance, "refund_policy_type", None) if self.instance else "flexible",
+        )
+        notes = (data.get("refund_policy_notes") or "").strip()
+        if refund_type == "custom" and not notes:
+            if not self.instance or not (self.instance.refund_policy_notes or "").strip():
+                raise serializers.ValidationError(
+                    {
+                        "refund_policy_notes": (
+                            "Describe la política de reembolso cuando el tipo es Personalizada."
+                        )
+                    }
+                )
+        return super().validate(data)
 
     def validate_city(self, value: str):
         """
