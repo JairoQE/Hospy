@@ -1,4 +1,4 @@
-export type TourId = "home" | "guest-app" | "owner-panel";
+export type TourId = "home" | "guest-app" | "owner-panel" | "property-detail";
 
 export type TourStepDef = {
   element?: string;

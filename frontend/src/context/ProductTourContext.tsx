@@ -13,6 +13,7 @@ import { useLocaleCurrency } from "./LocaleCurrencyContext";
 import { destroyActiveTour, isTourRunning, runProductTour } from "../productTour/runTour";
 import { isTourCompleted, markTourCompleted, resetTour as resetStoredTour } from "../productTour/storage";
 import { resolveTourForRoute, TOUR_DEFINITIONS } from "../productTour/tours";
+import { waitForTourDom } from "../productTour/waitForTourDom";
 import type { TourId } from "../productTour/types";
 
 type ProductTourContextValue = {
@@ -76,15 +77,24 @@ export function ProductTourProvider({ children }: { children: ReactNode }) {
     const autoKey = `${availableTourId}:${pathname}:${user?.id ?? "anon"}`;
     if (autoStartedRef.current === autoKey) return;
 
-    const timer = window.setTimeout(() => {
-      if (isTourCompleted(availableTourId)) return;
-      const started = startTour(availableTourId);
-      if (started) {
-        autoStartedRef.current = autoKey;
-      }
-    }, AUTO_START_DELAY_MS);
+    let cancelled = false;
+    const baseDelay = availableTourId === "property-detail" ? 600 : AUTO_START_DELAY_MS;
 
-    return () => window.clearTimeout(timer);
+    const timer = window.setTimeout(() => {
+      void waitForTourDom(availableTourId).then((ready) => {
+        if (cancelled || !ready) return;
+        if (isTourCompleted(availableTourId)) return;
+        const started = startTour(availableTourId);
+        if (started) {
+          autoStartedRef.current = autoKey;
+        }
+      });
+    }, baseDelay);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [availableTourId, pathname, startTour, user?.id]);
 
   const value = useMemo(

@@ -1,0 +1,128 @@
+/* Banner superior — alertas y mensajes nuevos */
+
+.inbox-notification-host {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1300;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem 0;
+  pointer-events: none;
+}
+
+.inbox-notification-banner {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0.55rem 0.55rem 0.55rem 0.65rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: #f8fafc;
+  box-shadow:
+    0 10px 30px rgba(15, 23, 42, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  animation: inbox-notification-slide 0.35s ease-out;
+}
+
+@keyframes inbox-notification-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-110%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.inbox-notification-banner-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.inbox-notification-banner-main:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
+.inbox-notification-logo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.inbox-notification-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.inbox-notification-brand {
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0.88;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inbox-notification-message {
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.inbox-notification-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #f8fafc;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.inbox-notification-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  opacity: 1;
+}
+
+@media (max-width: 520px) {
+  .inbox-notification-host {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .inbox-notification-brand {
+    font-size: 0.65rem;
+  }
+
+  .inbox-notification-message {
+    font-size: 0.8125rem;
+  }
+}

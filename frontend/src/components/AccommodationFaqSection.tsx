@@ -32,7 +32,11 @@ export function AccommodationFaqSection({ propertyName, faqs }: Props) {
   if (faqs.length === 0) return null;
 
   return (
-    <section className="property-section property-faq-section" id="preguntas-frecuentes">
+    <section
+      className="property-section property-faq-section"
+      id="preguntas-frecuentes"
+      data-tour="property-faq"
+    >
       <h2>{tVars("detail.faqTitle", { name: propertyName })}</h2>
       <div className="property-faq-grid">
         <FaqColumn items={left} />

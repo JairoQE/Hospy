@@ -17,6 +17,15 @@ export const translations = {
       inbox: "Bandeja",
       myAds: "Mis anuncios",
     },
+    inboxNotify: {
+      brandLine: "Hospy — Conexión a tu destino",
+      notificacion: "Tienes {n} nueva notificación",
+      notificacion_plural: "Tienes {n} nuevas notificaciones",
+      mensaje: "Tienes {n} nuevo mensaje",
+      mensaje_plural: "Tienes {n} nuevos mensajes",
+      both: "Tienes nuevas alertas y mensajes en tu bandeja",
+      dismiss: "Cerrar aviso",
+    },
     footer: {
       tagline: "Conexión a tu destino",
       verified: "Hospedajes 100% verificados",
@@ -171,6 +180,51 @@ export const translations = {
       ownerDashboardTitle: "Resumen de rendimiento",
       ownerDashboardDesc:
         "Aquí ves ocupación, ingresos, reservas confirmadas y tendencias según el período que elijas.",
+      detailWelcomeTitle: "Ficha del hospedaje",
+      detailWelcomeDesc:
+        "Te guiamos por esta página: fotos, ofertas, disponibilidad, reserva, políticas y más.",
+      detailHeaderTitle: "Nombre y acciones rápidas",
+      detailHeaderDesc:
+        "Aquí ves el tipo de alojamiento, la valoración, la ubicación y los botones para ver el mapa o ir a reservar.",
+      detailGalleryTitle: "Galería de fotos",
+      detailGalleryDesc:
+        "Explora las imágenes del local. Toca una foto para ampliarla y ver más detalles.",
+      detailOffersTitle: "Ofertas y promociones",
+      detailOffersDesc:
+        "Si hay descuentos activos, aparecen aquí con el porcentaje, las fechas y las habitaciones incluidas.",
+      detailAmenitiesTitle: "Servicios destacados",
+      detailAmenitiesDesc:
+        "Un vistazo rápido a lo que incluye el hospedaje: WiFi, estacionamiento, piscina y más.",
+      detailAboutTitle: "Sobre el alojamiento",
+      detailAboutDesc:
+        "Lee la descripción del anfitrión para conocer el ambiente, la ubicación y qué esperar de tu estadía.",
+      detailContactTitle: "Contactar al anfitrión",
+      detailContactDesc:
+        "Escríbele por WhatsApp o chat interno si tienes dudas antes de reservar.",
+      detailAvailabilityTitle: "Disponibilidad y calendario",
+      detailAvailabilityDesc:
+        "Elige fechas de entrada y salida. El calendario muestra días libres, ocupados o bloqueados.",
+      detailRoomsTitle: "Habitaciones y precios",
+      detailRoomsDesc:
+        "Compara tipos, capacidad y precio total de la estadía. Pulsa el ojo para ver fotos de cada habitación.",
+      detailSidebarTitle: "Resumen de reserva",
+      detailSidebarDesc:
+        "En el panel lateral confirmas fechas, habitación y total antes de pulsar Reservar.",
+      detailServicesTitle: "Servicios incluidos",
+      detailServicesDesc:
+        "Listado completo de comodidades del hospedaje para que sepas qué está incluido.",
+      detailPoliciesTitle: "Políticas del hospedaje",
+      detailPoliciesDesc:
+        "Horarios de check-in/out, cancelación y reembolsos según las reglas de este local.",
+      detailFaqTitle: "Preguntas frecuentes",
+      detailFaqDesc:
+        "Respuestas del anfitrión a dudas comunes sin tener que escribirle.",
+      detailReviewsTitle: "Opiniones de huéspedes",
+      detailReviewsDesc:
+        "Lee reseñas verificadas de quienes ya se hospedaron aquí.",
+      detailLocationTitle: "Ubicación",
+      detailLocationDesc:
+        "Mapa interactivo y enlace para abrir la dirección en Google Maps.",
     },
     home: {
       heroTitle: "Encuentra tu próxima",
@@ -517,6 +571,15 @@ export const translations = {
       inbox: "Inbox",
       myAds: "My ads",
     },
+    inboxNotify: {
+      brandLine: "Hospy — Connection to your destination",
+      notificacion: "You have {n} new notification",
+      notificacion_plural: "You have {n} new notifications",
+      mensaje: "You have {n} new message",
+      mensaje_plural: "You have {n} new messages",
+      both: "You have new alerts and messages in your inbox",
+      dismiss: "Dismiss",
+    },
     footer: {
       tagline: "Connection to your destination",
       verified: "100% verified stays",
@@ -671,6 +734,51 @@ export const translations = {
       ownerDashboardTitle: "Performance summary",
       ownerDashboardDesc:
         "Track occupancy, revenue, confirmed bookings, and trends for the period you select.",
+      detailWelcomeTitle: "Property page",
+      detailWelcomeDesc:
+        "A walkthrough of this listing: photos, offers, availability, booking, policies, and more.",
+      detailHeaderTitle: "Name and quick actions",
+      detailHeaderDesc:
+        "See property type, rating, location, and buttons to open the map or jump to booking.",
+      detailGalleryTitle: "Photo gallery",
+      detailGalleryDesc:
+        "Browse property photos. Tap an image to enlarge and see more detail.",
+      detailOffersTitle: "Offers and promotions",
+      detailOffersDesc:
+        "Active discounts show here with the percentage, dates, and included rooms.",
+      detailAmenitiesTitle: "Featured amenities",
+      detailAmenitiesDesc:
+        "A quick look at what's included: WiFi, parking, pool, and more.",
+      detailAboutTitle: "About this stay",
+      detailAboutDesc:
+        "Read the host's description to understand the place and what to expect.",
+      detailContactTitle: "Contact the host",
+      detailContactDesc:
+        "Message via WhatsApp or in-app chat if you have questions before booking.",
+      detailAvailabilityTitle: "Availability and calendar",
+      detailAvailabilityDesc:
+        "Pick check-in and check-out dates. The calendar shows free, busy, or blocked days.",
+      detailRoomsTitle: "Rooms and pricing",
+      detailRoomsDesc:
+        "Compare room types, capacity, and stay total. Use the eye icon for room photos.",
+      detailSidebarTitle: "Booking summary",
+      detailSidebarDesc:
+        "The sidebar confirms dates, room, and total before you tap Book.",
+      detailServicesTitle: "Included services",
+      detailServicesDesc:
+        "Full list of amenities so you know what's included in your stay.",
+      detailPoliciesTitle: "Property policies",
+      detailPoliciesDesc:
+        "Check-in/out times, cancellation, and refund rules for this listing.",
+      detailFaqTitle: "Frequently asked questions",
+      detailFaqDesc:
+        "The host's answers to common questions without messaging them.",
+      detailReviewsTitle: "Guest reviews",
+      detailReviewsDesc:
+        "Read verified reviews from guests who stayed here.",
+      detailLocationTitle: "Location",
+      detailLocationDesc:
+        "Interactive map and link to open the address in Google Maps.",
     },
     home: {
       heroTitle: "Find your next",

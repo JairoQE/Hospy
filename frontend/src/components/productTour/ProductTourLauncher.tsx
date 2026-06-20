@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useProductTour } from "../../context/ProductTourContext";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { isTourRunning } from "../../productTour/runTour";
+import { waitForTourDom } from "../../productTour/waitForTourDom";
 import "../../styles/product-tour.css";
 
 const HIDDEN_PREFIXES = ["/admin", "/login", "/registro", "/recuperar"];
@@ -21,7 +22,11 @@ export function ProductTourLauncher() {
     <button
       type="button"
       className="product-tour-launcher"
-      onClick={() => startTour(availableTourId, { force: true })}
+      onClick={() => {
+        void waitForTourDom(availableTourId).then((ready) => {
+          if (ready) startTour(availableTourId, { force: true });
+        });
+      }}
       aria-label={t("tour.launcherLabel")}
       title={t("tour.launcherLabel")}
     >

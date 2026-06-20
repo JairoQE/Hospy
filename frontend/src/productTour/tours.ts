@@ -125,6 +125,119 @@ export const TOUR_DEFINITIONS: Record<TourId, TourDefinition> = {
       },
     ],
   },
+  "property-detail": {
+    id: "property-detail",
+    steps: [
+      {
+        titleKey: "tour.detailWelcomeTitle",
+        descriptionKey: "tour.detailWelcomeDesc",
+      },
+      {
+        element: '[data-tour="property-header"]',
+        titleKey: "tour.detailHeaderTitle",
+        descriptionKey: "tour.detailHeaderDesc",
+        side: "bottom",
+      },
+      {
+        element: '[data-tour="property-gallery"]',
+        titleKey: "tour.detailGalleryTitle",
+        descriptionKey: "tour.detailGalleryDesc",
+        side: "bottom",
+      },
+      {
+        element: '[data-tour="property-offers"]',
+        titleKey: "tour.detailOffersTitle",
+        descriptionKey: "tour.detailOffersDesc",
+        side: "bottom",
+        optional: true,
+      },
+      {
+        element: '[data-tour="property-amenities"]',
+        titleKey: "tour.detailAmenitiesTitle",
+        descriptionKey: "tour.detailAmenitiesDesc",
+        side: "bottom",
+        optional: true,
+      },
+      {
+        element: '[data-tour="property-description"]',
+        titleKey: "tour.detailAboutTitle",
+        descriptionKey: "tour.detailAboutDesc",
+        side: "top",
+      },
+      {
+        element: '[data-tour="property-contact"]',
+        titleKey: "tour.detailContactTitle",
+        descriptionKey: "tour.detailContactDesc",
+        side: "top",
+        optional: true,
+      },
+      {
+        element: '[data-tour="property-availability"]',
+        titleKey: "tour.detailAvailabilityTitle",
+        descriptionKey: "tour.detailAvailabilityDesc",
+        side: "top",
+      },
+      {
+        element: '[data-tour="property-rooms"]',
+        titleKey: "tour.detailRoomsTitle",
+        descriptionKey: "tour.detailRoomsDesc",
+        side: "top",
+        optional: true,
+      },
+      {
+        element: '[data-tour="property-sidebar-book"]',
+        titleKey: "tour.detailSidebarTitle",
+        descriptionKey: "tour.detailSidebarDesc",
+        side: "left",
+        optional: true,
+      },
+      {
+        element: '[data-tour="property-services"]',
+        titleKey: "tour.detailServicesTitle",
+        descriptionKey: "tour.detailServicesDesc",
+        side: "top",
+      },
+      {
+        element: '[data-tour="property-policies"]',
+        titleKey: "tour.detailPoliciesTitle",
+        descriptionKey: "tour.detailPoliciesDesc",
+        side: "top",
+      },
+      {
+        element: '[data-tour="property-faq"]',
+        titleKey: "tour.detailFaqTitle",
+        descriptionKey: "tour.detailFaqDesc",
+        side: "top",
+        optional: true,
+      },
+      {
+        element: '[data-tour="property-reviews"]',
+        titleKey: "tour.detailReviewsTitle",
+        descriptionKey: "tour.detailReviewsDesc",
+        side: "top",
+      },
+      {
+        element: '[data-tour="property-location"]',
+        titleKey: "tour.detailLocationTitle",
+        descriptionKey: "tour.detailLocationDesc",
+        side: "top",
+      },
+      {
+        element: '[data-tour="mobile-bottom-nav"]',
+        titleKey: "tour.mobileNavTitle",
+        descriptionKey: "tour.mobileNavDescGuest",
+        side: "top",
+        optional: true,
+      },
+      {
+        element: '[data-tour="hospix-assistant"]',
+        titleKey: "tour.hospixTitle",
+        descriptionKey: "tour.hospixDesc",
+        side: "left",
+        optional: true,
+      },
+    ],
+  },
 };
 
 export function resolveTourForRoute(pathname: string, role?: string): TourId | null {
@@ -137,12 +250,16 @@ export function resolveTourForRoute(pathname: string, role?: string): TourId | n
     return null;
   }
 
+  if (/^\/hospedajes\/\d+/.test(pathname)) {
+    return "property-detail";
+  }
+
   if (pathname.startsWith("/panel")) {
     if (/^\/panel\/hospedajes\/\d+/.test(pathname)) return null;
     return role === "propietario" ? "owner-panel" : null;
   }
 
-  if (pathname === "/" || pathname.startsWith("/hospedajes/")) {
+  if (pathname === "/") {
     if (role === "propietario" || role === "administrador" || role === "patrocinador") {
       return "home";
     }

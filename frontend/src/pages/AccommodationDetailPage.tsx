@@ -408,7 +408,7 @@ export function AccommodationDetailPage() {
           <span>{acc.name}</span>
         </nav>
 
-        <header className="property-header">
+        <header className="property-header" data-tour="property-header">
           <div className="property-header-main">
             <div className="property-title-row">
               <h1>{acc.name}</h1>
@@ -460,7 +460,7 @@ export function AccommodationDetailPage() {
         </header>
       </div>
 
-      <div className="container property-gallery-wrap">
+      <div className="container property-gallery-wrap" data-tour="property-gallery">
         <PhotoGallery fotos={acc.fotos ?? []} name={acc.name} />
       </div>
 
@@ -477,7 +477,7 @@ export function AccommodationDetailPage() {
       )}
 
       {(acc.services ?? []).length > 0 && (
-        <div className="container property-amenities-bar">
+        <div className="container property-amenities-bar" data-tour="property-amenities">
           {(acc.services ?? []).slice(0, 8).map((s) => (
             <span key={s.id} className="amenity-pill">
               <span className="amenity-icon">{serviceIcon(s.slug, s.name)}</span>
@@ -489,7 +489,7 @@ export function AccommodationDetailPage() {
 
       <div className="container property-layout">
         <main className="property-main">
-          <section className="property-section" id="descripcion">
+          <section className="property-section" id="descripcion" data-tour="property-description">
             <h2>{t("detail.about")}</h2>
             <p className="property-description">{acc.description}</p>
           </section>
@@ -511,7 +511,7 @@ export function AccommodationDetailPage() {
             }
           />
 
-          <section className="property-section" id="disponibilidad">
+          <section className="property-section" id="disponibilidad" data-tour="property-availability">
             <div className="section-head-row">
               <h2>{t("detail.availability")}</h2>
               {minPrice != null && (
@@ -560,7 +560,7 @@ export function AccommodationDetailPage() {
               <p className="muted avail-hint">{t("detail.datesHint")}</p>
             )}
 
-            <div className="availability-table-wrap">
+            <div className="availability-table-wrap" data-tour="property-rooms">
               <table className="availability-table">
                 <thead>
                   <tr>
@@ -837,7 +837,7 @@ export function AccommodationDetailPage() {
             checkOut={effectiveSalida}
           />
 
-          <section className="property-section" id="servicios">
+          <section className="property-section" id="servicios" data-tour="property-services">
             <h2>{tVars("detail.servicesOf", { name: acc.name })}</h2>
             {score > 0 && (
               <p className="muted services-score">
@@ -857,6 +857,7 @@ export function AccommodationDetailPage() {
             )}
           </section>
 
+          <div data-tour="property-policies">
           <CheckInCheckOutPolicySection
             checkInFrom={acc.check_in_from}
             checkOutUntil={acc.check_out_until}
@@ -870,13 +871,14 @@ export function AccommodationDetailPage() {
             policyType={acc.refund_policy_type}
             bullets={acc.refund_policy_bullets}
           />
+          </div>
 
           <AccommodationFaqSection
             propertyName={acc.name}
             faqs={acc.faqs ?? []}
           />
 
-          <section className="property-section" id="resenas">
+          <section className="property-section" id="resenas" data-tour="property-reviews">
             <div className="section-head-row">
               <h2>{t("detail.reviewsTitle")}</h2>
               {reviews.length > 0 && (
@@ -934,7 +936,7 @@ export function AccommodationDetailPage() {
             </section>
           )}
 
-          <section className="property-section" id="ubicacion">
+          <section className="property-section" id="ubicacion" data-tour="property-location">
             <h2>{t("detail.location")}</h2>
             <p className="muted">{fullAddress}</p>
             <LazyPropertyMap
@@ -1012,7 +1014,7 @@ export function AccommodationDetailPage() {
             </ul>
           </div>
 
-          <div className="sidebar-card book-card sticky-book">
+          <div className="sidebar-card book-card sticky-book" data-tour="property-sidebar-book">
             <h3>{t("detail.yourBooking")}</h3>
             {hasDates ? (
               <>

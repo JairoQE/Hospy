@@ -34,7 +34,11 @@ export function PropertyOffersShowcase({
     Math.max(...offers.map((o) => Number(o.discount_percent) || 0));
 
   return (
-    <section className="property-offers-showcase" aria-labelledby="property-offers-title">
+    <section
+      className="property-offers-showcase"
+      aria-labelledby="property-offers-title"
+      data-tour="property-offers"
+    >
       <div className="property-offers-showcase-glow" aria-hidden />
       <div className="property-offers-showcase-inner">
         <div className="property-offers-showcase-hero">

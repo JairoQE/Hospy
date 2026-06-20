@@ -58,7 +58,7 @@ export function ContactHostSection({
   const showChat = !user || canInquireHost(user.role);
 
   return (
-    <section className="property-section contact-host-section" id="contacto">
+    <section className="property-section contact-host-section" id="contacto" data-tour="property-contact">
       <h2>{t("contact.title")}</h2>
       <p className="muted contact-host-lead">
         {tVars("contact.lead", { name: ownerName })}
