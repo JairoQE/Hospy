@@ -313,6 +313,36 @@ def notify_booking_cancelled_inbox(booking) -> None:
     )
 
 
+def notify_check_in_reminder(booking) -> None:
+    from bookings.models import Booking
+
+    booking = (
+        Booking.objects.select_related(
+            "guest", "room", "room__accommodation", "room__accommodation__owner"
+        )
+        .filter(pk=booking.pk)
+        .first()
+    )
+    if not booking:
+        return
+
+    acc = booking.room.accommodation
+    owner = acc.owner
+    guest_name = booking.guest.get_full_name() or booking.guest.email
+    check_in_label = booking.check_in.strftime("%d/%m/%Y")
+
+    notify_user(
+        owner,
+        title="Check-in mañana",
+        body=(
+            f"Mañana ({check_in_label}) llega {guest_name} a «{acc.name}» "
+            f"(hab. {booking.room.number}). Prepara la habitación o el acceso."
+        ),
+        link="/panel?tab=reservas",
+        kind="check_in_reminder",
+    )
+
+
 def unread_counts(user) -> dict[str, int]:
     from messaging.services import sync_chat_inbox_for_user
 

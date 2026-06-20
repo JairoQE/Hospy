@@ -144,6 +144,104 @@ def get_day_status(room: Room, day: date) -> str:
     return "disponible"
 
 
+WHOLE_UNIT_ACCOMMODATION_TYPES = frozenset({Accommodation.Type.CASA_DEPARTAMENTO})
+
+
+def accommodation_pricing_model(accommodation: Accommodation) -> str:
+    """per_unit = casa/departamento (día bloqueado si el alojamiento está reservado)."""
+    if accommodation.type in WHOLE_UNIT_ACCOMMODATION_TYPES:
+        return "per_unit"
+    return "per_room"
+
+
+def aggregate_accommodation_day_status(accommodation: Accommodation, day: date) -> dict:
+    """
+    Estado agregado del calendario público del hospedaje.
+
+    - per_unit: reserva en cualquier habitación activa → día ocupado (alojamiento completo).
+    - per_room: ocupado solo si no queda ninguna habitación libre; parcial si hay reservas parciales.
+    """
+    rooms = list(
+        Room.objects.filter(accommodation=accommodation, is_active=True).only("id", "is_active")
+    )
+    total = len(rooms)
+    if total == 0:
+        return {
+            "status": "inactiva",
+            "available": False,
+            "rooms_available": 0,
+            "rooms_total": 0,
+        }
+
+    statuses = [get_day_status(room, day) for room in rooms]
+    disponibles = sum(1 for s in statuses if s == "disponible")
+    reservados = sum(1 for s in statuses if s == "reservado")
+    per_unit = accommodation_pricing_model(accommodation) == "per_unit"
+
+    if per_unit:
+        if reservados > 0:
+            return {
+                "status": "ocupado",
+                "available": False,
+                "rooms_available": 0,
+                "rooms_total": total,
+            }
+        if disponibles == 0:
+            return {
+                "status": "bloqueado",
+                "available": False,
+                "rooms_available": 0,
+                "rooms_total": total,
+            }
+        return {
+            "status": "disponible",
+            "available": True,
+            "rooms_available": disponibles,
+            "rooms_total": total,
+        }
+
+    if disponibles == 0:
+        status = "ocupado" if reservados > 0 else "bloqueado"
+        return {
+            "status": status,
+            "available": False,
+            "rooms_available": 0,
+            "rooms_total": total,
+        }
+    if reservados > 0:
+        return {
+            "status": "parcial",
+            "available": True,
+            "rooms_available": disponibles,
+            "rooms_total": total,
+        }
+    return {
+        "status": "disponible",
+        "available": True,
+        "rooms_available": disponibles,
+        "rooms_total": total,
+    }
+
+
+def build_accommodation_monthly_calendar(
+    accommodation: Accommodation, year: int, month: int
+) -> list[dict]:
+    first = date(year, month, 1)
+    if month == 12:
+        last = date(year, 12, 31)
+    else:
+        last = date(year, month + 1, 1) - timedelta(days=1)
+
+    days = []
+    current = first
+    while current <= last:
+        row = aggregate_accommodation_day_status(accommodation, current)
+        row["date"] = current.isoformat()
+        days.append(row)
+        current += timedelta(days=1)
+    return days
+
+
 def build_monthly_calendar(room: Room, year: int, month: int) -> list[dict]:
     first = date(year, month, 1)
     if month == 12:

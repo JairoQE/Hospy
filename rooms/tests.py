@@ -185,3 +185,110 @@ def test_cambiar_precio_base_sincroniza_tarifa_temporada(
     assert quote.status_code == 200
     row = next(q for q in quote.data["cotizaciones"] if q["room_id"] == room.id)
     assert row["total"] == "2.00"
+
+
+@pytest.mark.django_db
+def test_calendario_hospedaje_por_habitacion(api_client, hospedaje_aprobado):
+    from bookings.models import Booking
+    from django.contrib.auth import get_user_model
+
+    acc, room = hospedaje_aprobado
+    other = Room.objects.create(
+        accommodation=acc,
+        number="202",
+        type=Room.Type.DOBLE,
+        capacity=2,
+        base_price=Decimal("120.00"),
+    )
+    guest = get_user_model().objects.create_user(
+        username="guest-cal",
+        email="guest-cal@test.com",
+        password="pass",
+    )
+    Booking.objects.create(
+        room=room,
+        guest=guest,
+        check_in=date(2026, 6, 20),
+        check_out=date(2026, 6, 22),
+        total_amount=Decimal("200.00"),
+        status=Booking.Status.CONFIRMADA,
+    )
+
+    r = api_client.get(
+        f"/api/v1/hospedajes/{acc.id}/disponibilidad/",
+        {"anio": 2026, "mes": 6},
+    )
+    assert r.status_code == 200
+    assert r.data["pricing_model"] == "per_room"
+    by_date = {d["date"]: d for d in r.data["days"]}
+    assert by_date["2026-06-20"]["status"] == "parcial"
+    assert by_date["2026-06-20"]["available"] is True
+    assert by_date["2026-06-20"]["rooms_available"] == 1
+
+    other.is_active = False
+    other.save(update_fields=["is_active"])
+    Booking.objects.create(
+        room=room,
+        guest=guest,
+        check_in=date(2026, 6, 25),
+        check_out=date(2026, 6, 27),
+        total_amount=Decimal("240.00"),
+        status=Booking.Status.CONFIRMADA,
+    )
+    r2 = api_client.get(
+        f"/api/v1/hospedajes/{acc.id}/disponibilidad/",
+        {"anio": 2026, "mes": 6},
+    )
+    by_date2 = {d["date"]: d for d in r2.data["days"]}
+    assert by_date2["2026-06-25"]["status"] == "ocupado"
+    assert by_date2["2026-06-25"]["available"] is False
+
+
+@pytest.mark.django_db
+def test_calendario_hospedaje_por_unidad(api_client, propietario):
+    acc = Accommodation.objects.create(
+        owner=propietario,
+        name="Casa playa",
+        type=Accommodation.Type.CASA_DEPARTAMENTO,
+        description="Desc",
+        status=Accommodation.Status.APROBADO,
+        is_active=True,
+        address="Calle 1",
+        city="Lima",
+        region="Lima",
+        latitude="-12.046400",
+        longitude="-77.042800",
+    )
+    room = Room.objects.create(
+        accommodation=acc,
+        number="1",
+        type=Room.Type.FAMILIAR,
+        capacity=4,
+        base_price=Decimal("300.00"),
+    )
+    from bookings.models import Booking
+    from django.contrib.auth import get_user_model
+
+    guest = get_user_model().objects.create_user(
+        username="guest-unit",
+        email="guest-unit@test.com",
+        password="pass",
+    )
+    Booking.objects.create(
+        room=room,
+        guest=guest,
+        check_in=date(2026, 7, 10),
+        check_out=date(2026, 7, 12),
+        total_amount=Decimal("600.00"),
+        status=Booking.Status.CONFIRMADA,
+    )
+
+    r = api_client.get(
+        f"/api/v1/hospedajes/{acc.id}/disponibilidad/",
+        {"anio": 2026, "mes": 7},
+    )
+    assert r.status_code == 200
+    assert r.data["pricing_model"] == "per_unit"
+    by_date = {d["date"]: d for d in r.data["days"]}
+    assert by_date["2026-07-10"]["status"] == "ocupado"
+    assert by_date["2026-07-11"]["status"] == "ocupado"

@@ -43,3 +43,24 @@ def notify_booking_cancelled_task(booking_id: int) -> None:
     from .services import _notify_booking_cancelled_sync
 
     _notify_booking_cancelled_sync(booking_id)
+
+
+@shared_task(name="bookings.send_check_in_reminders")
+def send_check_in_reminders() -> int:
+    """
+    Alerta al propietario 1 día antes del check-in (reservas pendientes o confirmadas).
+    Programada vía Celery Beat.
+    """
+    from django.utils import timezone
+
+    from notifications.services import notify_check_in_reminder
+
+    from .owner_calendar import bookings_needing_check_in_reminder
+
+    sent = 0
+    for booking in bookings_needing_check_in_reminder():
+        notify_check_in_reminder(booking)
+        booking.check_in_reminder_sent_at = timezone.now()
+        booking.save(update_fields=["check_in_reminder_sent_at", "updated_at"])
+        sent += 1
+    return sent

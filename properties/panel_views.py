@@ -2,12 +2,14 @@
 
 from django.core.cache import cache
 from django.db.models import Min, Q
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.permissions import IsAdministrador, IsPropietario
 from accounts.serializers import UserSerializer
 from bookings.models import Booking
+from bookings.owner_calendar import build_owner_occupancy_calendar
 from bookings.serializers import AdminDashboardBookingSerializer, BookingListSerializer
 from properties.models import Accommodation, Service
 from properties.serializers import (
@@ -73,6 +75,45 @@ class OwnerPanelBootstrapView(APIView):
             "servicios": ServiceSerializer(services_qs, many=True, context=ctx).data,
         }
         cache.set(cache_key, payload, 90)
+        return Response(payload)
+
+
+class OwnerCalendarView(APIView):
+    """GET /api/v1/propietario/calendario/?anio=2026&mes=6&hospedaje_id=1"""
+
+    permission_classes = [IsPropietario]
+
+    def get(self, request):
+        try:
+            year = int(
+                request.query_params.get("anio") or request.query_params.get("year")
+            )
+            month = int(
+                request.query_params.get("mes") or request.query_params.get("month")
+            )
+        except (TypeError, ValueError):
+            raise ValidationError(
+                {"detail": "Parámetros requeridos: anio y mes (ej. ?anio=2026&mes=6)."}
+            )
+        if month < 1 or month > 12:
+            raise ValidationError({"mes": "Debe estar entre 1 y 12."})
+
+        accommodation_id = request.query_params.get("hospedaje_id") or request.query_params.get(
+            "accommodation_id"
+        )
+        acc_id = None
+        if accommodation_id not in (None, ""):
+            try:
+                acc_id = int(accommodation_id)
+            except (TypeError, ValueError):
+                raise ValidationError({"hospedaje_id": "Debe ser un entero."})
+
+        payload = build_owner_occupancy_calendar(
+            request.user,
+            year,
+            month,
+            accommodation_id=acc_id,
+        )
         return Response(payload)
 
 

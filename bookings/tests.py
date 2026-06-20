@@ -65,6 +65,64 @@ def test_complete_past_bookings_task(huesped, hospedaje_aprobado):
 
 
 @pytest.mark.django_db
+def test_send_check_in_reminders_task(api_client, propietario, huesped, hospedaje_aprobado):
+    from datetime import date, timedelta
+
+    from bookings.tasks import send_check_in_reminders
+    from notifications.models import InboxItem
+
+    acc, room = hospedaje_aprobado
+    tomorrow = date.today() + timedelta(days=1)
+    booking = Booking.objects.create(
+        guest=huesped,
+        room=room,
+        check_in=tomorrow,
+        check_out=tomorrow + timedelta(days=2),
+        total_amount=200,
+        status=Booking.Status.CONFIRMADA,
+    )
+
+    sent = send_check_in_reminders()
+    assert sent == 1
+    booking.refresh_from_db()
+    assert booking.check_in_reminder_sent_at is not None
+    assert InboxItem.objects.filter(
+        recipient=acc.owner,
+        kind="check_in_reminder",
+        title="Check-in mañana",
+    ).exists()
+
+    assert send_check_in_reminders() == 0
+
+
+@pytest.mark.django_db
+def test_propietario_calendario_ocupacion(api_client, propietario, huesped, hospedaje_aprobado):
+    from datetime import date, timedelta
+
+    acc, room = hospedaje_aprobado
+    api_client.force_authenticate(user=propietario)
+    check_in = date(2026, 8, 12)
+    Booking.objects.create(
+        guest=huesped,
+        room=room,
+        check_in=check_in,
+        check_out=check_in + timedelta(days=2),
+        total_amount=200,
+        status=Booking.Status.CONFIRMADA,
+    )
+
+    r = api_client.get(
+        "/api/v1/propietario/calendario/",
+        {"anio": 2026, "mes": 8, "hospedaje_id": acc.id},
+    )
+    assert r.status_code == 200
+    by_date = {d["date"]: d for d in r.data["days"]}
+    assert by_date["2026-08-12"]["status"] == "ocupado"
+    assert by_date["2026-08-12"]["check_ins_count"] == 1
+    assert len(by_date["2026-08-12"]["bookings"]) >= 1
+
+
+@pytest.mark.django_db
 def test_confirmar_reserva_aun_si_falla_notificacion(
     api_client, propietario, huesped, hospedaje_aprobado, monkeypatch
 ):

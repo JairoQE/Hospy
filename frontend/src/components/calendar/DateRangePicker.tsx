@@ -9,6 +9,8 @@ import {
   nightsBetween,
 } from "../../utils/calendarDates";
 import { DateRangeCalendar } from "./DateRangeCalendar";
+import type { AccommodationCalendarDay } from "../../api/accommodationCalendar";
+import type { PricingModel } from "../../utils/pricingModel";
 import "../../styles/date-range-calendar.css";
 
 const POPOVER_WIDTH = 720;
@@ -34,6 +36,15 @@ type Props = {
   popoverWidth?: number;
   /** Texto cuando no hay fecha (ej. dd/mm/yy). */
   placeholder?: string;
+  dayStatuses?: Map<string, AccommodationCalendarDay>;
+  pricingModel?: PricingModel;
+  onCalendarViewChange?: (
+    year: number,
+    month: number,
+    secondYear?: number,
+    secondMonth?: number,
+  ) => void;
+  showAvailabilityLegend?: boolean;
 };
 
 type PopoverCoords = {
@@ -59,6 +70,10 @@ export function DateRangePicker({
   confirmLabel,
   popoverWidth,
   placeholder,
+  dayStatuses,
+  pricingModel,
+  onCalendarViewChange,
+  showAvailabilityLegend = false,
 }: Props) {
   const { language, t } = useLocaleCurrency();
   const [open, setOpen] = useState(false);
@@ -251,6 +266,10 @@ export function DateRangePicker({
             showToolbar={!isHero && !isAdmin}
             showFooter={!isHero && !isAdmin}
             marketingHint={isHero || isAdmin ? undefined : marketingHint}
+            dayStatuses={dayStatuses}
+            pricingModel={pricingModel}
+            onViewChange={onCalendarViewChange}
+            showAvailabilityLegend={showAvailabilityLegend}
           />
           <div
             className={`date-picker-popover-footer${isAdmin && mode === "single" ? " date-picker-popover-footer--hidden" : ""}`}

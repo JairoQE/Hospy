@@ -21,6 +21,8 @@ import {
   emptyAccommodationForm,
   type AccommodationFormData,
 } from "../components/AccommodationForm";
+import { OwnerCheckInAlerts } from "../components/owner/OwnerCheckInAlerts";
+import { OwnerOccupancyCalendar } from "../components/owner/OwnerOccupancyCalendar";
 import { OwnerInquiriesPanel } from "../components/OwnerInquiriesPanel";
 import { OwnerDashboard } from "../components/owner/OwnerDashboard";
 import { OwnerPropertiesList } from "../components/owner/OwnerPropertiesList";
@@ -327,13 +329,16 @@ export function OwnerPanelPage() {
             )}
 
             {tab === "dashboard" && !loading && (
-              <OwnerDashboard
+              <>
+                <OwnerCheckInAlerts bookings={bookings} />
+                <OwnerDashboard
                 properties={mine}
                 bookings={bookings}
                 reviews={reviews}
                 unreadMessages={inboxSummary.mensajes}
                 onViewReservations={() => goToTab("reservas")}
                 onViewConsultas={() => goToTab("consultas")}              />
+              </>
             )}
 
             {tab === "hospedajes" && !loading && (
@@ -355,6 +360,8 @@ export function OwnerPanelPage() {
 
             {tab === "reservas" && !loading && (
               <section className="owner-bookings-section" aria-label="Reservas">
+                <OwnerCheckInAlerts bookings={bookings} />
+                <OwnerOccupancyCalendar properties={mine} />
                 <div className="owner-bookings-intro card">
                   <h2 className="owner-bookings-intro-title">Tus reservas</h2>
                   <p className="muted">

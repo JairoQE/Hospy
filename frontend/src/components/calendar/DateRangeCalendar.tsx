@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Language } from "../../i18n/translations";
+import type { AccommodationCalendarDay } from "../../api/accommodationCalendar";
+import type { PricingModel } from "../../utils/pricingModel";
 import {
   addMonths,
   buildMonthGrid,
@@ -16,6 +18,7 @@ import {
   WEEKDAY_LABELS_ES,
   type CalendarCell,
 } from "../../utils/calendarDates";
+import { isDayFullyUnavailable, rangeCrossesUnavailableNight } from "../../utils/calendarAvailability";
 import "../../styles/date-range-calendar.css";
 
 export type DateRangeCalendarProps = {
@@ -27,6 +30,15 @@ export type DateRangeCalendarProps = {
   maxDate?: string;
   isDateDisabled?: (dateStr: string) => boolean;
   specialDates?: Set<string>;
+  dayStatuses?: Map<string, AccommodationCalendarDay>;
+  pricingModel?: PricingModel;
+  onViewChange?: (
+    year: number,
+    month: number,
+    secondYear?: number,
+    secondMonth?: number,
+  ) => void;
+  showAvailabilityLegend?: boolean;
   language?: Language;
   showPresets?: boolean;
   showToolbar?: boolean;
@@ -48,6 +60,10 @@ export function DateRangeCalendar({
   maxDate,
   isDateDisabled,
   specialDates,
+  dayStatuses,
+  pricingModel = "per_room",
+  onViewChange,
+  showAvailabilityLegend = false,
   language = "es-PE",
   showPresets = true,
   showToolbar = true,
@@ -95,6 +111,16 @@ export function DateRangeCalendar({
   }, []);
 
   const secondMonth = addMonths(viewYear, viewMonth, 1);
+
+  useEffect(() => {
+    if (!onViewChange) return;
+    onViewChange(
+      viewYear,
+      viewMonth,
+      twoMonths ? secondMonth.year : undefined,
+      twoMonths ? secondMonth.month : undefined,
+    );
+  }, [viewYear, viewMonth, twoMonths, secondMonth.year, secondMonth.month, onViewChange]);
   const weekdays = lang === "en" ? WEEKDAY_LABELS_EN : WEEKDAY_LABELS_ES;
 
   const labels = useMemo(
@@ -118,8 +144,52 @@ export function DateRangeCalendar({
           ? "Stay 2+ nights and unlock better deals!"
           : "¡Elige 2 noches o más y obtén mejores tarifas!",
       unavailable: lang === "en" ? "Not available" : "No disponible",
+      past: lang === "en" ? "Past date" : "Fecha pasada",
+      occupied: lang === "en" ? "Fully booked" : "Ocupado",
+      partial:
+        lang === "en"
+          ? "Some rooms booked — other rooms may still be available"
+          : "Algunas habitaciones reservadas — aún puede haber cupo",
+      blocked: lang === "en" ? "Blocked by host" : "Bloqueado por el anfitrión",
+      legendTitle: lang === "en" ? "Calendar" : "Calendario",
+      legendPerUnit:
+        lang === "en"
+          ? "Whole property: booked days are marked in red."
+          : "Alojamiento completo: los días reservados se marcan en rojo.",
+      legendPerRoom:
+        lang === "en"
+          ? "By room: red = full, amber = partial availability."
+          : "Por habitación: rojo = sin cupo, ámbar = cupo parcial.",
     }),
     [lang],
+  );
+
+  const dayTitle = useCallback(
+    (dateStr: string) => {
+      if (minDate && dateStr < minDate) return labels.past;
+      const row = dayStatuses?.get(dateStr);
+      if (!row) return undefined;
+      if (row.status === "ocupado") return labels.occupied;
+      if (row.status === "parcial") return labels.partial;
+      if (row.status === "bloqueado") return labels.blocked;
+      if (row.status === "inactiva") return labels.unavailable;
+      return undefined;
+    },
+    [dayStatuses, labels, minDate],
+  );
+
+  const isPast = useCallback(
+    (dateStr: string) => Boolean(minDate && dateStr < minDate),
+    [minDate],
+  );
+
+  const isOccupancyBlocked = useCallback(
+    (dateStr: string) => {
+      const row = dayStatuses?.get(dateStr);
+      if (row && isDayFullyUnavailable(row.status)) return true;
+      return false;
+    },
+    [dayStatuses],
   );
 
   const navigateMonth = (delta: number) => {
@@ -132,12 +202,13 @@ export function DateRangeCalendar({
 
   const isDisabled = useCallback(
     (dateStr: string) => {
-      if (minDate && dateStr < minDate) return true;
+      if (isPast(dateStr)) return true;
       if (maxDate && dateStr > maxDate) return true;
+      if (isOccupancyBlocked(dateStr)) return true;
       if (isDateDisabled?.(dateStr)) return true;
       return false;
     },
-    [minDate, maxDate, isDateDisabled],
+    [isPast, maxDate, isOccupancyBlocked, isDateDisabled],
   );
 
   const handleDayClick = (dateStr: string) => {
@@ -160,6 +231,13 @@ export function DateRangeCalendar({
 
     if (isSameDay(dateStr, startDate)) {
       onChange(dateStr, null);
+      return;
+    }
+
+    if (
+      dayStatuses &&
+      rangeCrossesUnavailableNight(startDate, dateStr, dayStatuses)
+    ) {
       return;
     }
 
@@ -217,9 +295,16 @@ export function DateRangeCalendar({
   const getDayClass = (cell: CalendarCell) => {
     const { dateStr } = cell;
     const classes = ["date-range-calendar-day"];
+    const row = dayStatuses?.get(dateStr);
     if (!cell.inCurrentMonth) classes.push("date-range-calendar-day--outside");
     if (isSameDay(dateStr, today)) classes.push("date-range-calendar-day--today");
-    if (isDisabled(dateStr)) classes.push("date-range-calendar-day--disabled");
+    if (isPast(dateStr)) classes.push("date-range-calendar-day--past");
+    else if (row?.status === "ocupado") classes.push("date-range-calendar-day--occupied");
+    else if (row?.status === "bloqueado" || row?.status === "inactiva") {
+      classes.push("date-range-calendar-day--blocked");
+    } else if (row?.status === "parcial") {
+      classes.push("date-range-calendar-day--partial");
+    } else if (isDisabled(dateStr)) classes.push("date-range-calendar-day--disabled");
     if (specialDates?.has(dateStr)) classes.push("date-range-calendar-day--special");
 
     const rangeEnd = endDate ?? (startDate && hoverDate && !endDate ? hoverDate : null);
@@ -322,7 +407,7 @@ export function DateRangeCalendar({
               isSameDay(cell.dateStr, endDate ?? "")
             }
             aria-disabled={isDisabled(cell.dateStr)}
-            title={isDisabled(cell.dateStr) ? labels.unavailable : undefined}
+            title={dayTitle(cell.dateStr) ?? (isDisabled(cell.dateStr) ? labels.unavailable : undefined)}
             className={getDayClass(cell)}
             onClick={() => handleDayClick(cell.dateStr)}
             onMouseEnter={() => mode === "range" && startDate && !endDate && setHoverDate(cell.dateStr)}
@@ -410,8 +495,26 @@ export function DateRangeCalendar({
         {twoMonths && renderMonth(secondMonth.year, secondMonth.month, 1, false)}
       </div>
 
-      {showFooter && (marketingHint || mode === "range") && (
+      {showFooter && (marketingHint || mode === "range" || showAvailabilityLegend) && (
         <div className="date-range-calendar-footer">
+          {showAvailabilityLegend && dayStatuses && (
+            <div className="date-range-calendar-legend" aria-label={labels.legendTitle}>
+              <span className="date-range-calendar-legend-item date-range-calendar-legend-item--past">
+                {labels.past}
+              </span>
+              <span className="date-range-calendar-legend-item date-range-calendar-legend-item--occupied">
+                {labels.occupied}
+              </span>
+              {pricingModel === "per_room" && (
+                <span className="date-range-calendar-legend-item date-range-calendar-legend-item--partial">
+                  {lang === "en" ? "Partial" : "Parcial"}
+                </span>
+              )}
+              <p className="date-range-calendar-legend-hint muted">
+                {pricingModel === "per_unit" ? labels.legendPerUnit : labels.legendPerRoom}
+              </p>
+            </div>
+          )}
           {marketingHint ?? labels.hintDiscount}
         </div>
       )}

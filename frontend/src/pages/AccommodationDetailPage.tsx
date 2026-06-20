@@ -34,7 +34,8 @@ import { recordRecentView } from "../hooks/useRecentlyViewed";
 import { canInquireHost } from "../utils/hostChat";
 import { compareDateStr } from "../utils/calendarDates";
 import { formatDate, formatMoney, roomTypeLabel, todayPlusDays, typeLabel } from "../utils/format";
-import { isWholeUnitPricing } from "../utils/pricingModel";
+import { useAccommodationCalendar } from "../hooks/useAccommodationCalendar";
+import { getPricingModel, isWholeUnitPricing } from "../utils/pricingModel";
 import { resolveMediaUrl } from "../utils/media";
 import { IconCheck, IconEye, IconMapPin, IconUser } from "../components/icons";
 import { PrimeIcon } from "../components/PrimeIcon";
@@ -91,6 +92,9 @@ export function AccommodationDetailPage() {
 
   const [localEntrada, setLocalEntrada] = useState(entrada || todayPlusDays(7));
   const [localSalida, setLocalSalida] = useState(salida || todayPlusDays(9));
+
+  const numericId = id && !Number.isNaN(Number(id)) ? Number(id) : undefined;
+  const accommodationCalendar = useAccommodationCalendar(numericId);
 
   useEffect(() => {
     if (entrada) setLocalEntrada(entrada);
@@ -449,6 +453,9 @@ export function AccommodationDetailPage() {
             </div>
 
             <div className="availability-search card availability-search--calendar">
+              <p className="availability-calendar-mode muted">
+                {wholeUnit ? t("calendar.modePerUnit") : t("calendar.modePerRoom")}
+              </p>
               <DateRangePicker
                 startDate={localEntrada}
                 endDate={localSalida}
@@ -461,6 +468,13 @@ export function AccommodationDetailPage() {
                 applyLabel={t("detail.viewPrices")}
                 showPresets
                 marketingHint={t("calendar.stayDiscountHint")}
+                dayStatuses={accommodationCalendar.daysByDate}
+                pricingModel={
+                  accommodationCalendar.pricingModel ??
+                  (acc ? getPricingModel(acc.type) : "per_room")
+                }
+                onCalendarViewChange={accommodationCalendar.ensureMonths}
+                showAvailabilityLegend
               />
             </div>
 

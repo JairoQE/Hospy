@@ -82,7 +82,13 @@ class ServiceViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-_PUBLIC_DETAIL_ACTIONS = ("retrieve", "detalle_bootstrap", "cotizacion", "tendencia_precios")
+_PUBLIC_DETAIL_ACTIONS = (
+    "retrieve",
+    "detalle_bootstrap",
+    "cotizacion",
+    "tendencia_precios",
+    "disponibilidad",
+)
 
 
 class AccommodationViewSet(viewsets.ModelViewSet):
@@ -115,6 +121,7 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             "detalle_bootstrap",
             "cotizacion",
             "tendencia_precios",
+            "disponibilidad",
         ):
             return public_accommodations_queryset()
 
@@ -211,6 +218,7 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             "detalle_bootstrap",
             "cotizacion",
             "tendencia_precios",
+            "disponibilidad",
         ):
             return [permissions.AllowAny()]
         if self.action == "pendientes":
@@ -518,6 +526,40 @@ class AccommodationViewSet(viewsets.ModelViewSet):
         except (TypeError, ValueError):
             days = 90
         return Response(build_accommodation_price_trend(accommodation, days=days))
+
+    @action(detail=True, methods=["get"], url_path="disponibilidad")
+    def disponibilidad(self, request, pk=None):
+        """GET /api/v1/hospedajes/{id}/disponibilidad/?anio=2026&mes=6"""
+        from rooms.services import (
+            accommodation_pricing_model,
+            build_accommodation_monthly_calendar,
+        )
+
+        accommodation = self.get_object()
+        try:
+            year = int(
+                request.query_params.get("anio") or request.query_params.get("year")
+            )
+            month = int(
+                request.query_params.get("mes") or request.query_params.get("month")
+            )
+        except (TypeError, ValueError):
+            raise ValidationError(
+                {"detail": "Parámetros requeridos: anio y mes (ej. ?anio=2026&mes=6)."}
+            )
+        if month < 1 or month > 12:
+            raise ValidationError({"mes": "Debe estar entre 1 y 12."})
+
+        model = accommodation_pricing_model(accommodation)
+        return Response(
+            {
+                "accommodation_id": accommodation.id,
+                "pricing_model": model,
+                "anio": year,
+                "mes": month,
+                "days": build_accommodation_monthly_calendar(accommodation, year, month),
+            }
+        )
 
     @action(detail=False, methods=["get"], url_path="cercanos")
     def cercanos(self, request):

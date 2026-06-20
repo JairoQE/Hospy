@@ -318,6 +318,11 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=3, minute=0),
         "options": {"expires": 3600},
     },
+    "check-in-reminders-daily": {
+        "task": "bookings.send_check_in_reminders",
+        "schedule": crontab(hour=9, minute=0),
+        "options": {"expires": 3600},
+    },
     "audit-retention-daily": {
         "task": "audit.run_retention_cycle",
         "schedule": crontab(hour=4, minute=0),

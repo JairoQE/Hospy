@@ -50,6 +50,10 @@ export const translations = {
       selectDates: "Seleccionar fechas",
       cancel: "Cancelar",
       dialogLabel: "Elegir fechas de estadía",
+      modePerUnit:
+        "Calendario por alojamiento completo: un día reservado bloquea toda la unidad.",
+      modePerRoom:
+        "Calendario por habitaciones: rojo = sin cupo; ámbar = aún hay habitaciones libres.",
     },
     search: {
       where: "¿Adónde vas?",
@@ -490,6 +494,10 @@ export const translations = {
       selectDates: "Select dates",
       cancel: "Cancel",
       dialogLabel: "Choose stay dates",
+      modePerUnit:
+        "Whole-property calendar: a booked day blocks the entire unit.",
+      modePerRoom:
+        "Room-based calendar: red = no availability; amber = some rooms still free.",
     },
     search: {
       where: "Where are you going?",

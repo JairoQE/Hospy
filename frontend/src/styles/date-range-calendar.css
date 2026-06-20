@@ -410,10 +410,112 @@
 
 .date-range-calendar-day--disabled {
   color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.date-range-calendar-day--past {
+  color: #9ca3af;
   text-decoration: line-through;
   cursor: not-allowed;
   background: #f3f4f6;
-  opacity: 0.7;
+  opacity: 0.75;
+}
+
+.date-range-calendar-day--occupied {
+  color: #991b1b;
+  cursor: not-allowed;
+  background: #fee2e2;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px #fecaca;
+}
+
+.date-range-calendar-day--occupied::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 6px;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    rgba(153, 27, 27, 0.12) 3px,
+    rgba(153, 27, 27, 0.12) 6px
+  );
+  pointer-events: none;
+}
+
+.date-range-calendar-day--blocked {
+  color: #6b7280;
+  cursor: not-allowed;
+  background: #e5e7eb;
+}
+
+.date-range-calendar-day--partial {
+  color: #92400e;
+  background: #fef3c7;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px #fcd34d;
+}
+
+.date-range-calendar-day--partial::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d97706;
+}
+
+.date-range-calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  margin-bottom: 0.65rem;
+}
+
+.date-range-calendar-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.date-range-calendar-legend-item::before {
+  content: "";
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.date-range-calendar-legend-item--past::before {
+  background: #f3f4f6;
+  box-shadow: inset 0 0 0 1px #d1d5db;
+}
+
+.date-range-calendar-legend-item--occupied::before {
+  background: #fee2e2;
+  box-shadow: inset 0 0 0 1px #fecaca;
+}
+
+.date-range-calendar-legend-item--partial::before {
+  background: #fef3c7;
+  box-shadow: inset 0 0 0 1px #fcd34d;
+}
+
+.date-range-calendar-legend-hint {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.availability-calendar-mode {
+  margin: 0 0 0.65rem;
+  font-size: 0.88rem;
 }
 
 .date-range-calendar-day--special::after {

@@ -26,6 +26,11 @@ class Booking(TimeStampedModel):
         choices=Status.choices,
         default=Status.PENDIENTE,
     )
+    check_in_reminder_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Cuándo se envió al propietario la alerta de check-in (1 día antes).",
+    )
 
     class Meta:
         verbose_name = "reserva"
