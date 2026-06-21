@@ -64,14 +64,40 @@ export type ActivityMapPoint = {
   longitude: number;
   city: string;
   country_code: string;
+  department?: string;
   count: number;
   top_actions: { action: string; count: number }[];
+};
+
+export type ActivityMapCountry = {
+  country_code: string;
+  country: string;
+  count: number;
+  latitude: number;
+  longitude: number;
+};
+
+export type ActivityMapDepartment = {
+  code: string;
+  name: string;
+  country_code: string;
+  count: number;
+  latitude: number;
+  longitude: number;
+};
+
+export type ActivityMapTimelineDay = {
+  date: string;
+  count: number;
 };
 
 export type ActivityMapResponse = {
   days: number;
   points: ActivityMapPoint[];
   total_events: number;
+  by_country: ActivityMapCountry[];
+  by_department: ActivityMapDepartment[];
+  timeline: ActivityMapTimelineDay[];
 };
 
 export type SecurityAlertRow = {
