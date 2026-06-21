@@ -67,6 +67,7 @@ export function AppPromoBanner() {
     <section
       className="home-block fade-in app-promo-banner"
       aria-labelledby="app-promo-title"
+      data-tour="home-app-promo"
     >
       <div className="app-promo-banner-inner">
         <div className="app-promo-banner-copy">

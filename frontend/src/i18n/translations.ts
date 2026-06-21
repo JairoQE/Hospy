@@ -191,10 +191,49 @@ export const translations = {
       launcherShort: "Tour",
       homeWelcomeTitle: "Bienvenido a Hospy",
       homeWelcomeDesc:
-        "Te mostramos en pocos pasos cómo buscar hospedaje, explorar destinos y usar las herramientas del sitio.",
-      homeSearchTitle: "Busca tu estadía",
+        "Esta es la página de inicio: aquí descubres hospedajes en todo el Perú, comparas precios y reservas sin salir del navegador. Te guiaremos por cada zona para que sepas dónde buscar, filtrar y volver a tus favoritos.",
+      homeHeaderNavTitle: "Navegación principal",
+      homeHeaderNavDesc:
+        "Explorar te deja en el inicio con el buscador y los carruseles. Destinos salta al mapa por departamentos. Ofertas muestra alojamientos con descuentos activos.",
+      homeHeaderToolsTitle: "Accesos rápidos del encabezado",
+      homeHeaderToolsDesc:
+        "Desde aquí ajustas accesibilidad (tamaño de texto, contraste, lectura), cambias entre modo claro y oscuro, inicias sesión o te registras, y —si ya entraste— ves alertas y mensajes.",
+      homeHeroTitle: "Portada de bienvenida",
+      homeHeroDesc:
+        "El titular resume la propuesta de Hospy: encontrar hoteles, hostales y hospedajes verificados. Debajo está el buscador principal, el punto de partida de casi toda búsqueda.",
+      homeSearchTitle: "Buscador de estadía",
       homeSearchDesc:
-        "Indica destino y fechas para ver hoteles, hostales y hospedajes verificados en todo el Perú.",
+        "Escribe una ciudad, provincia o distrito (con autocompletado) y elige fechas de entrada y salida. En móvil desliza entre «Destino» y «Fechas»; al pulsar Buscar verás resultados con filtros, orden y paginación.",
+      homeGeoTitle: "Ubicación opcional",
+      homeGeoDesc:
+        "Si aceptas compartir tu ubicación, Hospy puede sugerirte alojamientos cercanos y ordenar resultados por distancia. También puedes omitir este paso y buscar manualmente.",
+      homeFeaturedTitle: "Búsquedas destacadas",
+      homeFeaturedDesc:
+        "Tarjetas curadas con ciudades populares y destinos turísticos. Cambia entre pestañas, revisa valoración, cantidad de locales y precio promedio, y toca una tarjeta para cargar resultados al instante.",
+      homeRecentTitle: "Vistos recientemente",
+      homeRecentDesc:
+        "Si iniciaste sesión y visitaste fichas de hospedajes, aparecen aquí para retomar donde lo dejaste. Se guarda en tu navegador y cuenta.",
+      homeBrowseTypesTitle: "Explorar por tipo de alojamiento",
+      homeBrowseTypesDesc:
+        "Filtra de un toque: hotel, hostal, hospedaje o casa/departamento. Cada tarjeta muestra cuántos locales hay disponibles en esa categoría.",
+      homeBrowseRegionsTitle: "Explorar por región natural",
+      homeBrowseRegionsDesc:
+        "Agrupa opciones por Costa, Sierra o Selva. Ideal cuando buscas clima o paisaje antes de elegir una ciudad concreta.",
+      homeLocationsTitle: "Mapa por departamentos",
+      homeLocationsDesc:
+        "Navega Perú paso a paso: elige un departamento, luego provincia y distrito. Usa la migas de pan para volver atrás o el buscador interno para encontrar un lugar rápido.",
+      homeNearbyTitle: "Cerca de ti",
+      homeNearbyDesc:
+        "Tras activar la ubicación, esta sección lista hospedajes en un radio de kilómetros. Cambia de pestaña para ver hoteles, hostales u otros tipos según lo que haya cerca.",
+      homeAppPromoTitle: "Reserva 100 % web",
+      homeAppPromoDesc:
+        "Recordatorio de que puedes reservar desde el navegador: buscar, chatear con anfitriones y pagar sin instalar nada. Los botones llevan a destinos u ofertas.",
+      homeResultsTitle: "Zona de resultados",
+      homeResultsDesc:
+        "Cuando busques o elijas una tarjeta, aquí aparecen los hospedajes. Podrás refinar texto, tipo, precio, orden, agrupar por distrito y cambiar de página.",
+      homeTourLauncherTitle: "Repetir este tour",
+      homeTourLauncherDesc:
+        "El botón «?» flotante vuelve a abrir la guía cuando quieras. Úsalo si regresas después de un tiempo o quieres enseñar Hospy a alguien.",
       homeBrowseTitle: "Explora por categoría",
       homeBrowseDesc:
         "También puedes descubrir opciones por tipo de alojamiento, región o departamento.",
@@ -813,10 +852,49 @@ export const translations = {
       launcherShort: "Tour",
       homeWelcomeTitle: "Welcome to Hospy",
       homeWelcomeDesc:
-        "A quick walkthrough to search stays, browse destinations, and use the site tools.",
-      homeSearchTitle: "Search your stay",
+        "This is the home page: discover stays across Peru, compare prices, and book in your browser. We'll walk through each area so you know where to search, filter, and return to favorites.",
+      homeHeaderNavTitle: "Main navigation",
+      homeHeaderNavDesc:
+        "Explore keeps you on home with search and carousels. Destinations jumps to the department explorer. Offers shows listings with active discounts.",
+      homeHeaderToolsTitle: "Header quick controls",
+      homeHeaderToolsDesc:
+        "Adjust accessibility (text size, contrast, reading aids), switch light/dark theme, sign in or register, and —when logged in— open alerts and messages.",
+      homeHeroTitle: "Welcome hero",
+      homeHeroDesc:
+        "The headline states Hospy's value: verified hotels, hostels, and guesthouses. The main search bar below is where most journeys start.",
+      homeSearchTitle: "Stay search",
       homeSearchDesc:
-        "Pick a destination and dates to find verified hotels, hostels, and guesthouses across Peru.",
+        "Enter a city, province, or district (with autocomplete) and pick check-in/out dates. On mobile, swipe between Destination and Dates; tap Search for filterable, sortable, paginated results.",
+      homeGeoTitle: "Optional location",
+      homeGeoDesc:
+        "If you allow location access, Hospy can suggest nearby stays and sort by distance. You can skip this and search manually anytime.",
+      homeFeaturedTitle: "Featured searches",
+      homeFeaturedDesc:
+        "Curated cards for popular cities and destinations. Switch tabs, check ratings, listing counts, and average prices, then tap a card to load results instantly.",
+      homeRecentTitle: "Recently viewed",
+      homeRecentDesc:
+        "When signed in, properties you opened appear here so you can pick up where you left off. Saved to your account and browser.",
+      homeBrowseTypesTitle: "Browse by property type",
+      homeBrowseTypesDesc:
+        "One-tap filters: hotel, hostel, guesthouse, or house/apartment. Each tile shows how many listings exist in that category.",
+      homeBrowseRegionsTitle: "Browse by natural region",
+      homeBrowseRegionsDesc:
+        "Group options by Coast, Highlands, or Amazon. Useful when climate or landscape matters before picking a city.",
+      homeLocationsTitle: "Department explorer",
+      homeLocationsDesc:
+        "Drill down through Peru: pick a department, then province and district. Use breadcrumbs to go back or the inline search to find a place quickly.",
+      homeNearbyTitle: "Near you",
+      homeNearbyDesc:
+        "After enabling location, this section lists stays within a kilometer radius. Switch tabs to see hotels, hostels, or other types nearby.",
+      homeAppPromoTitle: "Fully web booking",
+      homeAppPromoDesc:
+        "A reminder that you can search, chat with hosts, and pay in the browser—no install required. Buttons jump to destinations or offers.",
+      homeResultsTitle: "Results area",
+      homeResultsDesc:
+        "When you search or tap a tile, listings appear here. Refine text, type, price, sort order, group by district, and paginate through pages.",
+      homeTourLauncherTitle: "Replay this tour",
+      homeTourLauncherDesc:
+        "The floating ? button reopens this guide anytime—handy if you return later or want to show Hospy to someone else.",
       homeBrowseTitle: "Browse by category",
       homeBrowseDesc:
         "You can also explore listings by property type, region, or department.",

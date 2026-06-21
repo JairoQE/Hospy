@@ -22,6 +22,7 @@ export function ProductTourLauncher() {
     <button
       type="button"
       className="product-tour-launcher"
+      data-tour="product-tour-launcher"
       onClick={() => {
         void waitForTourDom(availableTourId).then((ready) => {
           if (ready) startTour(availableTourId, { force: true });

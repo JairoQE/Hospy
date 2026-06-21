@@ -113,7 +113,7 @@ export function FeaturedSearchesSection({
   }
 
   return (
-    <section className="home-block fade-in featured-searches-section" id="destacados">
+    <section className="home-block fade-in featured-searches-section" id="destacados" data-tour="home-featured">
       <h2 className="home-block-title">{t("home.featuredTitle")}</h2>
 
       <div className="featured-searches-tabs" role="tablist" aria-label={t("home.featuredTitle")}>

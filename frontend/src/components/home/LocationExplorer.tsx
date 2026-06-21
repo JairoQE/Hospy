@@ -169,7 +169,7 @@ export function LocationExplorer({
   const atRoot = !depto;
 
   return (
-    <section className="home-block location-explorer">
+    <section className="home-block location-explorer" data-tour="home-locations">
       <h2 className="home-block-title">{t("home.browseByDept")}</h2>
       <p className="muted home-block-sub">{t("home.browseByDeptSub")}</p>
 

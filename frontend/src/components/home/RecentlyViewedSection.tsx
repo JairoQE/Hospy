@@ -16,7 +16,7 @@ export function RecentlyViewedSection({ items }: Props) {
   if (items.length === 0) return null;
 
   return (
-    <section className="home-block fade-in recently-section">
+    <section className="home-block fade-in recently-section" data-tour="home-recent">
       <h2 className="home-block-title">{t("home.recentTitle")}</h2>
       <p className="muted home-block-sub">{t("home.recentSub")}</p>
       <HorizontalCarousel itemWidth={220} ariaLabel={t("home.recentSub")}>

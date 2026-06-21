@@ -132,7 +132,7 @@ export function SiteHeader() {
         <div className="header-grid">
           <HospyBrand />
 
-          <nav className="header-nav-desktop" aria-label="Navegación principal">
+          <nav className="header-nav-desktop" aria-label="Navegación principal" data-tour="home-header-nav">
             {navPublic.map((item) => (
               <NavLink
                 key={item.label}
@@ -146,7 +146,7 @@ export function SiteHeader() {
             {roleNav()}
           </nav>
 
-          <div className="header-end">
+          <div className="header-end" data-tour="home-header-tools">
             <AccessibilityButton />
 
             <label className="theme-switch" aria-label="Cambiar tema claro/oscuro">

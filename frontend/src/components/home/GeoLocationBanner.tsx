@@ -14,7 +14,7 @@ export function GeoLocationBanner({ status, onActivate, onSkip }: Props) {
   if (status !== "prompt" && status !== "loading") return null;
 
   return (
-    <aside className="geo-banner fade-in" aria-label={t("geo.title")}>
+    <aside className="geo-banner fade-in" aria-label={t("geo.title")} data-tour="home-geo">
       <span className="geo-banner-icon" aria-hidden>
         <IconMapPin size={28} />
       </span>

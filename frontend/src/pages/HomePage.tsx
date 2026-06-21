@@ -682,7 +682,7 @@ export function HomePage() {
 
             <RecentlyViewedSection items={recentItems} />
 
-            <div id="tipos" data-tour="home-browse">
+            <div id="tipos" data-tour="home-browse-types">
 
               <BrowseTilesSection
                 title={t("home.browseByType")}
@@ -692,13 +692,15 @@ export function HomePage() {
               />
             </div>
 
-            <BrowseTilesSection
-              title={t("home.browseByRegion")}
-              subtitle={t("home.browseByRegionSub")}
-              tiles={regionTilesI18n}
-              loading={tilesLoading}
-              onSelect={onBrowseTile}
-            />
+            <div data-tour="home-browse-regions">
+              <BrowseTilesSection
+                title={t("home.browseByRegion")}
+                subtitle={t("home.browseByRegionSub")}
+                tiles={regionTilesI18n}
+                loading={tilesLoading}
+                onSelect={onBrowseTile}
+              />
+            </div>
 
             <div id="destinos">
 
@@ -738,7 +740,7 @@ export function HomePage() {
 
 
 
-        <section ref={resultsRef}>
+        <section ref={resultsRef} data-tour="home-results">
 
           <SearchResultsSection
             title={resultsTitle}

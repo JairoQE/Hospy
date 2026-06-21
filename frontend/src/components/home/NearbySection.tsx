@@ -55,7 +55,7 @@ export function NearbySection({ items, loading, radiusKm }: Props) {
 
   if (!loading && items.length === 0) {
     return (
-      <section className="home-block fade-in section-nearby" aria-labelledby="nearby-title">
+      <section className="home-block fade-in section-nearby" aria-labelledby="nearby-title" data-tour="home-nearby">
         <h2 id="nearby-title" className="home-block-title">
           {t("home.nearbyTitle")}
         </h2>
@@ -73,6 +73,7 @@ export function NearbySection({ items, loading, radiusKm }: Props) {
       className="home-block fade-in section-nearby"
       aria-labelledby="nearby-title"
       aria-live="polite"
+      data-tour="home-nearby"
     >
       <h2 id="nearby-title" className="home-block-title">
         {t("home.nearbyTitle")}
