@@ -3,6 +3,7 @@
 :root {
   --bg: #f4f6f8;
   --surface: #fff;
+  --input-bg: #fff;
   --text: #1a2332;
   --muted: #5c6b7a;
   --primary: #0d6e6e;
@@ -27,6 +28,7 @@
 :root[data-theme="dark"] {
   --bg: #0f1722;
   --surface: #162131;
+  --input-bg: #1a2838;
   --text: #e7edf7;
   --muted: #9fb0c8;
   --border: #2a3a50;
@@ -34,6 +36,7 @@
   --primary-hover: #42b9b0;
   --home-deep: #dbeafe;
   --home-turquoise: #6ec7e8;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.42);
 }
 
 *,

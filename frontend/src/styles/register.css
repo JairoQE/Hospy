@@ -290,7 +290,7 @@
   margin-top: 1.25rem;
   padding: 0.85rem 1rem;
   border-radius: 12px;
-  background: #f8fafc;
+  background: var(--bg);
   border-left: 4px solid var(--register-accent);
   font-size: 0.85rem;
   color: var(--muted);
