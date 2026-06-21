@@ -5,7 +5,8 @@ export type TourStepDef = {
   titleKey: string;
   descriptionKey: string;
   side?: "top" | "bottom" | "left" | "right";
-  /** Si true, el paso solo se incluye cuando el selector existe en el DOM. */
+  align?: "start" | "center" | "end";
+  /** Si true, el paso solo se incluye cuando el selector existe y es visible. */
   optional?: boolean;
 };
 

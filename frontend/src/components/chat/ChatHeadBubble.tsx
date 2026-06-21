@@ -21,10 +21,7 @@ export function ChatHeadBubble({
   variant = "peer",
 }: Props) {
   return (
-    <div
-      className={`chat-head-bubble-wrap chat-head-bubble-wrap--${variant}`}
-      {...(variant === "hospix" ? { "data-tour": "hospix-assistant" } : {})}
-    >
+    <div className={`chat-head-bubble-wrap chat-head-bubble-wrap--${variant}`}>
       <button
         type="button"
         className="chat-head-bubble"
@@ -35,6 +32,7 @@ export function ChatHeadBubble({
         }}
         aria-label={label}
         title={label}
+        {...(variant === "hospix" ? { "data-tour": "hospix-assistant" } : {})}
       >
         {children}
       </button>

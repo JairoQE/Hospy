@@ -14,6 +14,131 @@ function ownerNavStep(): TourStepDef {
   };
 }
 
+function bookingsNavStep(): TourStepDef {
+  const mobile = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+  return {
+    element: mobile ? '[data-tour="nav-bookings-mobile"]' : '[data-tour="nav-bookings-desktop"]',
+    titleKey: "tour.bookingsTitle",
+    descriptionKey: "tour.bookingsDesc",
+    side: mobile ? "top" : "bottom",
+    optional: true,
+  };
+}
+
+function mobileNavStep(
+  descKey: "tour.mobileNavDescGuest" | "tour.mobileNavDescOwner",
+): TourStepDef {
+  const mobile = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+  if (mobile) {
+    return {
+      element: '[data-tour="mobile-bottom-nav"]',
+      titleKey: "tour.mobileNavTitle",
+      descriptionKey: descKey,
+      side: "top",
+      optional: true,
+    };
+  }
+
+  const owner = descKey === "tour.mobileNavDescOwner";
+  return {
+    element: owner ? OWNER_NAV_DESKTOP : '[data-tour="home-header-nav"]',
+    titleKey: "tour.mobileNavTitleDesktop",
+    descriptionKey: owner ? "tour.mobileNavDescDesktopOwner" : "tour.mobileNavDescDesktopGuest",
+    side: owner ? "right" : "bottom",
+    optional: true,
+  };
+}
+
+function hospixStep(owner = false): TourStepDef {
+  return {
+    element: '[data-tour="hospix-assistant"]',
+    titleKey: "tour.hospixTitle",
+    descriptionKey: owner ? "tour.hospixDescOwner" : "tour.hospixDesc",
+    side: "top",
+    align: "end",
+    optional: true,
+  };
+}
+
+/** Secciones de exploración del home (compartidas por tour anónimo y huésped). */
+const HOME_BROWSE_STEPS: TourStepDef[] = [
+  {
+    element: '[data-tour="home-geo"]',
+    titleKey: "tour.homeGeoTitle",
+    descriptionKey: "tour.homeGeoDesc",
+    side: "bottom",
+    optional: true,
+  },
+  {
+    element: '[data-tour="home-featured"]',
+    titleKey: "tour.homeFeaturedTitle",
+    descriptionKey: "tour.homeFeaturedDesc",
+    side: "top",
+    optional: true,
+  },
+  {
+    element: '[data-tour="home-recent"]',
+    titleKey: "tour.homeRecentTitle",
+    descriptionKey: "tour.homeRecentDesc",
+    side: "top",
+    optional: true,
+  },
+  {
+    element: '[data-tour="home-browse-types"]',
+    titleKey: "tour.homeBrowseTypesTitle",
+    descriptionKey: "tour.homeBrowseTypesDesc",
+    side: "top",
+    optional: true,
+  },
+  {
+    element: '[data-tour="home-browse-regions"]',
+    titleKey: "tour.homeBrowseRegionsTitle",
+    descriptionKey: "tour.homeBrowseRegionsDesc",
+    side: "top",
+    optional: true,
+  },
+  {
+    element: '[data-tour="home-locations"]',
+    titleKey: "tour.homeLocationsTitle",
+    descriptionKey: "tour.homeLocationsDesc",
+    side: "top",
+    optional: true,
+  },
+  {
+    element: '[data-tour="home-nearby"]',
+    titleKey: "tour.homeNearbyTitle",
+    descriptionKey: "tour.homeNearbyDesc",
+    side: "top",
+    optional: true,
+  },
+  {
+    element: '[data-tour="home-app-promo"]',
+    titleKey: "tour.homeAppPromoTitle",
+    descriptionKey: "tour.homeAppPromoDesc",
+    side: "top",
+    optional: true,
+  },
+  {
+    element: '[data-tour="home-results"]',
+    titleKey: "tour.homeResultsTitle",
+    descriptionKey: "tour.homeResultsDesc",
+    side: "top",
+    optional: true,
+  },
+];
+
+function guestProfileStep(): TourStepDef {
+  const mobile = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+  return {
+    element: mobile ? '[data-tour="nav-profile-mobile"]' : '[data-tour="header-user-menu"]',
+    titleKey: "tour.guestProfileTitle",
+    descriptionKey: mobile ? "tour.guestProfileDescMobile" : "tour.guestProfileDescDesktop",
+    side: mobile ? "top" : "bottom",
+    align: mobile ? "center" : "end",
+    optional: true,
+  };
+}
+
 export const TOUR_DEFINITIONS: Record<TourId, TourDefinition> = {
   home: {
     id: "home",
@@ -47,76 +172,8 @@ export const TOUR_DEFINITIONS: Record<TourId, TourDefinition> = {
         descriptionKey: "tour.homeSearchDesc",
         side: "bottom",
       },
-      {
-        element: '[data-tour="home-geo"]',
-        titleKey: "tour.homeGeoTitle",
-        descriptionKey: "tour.homeGeoDesc",
-        side: "bottom",
-        optional: true,
-      },
-      {
-        element: '[data-tour="home-featured"]',
-        titleKey: "tour.homeFeaturedTitle",
-        descriptionKey: "tour.homeFeaturedDesc",
-        side: "top",
-        optional: true,
-      },
-      {
-        element: '[data-tour="home-recent"]',
-        titleKey: "tour.homeRecentTitle",
-        descriptionKey: "tour.homeRecentDesc",
-        side: "top",
-        optional: true,
-      },
-      {
-        element: '[data-tour="home-browse-types"]',
-        titleKey: "tour.homeBrowseTypesTitle",
-        descriptionKey: "tour.homeBrowseTypesDesc",
-        side: "top",
-        optional: true,
-      },
-      {
-        element: '[data-tour="home-browse-regions"]',
-        titleKey: "tour.homeBrowseRegionsTitle",
-        descriptionKey: "tour.homeBrowseRegionsDesc",
-        side: "top",
-        optional: true,
-      },
-      {
-        element: '[data-tour="home-locations"]',
-        titleKey: "tour.homeLocationsTitle",
-        descriptionKey: "tour.homeLocationsDesc",
-        side: "top",
-        optional: true,
-      },
-      {
-        element: '[data-tour="home-nearby"]',
-        titleKey: "tour.homeNearbyTitle",
-        descriptionKey: "tour.homeNearbyDesc",
-        side: "top",
-        optional: true,
-      },
-      {
-        element: '[data-tour="home-app-promo"]',
-        titleKey: "tour.homeAppPromoTitle",
-        descriptionKey: "tour.homeAppPromoDesc",
-        side: "top",
-        optional: true,
-      },
-      {
-        element: '[data-tour="home-results"]',
-        titleKey: "tour.homeResultsTitle",
-        descriptionKey: "tour.homeResultsDesc",
-        side: "top",
-        optional: true,
-      },
-      {
-        element: '[data-tour="mobile-bottom-nav"]',
-        titleKey: "tour.mobileNavTitle",
-        descriptionKey: "tour.mobileNavDescGuest",
-        side: "top",
-        optional: true,
-      },
+      ...HOME_BROWSE_STEPS,
+      mobileNavStep("tour.mobileNavDescGuest"),
       {
         element: '[data-tour="product-tour-launcher"]',
         titleKey: "tour.homeTourLauncherTitle",
@@ -124,13 +181,7 @@ export const TOUR_DEFINITIONS: Record<TourId, TourDefinition> = {
         side: "left",
         optional: true,
       },
-      {
-        element: '[data-tour="hospix-assistant"]',
-        titleKey: "tour.hospixTitle",
-        descriptionKey: "tour.hospixDesc",
-        side: "left",
-        optional: true,
-      },
+      hospixStep(),
     ],
   },
   "guest-app": {
@@ -141,39 +192,58 @@ export const TOUR_DEFINITIONS: Record<TourId, TourDefinition> = {
         descriptionKey: "tour.guestWelcomeDesc",
       },
       {
-        element: '[data-tour="home-search"]',
-        titleKey: "tour.homeSearchTitle",
-        descriptionKey: "tour.homeSearchDesc",
+        element: '[data-tour="home-header-nav"]',
+        titleKey: "tour.homeHeaderNavTitle",
+        descriptionKey: "tour.homeHeaderNavDesc",
+        side: "bottom",
+        optional: true,
+      },
+      {
+        element: '[data-tour="home-header-tools"]',
+        titleKey: "tour.guestHeaderToolsTitle",
+        descriptionKey: "tour.guestHeaderToolsDesc",
         side: "bottom",
       },
       {
         element: '[data-tour="header-inbox"]',
         titleKey: "tour.inboxTitle",
-        descriptionKey: "tour.inboxDesc",
+        descriptionKey: "tour.guestInboxDesc",
         side: "bottom",
+        align: "end",
         optional: true,
       },
       {
-        element: '[data-tour="nav-bookings"]',
-        titleKey: "tour.bookingsTitle",
-        descriptionKey: "tour.bookingsDesc",
+        element: '[data-tour="home-hero"]',
+        titleKey: "tour.homeHeroTitle",
+        descriptionKey: "tour.homeHeroDesc",
         side: "bottom",
-        optional: true,
       },
       {
-        element: '[data-tour="mobile-bottom-nav"]',
-        titleKey: "tour.mobileNavTitle",
-        descriptionKey: "tour.mobileNavDescGuest",
-        side: "top",
-        optional: true,
+        element: '[data-tour="home-search"]',
+        titleKey: "tour.homeSearchTitle",
+        descriptionKey: "tour.homeSearchDesc",
+        side: "bottom",
       },
+      ...HOME_BROWSE_STEPS.map((step) =>
+        step.element === '[data-tour="home-recent"]'
+          ? {
+              ...step,
+              titleKey: "tour.guestRecentTitle",
+              descriptionKey: "tour.guestRecentDesc",
+            }
+          : step,
+      ),
+      bookingsNavStep(),
+      guestProfileStep(),
+      mobileNavStep("tour.mobileNavDescGuest"),
       {
-        element: '[data-tour="hospix-assistant"]',
-        titleKey: "tour.hospixTitle",
-        descriptionKey: "tour.hospixDesc",
+        element: '[data-tour="product-tour-launcher"]',
+        titleKey: "tour.homeTourLauncherTitle",
+        descriptionKey: "tour.homeTourLauncherDesc",
         side: "left",
         optional: true,
       },
+      hospixStep(),
     ],
   },
   "owner-panel": {
@@ -191,20 +261,8 @@ export const TOUR_DEFINITIONS: Record<TourId, TourDefinition> = {
         side: "bottom",
         optional: true,
       },
-      {
-        element: '[data-tour="mobile-bottom-nav"]',
-        titleKey: "tour.mobileNavTitle",
-        descriptionKey: "tour.mobileNavDescOwner",
-        side: "top",
-        optional: true,
-      },
-      {
-        element: '[data-tour="hospix-assistant"]',
-        titleKey: "tour.hospixTitle",
-        descriptionKey: "tour.hospixDescOwner",
-        side: "left",
-        optional: true,
-      },
+      mobileNavStep("tour.mobileNavDescOwner"),
+      hospixStep(true),
     ],
   },
   "property-detail": {
@@ -304,20 +362,8 @@ export const TOUR_DEFINITIONS: Record<TourId, TourDefinition> = {
         descriptionKey: "tour.detailLocationDesc",
         side: "top",
       },
-      {
-        element: '[data-tour="mobile-bottom-nav"]',
-        titleKey: "tour.mobileNavTitle",
-        descriptionKey: "tour.mobileNavDescGuest",
-        side: "top",
-        optional: true,
-      },
-      {
-        element: '[data-tour="hospix-assistant"]',
-        titleKey: "tour.hospixTitle",
-        descriptionKey: "tour.hospixDesc",
-        side: "left",
-        optional: true,
-      },
+      mobileNavStep("tour.mobileNavDescGuest"),
+      hospixStep(),
     ],
   },
 };

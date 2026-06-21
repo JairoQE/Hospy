@@ -8,9 +8,12 @@ function buildSteps(definition: TourDefinition, t: TranslateFn): DriveStep[] {
   const steps: DriveStep[] = [];
 
   for (const step of definition.steps) {
-    if (step.element && !document.querySelector(step.element)) {
-      if (step.optional) continue;
-      return [];
+    if (step.element) {
+      const target = document.querySelector(step.element);
+      if (!target || !isTourTargetVisible(target)) {
+        if (step.optional) continue;
+        return [];
+      }
     }
 
     steps.push({
@@ -19,12 +22,21 @@ function buildSteps(definition: TourDefinition, t: TranslateFn): DriveStep[] {
         title: t(step.titleKey),
         description: t(step.descriptionKey),
         side: step.side,
-        align: "center",
+        align: step.align ?? "center",
       },
     });
   }
 
   return steps.length ? steps : [];
+}
+
+function isTourTargetVisible(el: Element): boolean {
+  const node = el as HTMLElement;
+  const style = window.getComputedStyle(node);
+  if (style.display === "none" || style.visibility === "hidden") return false;
+  if (Number(style.opacity) === 0) return false;
+  const rect = node.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
 }
 
 let activeDriver: Driver | null = null;
@@ -56,7 +68,7 @@ export function runProductTour(
     smoothScroll: true,
     allowClose: true,
     overlayOpacity: 0.62,
-    stagePadding: 10,
+    stagePadding: 8,
     stageRadius: 12,
     popoverClass: "hospy-product-tour-popover",
     progressText: t("tour.progress"),

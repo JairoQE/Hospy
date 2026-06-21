@@ -54,6 +54,11 @@
   border-radius: 12px !important;
 }
 
+button[data-tour="hospix-assistant"].driver-active-element,
+.chat-head-bubble-wrap--hospix .chat-head-bubble.driver-active-element {
+  border-radius: 50% !important;
+}
+
 /* Botón flotante para relanzar el tour */
 
 .product-tour-launcher {

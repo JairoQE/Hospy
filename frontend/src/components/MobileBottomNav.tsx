@@ -236,7 +236,8 @@ export function MobileBottomNav() {
             to={item.to}
             className={() => `mobile-tab${active ? " is-active" : ""}`}
             aria-current={active ? "page" : undefined}
-            {...(item.label === "Reservas" ? { "data-tour": "nav-bookings" } : {})}
+            {...(item.label === "Reservas" ? { "data-tour": "nav-bookings-mobile" } : {})}
+            {...(item.label === "Perfil" ? { "data-tour": "nav-profile-mobile" } : {})}
           >
             <span className="mobile-tab-indicator" aria-hidden />
             <span className="mobile-tab-icon">

@@ -242,6 +242,11 @@ export const translations = {
         "Desde la barra inferior accedes a inicio, alertas, mensajes, reservas y tu perfil.",
       mobileNavDescOwner:
         "La barra inferior te lleva al inicio, bandeja y panel sin salir de la app.",
+      mobileNavTitleDesktop: "Menú superior",
+      mobileNavDescDesktopGuest:
+        "En pantalla grande la navegación está arriba: Explorar, Destinos, Ofertas y Mis reservas. A la derecha tienes alertas, mensajes y tu perfil.",
+      mobileNavDescDesktopOwner:
+        "En escritorio usa el menú lateral del panel para ir al dashboard, hospedajes, reservas y consultas. La barra inferior solo aparece en móvil.",
       hospixTitle: "Hospix, tu asistente",
       hospixDesc:
         "Toca el robot para hacer preguntas, recibir ayuda con reservas o explorar el sitio en cualquier momento.",
@@ -249,7 +254,20 @@ export const translations = {
         "Hospix conoce tu panel: pídele un resumen, accesos rápidos o ayuda con tus hospedajes.",
       guestWelcomeTitle: "Tu espacio en Hospy",
       guestWelcomeDesc:
-        "Como huésped puedes buscar alojamiento, gestionar reservas y recibir alertas en un solo lugar.",
+        "Has iniciado sesión como huésped. Este recorrido te muestra cómo buscar hospedajes, revisar reservas, leer alertas y usar todas las herramientas del inicio en un solo lugar.",
+      guestHeaderToolsTitle: "Tu barra personal",
+      guestHeaderToolsDesc:
+        "Con la sesión activa ves accesibilidad, tema claro/oscuro, alertas, mensajes con anfitriones y tu menú de cuenta a la derecha.",
+      guestInboxDesc:
+        "La campana avisa cambios en reservas y novedades; el chat abre conversaciones con propietarios. Los números rojos indican pendientes sin leer.",
+      guestRecentTitle: "Tus visitas recientes",
+      guestRecentDesc:
+        "Como huésped registrado, aquí reaparecen los alojamientos que abriste para retomarlos con un clic.",
+      guestProfileTitle: "Tu cuenta",
+      guestProfileDescDesktop:
+        "Pulsa tu nombre para editar perfil, ir a reservas o cerrar sesión. Todo sin salir del inicio.",
+      guestProfileDescMobile:
+        "En el celular tu perfil está en la pestaña «Perfil» de la barra inferior; ahí también cierras sesión.",
       inboxTitle: "Alertas y mensajes",
       inboxDesc:
         "Las campanas del encabezado muestran notificaciones de reservas y conversaciones con anfitriones.",
@@ -903,6 +921,11 @@ export const translations = {
         "The bottom bar gives you home, alerts, messages, bookings, and profile.",
       mobileNavDescOwner:
         "The bottom bar keeps home, inbox, and your owner panel one tap away.",
+      mobileNavTitleDesktop: "Top menu",
+      mobileNavDescDesktopGuest:
+        "On desktop, navigation lives in the header: Explore, Destinations, Offers, and My bookings. Alerts, messages, and profile are on the right.",
+      mobileNavDescDesktopOwner:
+        "On desktop, use the panel sidebar for dashboard, listings, bookings, and inquiries. The bottom bar only appears on mobile.",
       hospixTitle: "Hospix assistant",
       hospixDesc:
         "Tap the robot anytime for help with bookings, questions, or exploring the site.",
@@ -910,7 +933,20 @@ export const translations = {
         "Hospix knows your panel—ask for summaries, shortcuts, or help with your listings.",
       guestWelcomeTitle: "Your Hospy space",
       guestWelcomeDesc:
-        "As a guest you can search stays, manage bookings, and get alerts in one place.",
+        "You're signed in as a guest. This walkthrough covers search, bookings, alerts, and every home tool in one place.",
+      guestHeaderToolsTitle: "Your personal bar",
+      guestHeaderToolsDesc:
+        "While signed in you get accessibility, light/dark theme, alerts, host messages, and your account menu on the right.",
+      guestInboxDesc:
+        "The bell shows booking updates and news; chat opens host conversations. Red badges mean unread items.",
+      guestRecentTitle: "Your recent views",
+      guestRecentDesc:
+        "As a signed-in guest, listings you opened reappear here so you can continue with one tap.",
+      guestProfileTitle: "Your account",
+      guestProfileDescDesktop:
+        "Click your name to edit profile, open bookings, or sign out—all from home.",
+      guestProfileDescMobile:
+        "On your phone, profile lives in the bottom bar's Profile tab, including sign out.",
       inboxTitle: "Alerts and messages",
       inboxDesc:
         "Header bells show booking notifications and conversations with hosts.",

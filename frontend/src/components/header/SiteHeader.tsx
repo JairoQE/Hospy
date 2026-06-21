@@ -89,7 +89,12 @@ export function SiteHeader() {
     if (!user) return null;
     if (isRole("huesped")) {
       return (
-        <NavLink to="/mis-reservas" className={navClassName} onClick={() => setMobileOpen(false)}>
+        <NavLink
+          to="/mis-reservas"
+          className={navClassName}
+          onClick={() => setMobileOpen(false)}
+          data-tour="nav-bookings-desktop"
+        >
           {t("nav.myBookings")}
         </NavLink>
       );

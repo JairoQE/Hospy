@@ -46,7 +46,11 @@ export function HeaderUserMenu({ user, onLogout, className = "" }: Props) {
   const name = displayName(user);
 
   return (
-    <div className={`header-user-menu ${className}`.trim()} ref={wrapRef}>
+    <div
+      className={`header-user-menu ${className}`.trim()}
+      ref={wrapRef}
+      data-tour="header-user-menu"
+    >
       <button
         type="button"
         className="header-user-trigger"
