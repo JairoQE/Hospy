@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useChatDock } from "../context/ChatDockContext";
+import { peerPublicProfilePath } from "../utils/peerProfilePath";
 import type { InboxCanal, InboxItem } from "../types/inbox";
 import { useInboxSummary } from "./useInboxSummary";
 
@@ -69,6 +70,10 @@ export function useInboxChannel(canal: InboxCanal, enabled = true) {
           mode: user.role === "propietario" ? "owner" : "guest",
           peerName: item.title,
           peerPhotoUrl: item.sender_photo_url ?? null,
+          peerUserId: item.peer_user_id ?? undefined,
+          peerProfilePath: item.peer_user_id
+            ? peerPublicProfilePath(item.peer_user_id, item.peer_user_role)
+            : undefined,
           hospedajeId: item.accommodation_id,
           hospedajeName: item.accommodation_name ?? "",
           conversationId: item.conversation_id,

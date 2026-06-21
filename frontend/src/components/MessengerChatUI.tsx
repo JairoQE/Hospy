@@ -5,6 +5,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+import { Link } from "react-router-dom";
 import type { ChatMessage } from "../api/types";
 import { buildMessengerThread } from "../utils/messengerThread";
 import { formatRelativeTime, formatSeenRelative } from "../utils/relativeTime";
@@ -29,6 +30,8 @@ type Props = {
   onClose?: () => void;
   onMinimize?: () => void;
   className?: string;
+  /** Ruta al perfil público del otro participante (avatar + nombre). */
+  profilePath?: string | null;
   /** embedded = panel propietario; dock = ventana flotante inferior derecha */
   variant?: "embedded" | "dock";
 };
@@ -49,6 +52,7 @@ export function MessengerChatUI({
   onClose,
   onMinimize,
   className = "",
+  profilePath,
   variant = "embedded",
 }: Props) {
   const threadRef = useRef<HTMLDivElement>(null);
@@ -105,11 +109,27 @@ export function MessengerChatUI({
   return (
     <div className={shellClass} role="dialog" aria-label={`Chat con ${title}`}>
       <header className="messenger-header">
-        <ChatPeerAvatar initial={peerInitial} photoUrl={peerPhotoUrl} />
-        <div className="messenger-header-text">
-          <strong className="messenger-header-name">{title}</strong>
-          {subtitle && <span className="messenger-header-sub">{subtitle}</span>}
-        </div>
+        {profilePath ? (
+          <Link
+            to={profilePath}
+            className="messenger-header-profile-link"
+            title="Ver perfil público"
+          >
+            <ChatPeerAvatar initial={peerInitial} photoUrl={peerPhotoUrl} />
+            <div className="messenger-header-text">
+              <strong className="messenger-header-name">{title}</strong>
+              {subtitle && <span className="messenger-header-sub">{subtitle}</span>}
+            </div>
+          </Link>
+        ) : (
+          <>
+            <ChatPeerAvatar initial={peerInitial} photoUrl={peerPhotoUrl} />
+            <div className="messenger-header-text">
+              <strong className="messenger-header-name">{title}</strong>
+              {subtitle && <span className="messenger-header-sub">{subtitle}</span>}
+            </div>
+          </>
+        )}
         <div className="messenger-header-actions">
           {isDock && onMinimize && (
             <button

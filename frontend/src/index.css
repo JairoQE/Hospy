@@ -5699,6 +5699,30 @@ textarea:focus {
   z-index: 1;
 }
 
+.messenger-header-profile-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 8px;
+  margin: -0.2rem 0;
+  padding: 0.2rem 0.35rem 0.2rem 0;
+  transition: background 0.15s ease;
+}
+
+.messenger-header-profile-link:hover {
+  background: #f0f2f5;
+  text-decoration: none;
+}
+
+.messenger-header-profile-link:focus-visible {
+  outline: 2px solid var(--primary, #0d6e6e);
+  outline-offset: 2px;
+}
+
 .messenger-header-text {
   display: flex;
   flex-direction: column;

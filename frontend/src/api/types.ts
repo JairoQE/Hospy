@@ -451,6 +451,7 @@ export interface Conversation {
 export interface ChatInquiryResponse {
   conversation: Conversation | null;
   messages: ChatMessage[];
+  propietario_id?: number;
   propietario_nombre?: string;
   propietario_foto_url?: string | null;
 }

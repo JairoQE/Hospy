@@ -18,6 +18,7 @@ import { useChatDock } from "../context/ChatDockContext";
 import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
 import { displayName, roleProfileTitleI18nKey } from "../utils/format";
 import { canInquireHost } from "../utils/hostChat";
+import { peerPublicProfilePath } from "../utils/peerProfilePath";
 import "../styles/owner-store-page.css";
 
 const PAGE_SIZE = 6;
@@ -181,6 +182,8 @@ export function OwnerStorePage() {
       mode: "guest",
       peerName: ownerName,
       peerPhotoUrl: store.photo_url,
+      peerUserId: id,
+      peerProfilePath: peerPublicProfilePath(id, "propietario"),
       hospedajeId: first.id,
       hospedajeName: first.name,
     });

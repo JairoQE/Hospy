@@ -9,6 +9,7 @@ import {
 import type { ChatMessage, Conversation } from "../api/types";
 import { useInboxSummary } from "../hooks/useInboxSummary";
 import { MessengerChatUI } from "./MessengerChatUI";
+import { peerPublicProfilePath } from "../utils/peerProfilePath";
 import { SkeletonOwnerInquiries } from "./ui/Skeleton";
 
 type Props = {
@@ -141,6 +142,7 @@ export function OwnerInquiriesPanel({ initialConversationId = null }: Props) {
           onSend={send}
           sending={sending}
           error={error}
+          profilePath={peerPublicProfilePath(selected.guest)}
         />
       )}
     </div>

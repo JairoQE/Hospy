@@ -36,6 +36,7 @@ import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
 import { DateRangePicker } from "../components/calendar/DateRangePicker";
 import { recordRecentView } from "../hooks/useRecentlyViewed";
 import { canInquireHost } from "../utils/hostChat";
+import { peerPublicProfilePath } from "../utils/peerProfilePath";
 import { compareDateStr } from "../utils/calendarDates";
 import { formatDate, formatMoney, roomTypeLabel, todayPlusDays, typeLabel } from "../utils/format";
 import { useAccommodationCalendar } from "../hooks/useAccommodationCalendar";
@@ -149,6 +150,8 @@ export function AccommodationDetailPage() {
       mode: "guest",
       peerName: acc.propietario_nombre || t("detail.hostDefault"),
       peerPhotoUrl: acc.propietario_foto_url,
+      peerUserId: acc.propietario_id,
+      peerProfilePath: peerPublicProfilePath(acc.propietario_id, "propietario"),
       hospedajeId: acc.id,
       hospedajeName: acc.name,
     });
@@ -509,6 +512,8 @@ export function AccommodationDetailPage() {
                 mode: "guest",
                 peerName: acc.propietario_nombre || t("detail.hostDefault"),
                 peerPhotoUrl: acc.propietario_foto_url,
+                peerUserId: acc.propietario_id,
+                peerProfilePath: peerPublicProfilePath(acc.propietario_id, "propietario"),
                 hospedajeId: acc.id,
                 hospedajeName: acc.name,
               })
@@ -1058,6 +1063,8 @@ export function AccommodationDetailPage() {
               mode: "guest",
               peerName: acc.propietario_nombre || t("detail.hostDefault"),
               peerPhotoUrl: acc.propietario_foto_url,
+              peerUserId: acc.propietario_id,
+              peerProfilePath: peerPublicProfilePath(acc.propietario_id, "propietario"),
               hospedajeId: acc.id,
               hospedajeName: acc.name,
             });

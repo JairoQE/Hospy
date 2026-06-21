@@ -1,3 +1,5 @@
+import type { UserRole } from "../api/types";
+
 export type InboxCanal = "notificacion" | "mensaje";
 
 export interface InboxItem {
@@ -15,6 +17,8 @@ export interface InboxItem {
   accommodation_name?: string | null;
   /** Fecha del último mensaje (no de la última sincronización). */
   thread_at?: string;
+  peer_user_id?: number | null;
+  peer_user_role?: UserRole | null;
   created_at: string;
   updated_at?: string;
 }

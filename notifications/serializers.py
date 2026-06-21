@@ -12,6 +12,8 @@ class InboxItemSerializer(serializers.ModelSerializer):
     accommodation_id = serializers.SerializerMethodField()
     accommodation_name = serializers.SerializerMethodField()
     thread_at = serializers.SerializerMethodField()
+    peer_user_id = serializers.SerializerMethodField()
+    peer_user_role = serializers.SerializerMethodField()
 
     class Meta:
         model = InboxItem
@@ -29,6 +31,8 @@ class InboxItemSerializer(serializers.ModelSerializer):
             "accommodation_id",
             "accommodation_name",
             "thread_at",
+            "peer_user_id",
+            "peer_user_role",
             "created_at",
             "updated_at",
         )
@@ -71,6 +75,34 @@ class InboxItemSerializer(serializers.ModelSerializer):
         )
         return last or obj.created_at
 
+    def get_peer_user_id(self, obj):
+        conv = self._get_conversation(obj)
+        if not conv:
+            return None
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        user = request.user
+        if user.id == conv.owner_id:
+            return conv.guest_id
+        if user.id == conv.guest_id:
+            return conv.owner_id
+        return None
+
+    def get_peer_user_role(self, obj):
+        conv = self._get_conversation(obj)
+        if not conv:
+            return None
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        user = request.user
+        if user.id == conv.owner_id:
+            return conv.guest.role
+        if user.id == conv.guest_id:
+            return conv.owner.role
+        return None
+
     def _get_conversation(self, obj):
         if not obj.kind or not obj.kind.startswith("chat_conv_"):
             return None
@@ -81,7 +113,7 @@ class InboxItemSerializer(serializers.ModelSerializer):
         from messaging.models import Conversation
 
         return (
-            Conversation.objects.select_related("accommodation")
+            Conversation.objects.select_related("accommodation", "guest", "owner")
             .filter(pk=conv_id)
             .first()
         )

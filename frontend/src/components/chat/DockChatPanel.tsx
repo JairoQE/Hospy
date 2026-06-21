@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError } from "../../api/client";
 import {
   fetchAccommodationInquiry,
@@ -11,6 +11,7 @@ import type { ChatMessage } from "../../api/types";
 import type { ChatDockSession } from "../../context/ChatDockContext";
 import { useAuth } from "../../context/AuthContext";
 import { useInboxSummary } from "../../hooks/useInboxSummary";
+import { peerPublicProfilePath } from "../../utils/peerProfilePath";
 import { MessengerChatUI } from "../MessengerChatUI";
 
 type Props = {
@@ -29,6 +30,20 @@ export function DockChatPanel({ session, onMinimize, onClose }: Props) {
   const [error, setError] = useState("");
   const [draft, setDraft] = useState("");
   const { refresh: refreshInbox } = useInboxSummary();
+  const [ownerId, setOwnerId] = useState<number | null>(
+    session.mode === "guest" && session.peerUserId ? session.peerUserId : null,
+  );
+
+  const profilePath = useMemo(() => {
+    if (session.peerProfilePath) return session.peerProfilePath;
+    if (session.mode === "guest" && ownerId) {
+      return peerPublicProfilePath(ownerId, "propietario");
+    }
+    if (session.mode === "owner" && session.peerUserId) {
+      return peerPublicProfilePath(session.peerUserId);
+    }
+    return null;
+  }, [session, ownerId]);
 
   const markThreadRead = useCallback(
     (convId: number) => {
@@ -56,6 +71,7 @@ export function DockChatPanel({ session, onMinimize, onClose }: Props) {
         const convId = data.conversation?.id ?? session.conversationId ?? null;
         setConversationId(convId);
         setPeerPhotoUrl(data.propietario_foto_url ?? session.peerPhotoUrl ?? null);
+        if (data.propietario_id) setOwnerId(data.propietario_id);
         if (convId) markThreadRead(convId);
       }
     } catch (e) {
@@ -148,6 +164,7 @@ export function DockChatPanel({ session, onMinimize, onClose }: Props) {
       error={error}
       onMinimize={onMinimize}
       onClose={onClose}
+      profilePath={profilePath}
     />
   );
 }

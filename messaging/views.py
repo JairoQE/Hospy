@@ -198,6 +198,7 @@ class AccommodationInquiryView(APIView):
         ).first()
         owner = accommodation.owner
         owner_payload = {
+            "propietario_id": owner.id,
             "propietario_nombre": _owner_name(owner),
             "propietario_foto_url": user_photo_url(owner),
         }
@@ -244,6 +245,7 @@ class AccommodationInquiryView(APIView):
                     conv, context={"request": request}
                 ).data,
                 "messages": _serialize_conversation_messages(conv, request),
+                "propietario_id": owner.id,
                 "propietario_nombre": _owner_name(owner),
                 "propietario_foto_url": user_photo_url(owner),
             },

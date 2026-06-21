@@ -14,6 +14,8 @@ export type ChatDockSession = {
   mode: "guest" | "owner";
   peerName: string;
   peerPhotoUrl?: string | null;
+  peerUserId?: number;
+  peerProfilePath?: string;
   hospedajeId: number;
   hospedajeName: string;
   conversationId?: number | null;
