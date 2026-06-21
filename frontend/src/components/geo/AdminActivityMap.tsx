@@ -40,7 +40,14 @@ type MapView =
 type Props = {
   data: ActivityMapResponse;
   className?: string;
+  focusPointKey?: string | null;
 };
+
+export function activityMapPointKey(
+  p: Pick<ActivityMapPoint, "latitude" | "longitude">,
+): string {
+  return `${p.latitude}-${p.longitude}`;
+}
 
 function countryCodeFromFeature(feature: GeoJSON.Feature): string {
   const props = feature.properties ?? {};
@@ -139,7 +146,7 @@ function ActivityTimeline({
   );
 }
 
-export function AdminActivityMap({ data, className = "" }: Props) {
+export function AdminActivityMap({ data, className = "", focusPointKey = null }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerGroupRef = useRef<L.LayerGroup | null>(null);
@@ -200,6 +207,31 @@ export function AdminActivityMap({ data, className = "" }: Props) {
       ),
     [data.by_department],
   );
+
+  useEffect(() => {
+    if (!focusPointKey) return;
+    const point = data.points.find((p) => activityMapPointKey(p) === focusPointKey);
+    if (!point) return;
+
+    const country = countryByCode.get(point.country_code.toUpperCase());
+    const countryName = country?.country || point.country_code;
+
+    if (point.department) {
+      setView({
+        level: "cities",
+        countryCode: point.country_code,
+        department: point.department,
+        label: point.city || point.department,
+      });
+      return;
+    }
+
+    setView({
+      level: "cities",
+      countryCode: point.country_code,
+      label: point.city || countryName,
+    });
+  }, [focusPointKey, data.points, countryByCode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -366,13 +398,19 @@ export function AdminActivityMap({ data, className = "" }: Props) {
           (p) => p.country_code.toUpperCase() === country.code.toUpperCase(),
         ),
         data.total_events,
-        (point) => {
-          setView({
-            level: "cities",
-            countryCode: country.code,
-            label: point.city || country.name,
-          });
-          flyToBounds([[point.latitude, point.longitude], [point.latitude, point.longitude]], 11);
+        {
+          focusKey: focusPointKey,
+          onClick: (point) => {
+            setView({
+              level: "cities",
+              countryCode: country.code,
+              label: point.city || country.name,
+            });
+            flyToBounds(
+              [[point.latitude, point.longitude], [point.latitude, point.longitude]],
+              11,
+            );
+          },
         },
       );
 
@@ -384,7 +422,7 @@ export function AdminActivityMap({ data, className = "" }: Props) {
         ) ?? boundsForCountry(country.code);
       if (bounds) flyToBounds(bounds, 7);
     },
-    [data.points, data.total_events, departmentsForCountry, flyToBounds, maxDeptCount],
+    [data.points, data.total_events, departmentsForCountry, flyToBounds, focusPointKey, maxDeptCount],
   );
 
   const renderDepartmentLayer = useCallback(
@@ -399,20 +437,26 @@ export function AdminActivityMap({ data, className = "" }: Props) {
           (p.department || "").toLowerCase() === department.name.toLowerCase(),
       );
 
-      renderCityMarkers(group, points, data.total_events, (point) => {
-        setView({
-          level: "cities",
-          countryCode: department.countryCode,
-          department: department.name,
-          label: point.city || department.name,
-        });
-        flyToBounds([[point.latitude, point.longitude], [point.latitude, point.longitude]], 12);
+      renderCityMarkers(group, points, data.total_events, {
+        focusKey: focusPointKey,
+        onClick: (point) => {
+          setView({
+            level: "cities",
+            countryCode: department.countryCode,
+            department: department.name,
+            label: point.city || department.name,
+          });
+          flyToBounds(
+            [[point.latitude, point.longitude], [point.latitude, point.longitude]],
+            12,
+          );
+        },
       });
 
       const bounds = boundsFromPoints(points) ?? boundsForCountry(department.countryCode);
       if (bounds) flyToBounds(bounds, 9);
     },
-    [data.points, data.total_events, flyToBounds],
+    [data.points, data.total_events, flyToBounds, focusPointKey],
   );
 
   const renderCitiesLayer = useCallback(
@@ -429,11 +473,20 @@ export function AdminActivityMap({ data, className = "" }: Props) {
         return true;
       });
 
-      renderCityMarkers(group, points, data.total_events);
-      const bounds = boundsFromPoints(points);
-      if (bounds) flyToBounds(bounds, 11);
+      renderCityMarkers(group, points, data.total_events, { focusKey: focusPointKey });
+      const focused = focusPointKey
+        ? points.find((p) => activityMapPointKey(p) === focusPointKey)
+        : null;
+      if (focused) {
+        mapRef.current?.setView([focused.latitude, focused.longitude], 13, {
+          animate: true,
+        });
+      } else {
+        const bounds = boundsFromPoints(points);
+        if (bounds) flyToBounds(bounds, 11);
+      }
     },
-    [data.points, data.total_events, flyToBounds],
+    [data.points, data.total_events, flyToBounds, focusPointKey],
   );
 
   useEffect(() => {
@@ -454,6 +507,7 @@ export function AdminActivityMap({ data, className = "" }: Props) {
     renderCitiesLayer(view.countryCode, view.department);
   }, [
     view,
+    focusPointKey,
     renderWorldLayer,
     renderCountryLayer,
     renderDepartmentLayer,
@@ -587,17 +641,22 @@ function renderCityMarkers(
   group: L.LayerGroup,
   points: ActivityMapPoint[],
   totalEvents: number,
-  onClick?: (point: ActivityMapPoint) => void,
+  options?: {
+    onClick?: (point: ActivityMapPoint) => void;
+    focusKey?: string | null;
+  },
 ) {
   const max = points.reduce((acc, p) => Math.max(acc, p.count), 0);
   for (const point of points) {
+    const key = activityMapPointKey(point);
+    const isFocused = options?.focusKey === key;
     const ratio = max > 0 ? point.count / max : 0;
     const marker = L.circleMarker([point.latitude, point.longitude], {
-      radius: markerRadius(point.count, max),
-      color: "#ffffff",
-      weight: 1.5,
+      radius: markerRadius(point.count, max) + (isFocused ? 5 : 0),
+      color: isFocused ? "#2563eb" : "#ffffff",
+      weight: isFocused ? 3 : 1.5,
       fillColor: colorForRatio(ratio),
-      fillOpacity: 0.9,
+      fillOpacity: isFocused ? 1 : 0.9,
     });
     const pct =
       totalEvents > 0 ? Math.round((point.count / totalEvents) * 100) : 0;
@@ -611,9 +670,12 @@ function renderCityMarkers(
         `${point.count} eventos (${pct}%)` +
         (actions ? `<br/><span style="opacity:.75">${actions}</span>` : ""),
     );
-    if (onClick) {
-      marker.on("click", () => onClick(point));
+    if (options?.onClick) {
+      marker.on("click", () => options.onClick!(point));
     }
     group.addLayer(marker);
+    if (isFocused) {
+      window.setTimeout(() => marker.openPopup(), 150);
+    }
   }
 }

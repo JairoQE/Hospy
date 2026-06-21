@@ -6977,6 +6977,40 @@ textarea:focus {
   background: linear-gradient(90deg, #2dd4bf, #0d9488);
 }
 
+.admin-geo-legend-list--expanded {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  scrollbar-width: thin;
+}
+
+.admin-geo-legend-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: 0.55rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.admin-geo-legend-toggle:hover,
+.admin-geo-legend-toggle:focus-visible {
+  border-color: var(--primary);
+  background: rgba(13, 110, 110, 0.06);
+  outline: none;
+}
+
 :root[data-theme="dark"] .admin-geo-stat-pill {
   background: rgba(78, 205, 196, 0.12);
 }
