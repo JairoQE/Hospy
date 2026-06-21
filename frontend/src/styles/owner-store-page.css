@@ -220,6 +220,18 @@
   color: var(--primary);
 }
 
+.owner-store-metric--clickable {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: inherit;
+}
+
+.owner-store-metric--clickable:hover strong {
+  color: var(--primary);
+}
+
 .owner-store-hero-actions {
   display: flex;
   flex-wrap: wrap;

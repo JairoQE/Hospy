@@ -15,6 +15,7 @@ type Props = {
   onFollow: () => void;
   onContact: () => void;
   onShare: () => void;
+  onFollowersClick?: () => void;
   me: { id: number; role?: string } | null;
 };
 
@@ -27,6 +28,7 @@ export function OwnerStoreHero({
   onFollow,
   onContact,
   onShare,
+  onFollowersClick,
   me,
 }: Props) {
   const { t } = useLocaleCurrency();
@@ -85,10 +87,14 @@ export function OwnerStoreHero({
             <strong>{reviews}</strong>
             <span className="owner-store-metric-label">{t("ownerStorePage.metricReviews")}</span>
           </a>
-          <div className="owner-store-metric">
+          <button
+            type="button"
+            className="owner-store-metric owner-store-metric--clickable"
+            onClick={onFollowersClick}
+          >
             <strong>{store.followers_count}</strong>
             <span className="owner-store-metric-label">{t("ownerStorePage.metricFollowers")}</span>
-          </div>
+          </button>
           <div className="owner-store-metric">
             <strong>{count}</strong>
             <span className="owner-store-metric-label">{t("ownerStorePage.metricProperties")}</span>

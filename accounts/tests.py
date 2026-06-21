@@ -563,3 +563,26 @@ def test_reserva_bloqueada_sin_payout(api_client, huesped, hospedaje_aprobado):
     )
     assert response.status_code == 400
     assert "datos" in str(response.data).lower()
+
+
+@pytest.mark.django_db
+def test_usuario_seguidores_y_siguiendo(api_client, huesped, propietario):
+    from accounts.models import UserFollow
+
+    UserFollow.objects.create(follower=huesped, following=propietario)
+    UserFollow.objects.create(follower=propietario, following=huesped)
+
+    followers = api_client.get(f"/api/v1/auth/usuarios/{propietario.pk}/seguidores/")
+    assert followers.status_code == 200
+    assert followers.data["count"] == 1
+    assert followers.data["results"][0]["id"] == huesped.pk
+    assert followers.data["results"][0]["display_name"]
+
+    following = api_client.get(f"/api/v1/auth/usuarios/{huesped.pk}/siguiendo/")
+    assert following.status_code == 200
+    assert following.data["count"] == 1
+    assert following.data["results"][0]["id"] == propietario.pk
+
+    api_client.force_authenticate(user=huesped)
+    followers_auth = api_client.get(f"/api/v1/auth/usuarios/{propietario.pk}/seguidores/")
+    assert followers_auth.data["results"][0]["is_following"] is False

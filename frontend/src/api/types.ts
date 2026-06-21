@@ -84,6 +84,18 @@ export interface Paginated<T> {
   results: T[];
 }
 
+export interface FollowListUser {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  display_name: string;
+  role: UserRole;
+  photo_url: string | null;
+  is_following: boolean;
+  is_self: boolean;
+}
+
 export interface AccommodationListItem {
   id: number;
   name: string;

@@ -9,6 +9,7 @@ import {
   type SortKey,
 } from "../components/owner-store/OwnerStoreFilters";
 import { OwnerStoreHero } from "../components/owner-store/OwnerStoreHero";
+import { FollowListModal, type FollowListTab } from "../components/profile/FollowListModal";
 import { OwnerStorePropertyCard } from "../components/owner-store/OwnerStorePropertyCard";
 import { OwnerStoreReviews } from "../components/owner-store/OwnerStoreReviews";
 import { SkeletonOwnerStorePage } from "../components/ui/Skeleton";
@@ -89,6 +90,8 @@ export function OwnerStorePage() {
   });
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [followListOpen, setFollowListOpen] = useState(false);
+  const [followListTab, setFollowListTab] = useState<FollowListTab>("followers");
   const [contactHint, setContactHint] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -244,6 +247,10 @@ export function OwnerStorePage() {
           onFollow={() => void toggleFollow()}
           onContact={handleContact}
           onShare={() => void handleShare()}
+          onFollowersClick={() => {
+            setFollowListTab("followers");
+            setFollowListOpen(true);
+          }}
           me={me}
         />
 
@@ -312,6 +319,16 @@ export function OwnerStorePage() {
           </section>
         )}
       </div>
+
+      <FollowListModal
+        open={followListOpen}
+        onClose={() => setFollowListOpen(false)}
+        userId={store.id}
+        userName={ownerName}
+        followersCount={store.followers_count}
+        followingCount={store.following_count ?? 0}
+        initialTab={followListTab}
+      />
     </div>
   );
 }

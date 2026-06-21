@@ -29,6 +29,7 @@ type Props = {
   onPhotoSelect?: (file: File) => void;
   flash?: string;
   flashError?: boolean;
+  onFollowStatsClick?: (tab: "followers" | "following") => void;
 };
 
 function formatCount(n: number): string {
@@ -62,6 +63,7 @@ export function ProfileHero({
   onPhotoSelect,
   flash,
   flashError,
+  onFollowStatsClick,
 }: Props) {
   const [lightbox, setLightbox] = useState<"photo" | "cover" | null>(null);
   const photoUrl = profilePhotoUrl(user);
@@ -154,13 +156,23 @@ export function ProfileHero({
                   <div className="profile-identity-main">
                     <h1 className="profile-name">{title}</h1>
                     <div className="profile-stats-row" aria-label="Seguidores">
-                      <span className="profile-stat-chip">
+                      <button
+                        type="button"
+                        className="profile-stat-chip profile-stat-chip--clickable"
+                        onClick={() => onFollowStatsClick?.("followers")}
+                        aria-label={`${formatCount(followersCount)} seguidores`}
+                      >
                         <strong>{formatCount(followersCount)}</strong>
                         {followersCount === 1 ? " seguidor" : " seguidores"}
-                      </span>
-                      <span className="profile-stat-chip">
+                      </button>
+                      <button
+                        type="button"
+                        className="profile-stat-chip profile-stat-chip--clickable"
+                        onClick={() => onFollowStatsClick?.("following")}
+                        aria-label={`${formatCount(followingCount)} siguiendo`}
+                      >
                         <strong>{formatCount(followingCount)}</strong> siguiendo
-                      </span>
+                      </button>
                     </div>
                     {showEmail && email && <p className="profile-email">{email}</p>}
                     {roleCategory && (

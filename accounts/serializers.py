@@ -267,6 +267,46 @@ class AdminUserListSerializer(serializers.ModelSerializer):
         return ""
 
 
+class FollowListUserSerializer(serializers.ModelSerializer):
+    """Usuario resumido en listas de seguidores / siguiendo."""
+
+    photo_url = serializers.SerializerMethodField()
+    display_name = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
+    is_self = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "display_name",
+            "role",
+            "photo_url",
+            "is_following",
+            "is_self",
+        )
+
+    def get_photo_url(self, obj):
+        return media_public_path(obj.photo) if obj.photo else None
+
+    def get_display_name(self, obj):
+        full = obj.get_full_name().strip()
+        return full or obj.username
+
+    def get_is_following(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return is_following(request.user, obj)
+
+    def get_is_self(self, obj):
+        request = self.context.get("request")
+        return bool(request and request.user.is_authenticated and request.user.pk == obj.pk)
+
+
 class PublicUserProfileSerializer(serializers.ModelSerializer):
     photo_url = serializers.SerializerMethodField()
     cover_photo_url = serializers.SerializerMethodField()

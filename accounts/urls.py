@@ -36,6 +36,16 @@ urlpatterns = [
     path("usuarios/<int:pk>/", views.PublicUserProfileView.as_view(), name="usuario-publico"),
     path("usuarios/<int:pk>/seguir/", views.FollowUserView.as_view(), name="usuario-seguir"),
     path(
+        "usuarios/<int:pk>/seguidores/",
+        views.UserFollowersListView.as_view(),
+        name="usuario-seguidores",
+    ),
+    path(
+        "usuarios/<int:pk>/siguiendo/",
+        views.UserFollowingListView.as_view(),
+        name="usuario-siguiendo",
+    ),
+    path(
         "anfitriones/<int:pk>/",
         views.OwnerStoreView.as_view(),
         name="anfitrion-tienda",

@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Q
+from django.db.models import Count, OuterRef, Q, Subquery
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.pagination import PageNumberPagination
@@ -25,11 +25,14 @@ from .captcha import captcha_public_config
 
 from .facebook_auth import resolve_facebook_user, verify_facebook_access_token
 from .google_auth import resolve_google_user, verify_google_credential
+from .models import UserFollow
+
 from .serializers import (
     ChangeEmailSerializer,
     ChangePasswordSerializer,
     CustomTokenObtainPairSerializer,
     FacebookAuthSerializer,
+    FollowListUserSerializer,
     GoogleAuthSerializer,
     OwnerApprovalSerializer,
     OwnerPublicProfileSerializer,
@@ -213,6 +216,54 @@ class FollowUserView(APIView):
                 if following_now
                 else "Dejaste de seguir a este usuario.",
             }
+        )
+
+
+class FollowListPagination(PageNumberPagination):
+    page_size = 30
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
+class UserFollowersListView(generics.ListAPIView):
+    """GET /api/v1/auth/usuarios/<pk>/seguidores/ — quién sigue a este usuario."""
+
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = FollowListUserSerializer
+    pagination_class = FollowListPagination
+
+    def get_queryset(self):
+        target = get_object_or_404(User, pk=self.kwargs["pk"], is_active=True)
+        follower_ids = UserFollow.objects.filter(following=target).values("follower_id")
+        followed_at = UserFollow.objects.filter(
+            following=target,
+            follower=OuterRef("pk"),
+        ).order_by("-created_at").values("created_at")[:1]
+        return (
+            User.objects.filter(pk__in=follower_ids, is_active=True)
+            .annotate(followed_at=Subquery(followed_at))
+            .order_by("-followed_at")
+        )
+
+
+class UserFollowingListView(generics.ListAPIView):
+    """GET /api/v1/auth/usuarios/<pk>/siguiendo/ — a quién sigue este usuario."""
+
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = FollowListUserSerializer
+    pagination_class = FollowListPagination
+
+    def get_queryset(self):
+        target = get_object_or_404(User, pk=self.kwargs["pk"], is_active=True)
+        following_ids = UserFollow.objects.filter(follower=target).values("following_id")
+        followed_at = UserFollow.objects.filter(
+            follower=target,
+            following=OuterRef("pk"),
+        ).order_by("-created_at").values("created_at")[:1]
+        return (
+            User.objects.filter(pk__in=following_ids, is_active=True)
+            .annotate(followed_at=Subquery(followed_at))
+            .order_by("-followed_at")
         )
 
 

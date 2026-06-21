@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError, api } from "../api/client";
 import type { PublicUserProfile, User } from "../api/types";
 import { ProfileHero } from "../components/profile/ProfileHero";
+import { FollowListModal, type FollowListTab } from "../components/profile/FollowListModal";
 import { PublicProfileSection } from "../components/profile/PublicProfileSection";
 import { PhoneInput, formatPhoneDisplay } from "../components/profile/PhoneInput";
 import { ProfileSecuritySection } from "../components/profile/ProfileSecuritySection";
@@ -34,6 +35,8 @@ export function ProfilePage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [followListOpen, setFollowListOpen] = useState(false);
+  const [followListTab, setFollowListTab] = useState<FollowListTab>("followers");
 
   const targetId = userIdParam ? Number(userIdParam) : me?.id;
   const isOwn = !userIdParam || (me && targetId === me.id);
@@ -217,6 +220,11 @@ export function ProfilePage() {
 
   const heroUser = isOwn ? me! : publicProfile!;
 
+  const openFollowList = (tab: FollowListTab) => {
+    setFollowListTab(tab);
+    setFollowListOpen(true);
+  };
+
   return (
     <div className="profile-page">
       <ProfileHero
@@ -232,6 +240,7 @@ export function ProfilePage() {
         followLoading={followLoading}
         canFollow={!isOwn && !!me}
         onFollowToggle={!isOwn && me ? toggleFollow : undefined}
+        onFollowStatsClick={openFollowList}
         uploadingCover={uploadingCover}
         uploadingPhoto={uploadingPhoto}
         onCoverSelect={isOwn ? uploadCover : undefined}
@@ -356,6 +365,18 @@ export function ProfilePage() {
           )
         )}
       </div>
+
+      {targetId && !Number.isNaN(targetId) && (
+        <FollowListModal
+          open={followListOpen}
+          onClose={() => setFollowListOpen(false)}
+          userId={targetId}
+          userName={title}
+          followersCount={followersCount}
+          followingCount={followingCount}
+          initialTab={followListTab}
+        />
+      )}
     </div>
   );
 }
