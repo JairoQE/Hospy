@@ -267,6 +267,56 @@ class UserFollowingListView(generics.ListAPIView):
         )
 
 
+class UserPublicBookingsListView(generics.ListAPIView):
+    """GET /api/v1/auth/usuarios/<pk>/reservas-publicas/ — estadías completadas del huésped."""
+
+    permission_classes = (permissions.AllowAny,)
+    pagination_class = FollowListPagination
+
+    def get_serializer_class(self):
+        from bookings.serializers import PublicProfileBookingSerializer
+
+        return PublicProfileBookingSerializer
+
+    def get_queryset(self):
+        from bookings.models import Booking
+
+        target = get_object_or_404(User, pk=self.kwargs["pk"], is_active=True)
+        return (
+            Booking.objects.filter(
+                guest=target,
+                status=Booking.Status.COMPLETADA,
+            )
+            .select_related("room", "room__accommodation")
+            .order_by("-check_out", "-created_at")
+        )
+
+
+class UserPublicReviewsListView(generics.ListAPIView):
+    """GET /api/v1/auth/usuarios/<pk>/resenas-publicas/ — reseñas aprobadas del huésped."""
+
+    permission_classes = (permissions.AllowAny,)
+    pagination_class = FollowListPagination
+
+    def get_serializer_class(self):
+        from reviews.serializers import PublicProfileReviewSerializer
+
+        return PublicProfileReviewSerializer
+
+    def get_queryset(self):
+        from reviews.models import Review
+
+        target = get_object_or_404(User, pk=self.kwargs["pk"], is_active=True)
+        return (
+            Review.objects.filter(
+                author=target,
+                status=Review.Status.APROBADA,
+            )
+            .select_related("accommodation", "booking", "booking__room")
+            .order_by("-created_at")
+        )
+
+
 class PasswordResetRequestView(APIView):
     """POST /api/v1/auth/reset-password/ — envía enlace por email (RF-07)."""
 

@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { peerPublicProfilePath } from "../../utils/peerProfilePath";
 import { IconSpinner } from "../icons";
 import { PrimeIcon } from "../PrimeIcon";
+import { showAppToast } from "../ui/AppToast";
 import { UserAvatar } from "../UserAvatar";
 
 export type FollowListTab = "followers" | "following";
@@ -25,6 +26,12 @@ function formatTabCount(n: number): string {
   return n.toLocaleString("es-PE");
 }
 
+function canFollowUser(item: FollowListUser, meId?: number): boolean {
+  if (item.is_self) return false;
+  if (meId != null && item.id === meId) return false;
+  return true;
+}
+
 export function FollowListModal({
   open,
   onClose,
@@ -39,13 +46,13 @@ export function FollowListModal({
   const [tab, setTab] = useState<FollowListTab>(initialTab);
   const [users, setUsers] = useState<FollowListUser[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [loadFailed, setLoadFailed] = useState(false);
   const [followLoadingId, setFollowLoadingId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     if (!open || !userId) return;
     setLoading(true);
-    setError("");
+    setLoadFailed(false);
     try {
       const data =
         tab === "followers"
@@ -54,7 +61,11 @@ export function FollowListModal({
       setUsers(data);
     } catch (e) {
       setUsers([]);
-      setError(e instanceof ApiError ? e.message : "No se pudo cargar la lista");
+      setLoadFailed(true);
+      showAppToast(
+        e instanceof ApiError ? e.message : "No se pudo cargar la lista",
+        "error",
+      );
     } finally {
       setLoading(false);
     }
@@ -83,7 +94,7 @@ export function FollowListModal({
   }, [open, onClose]);
 
   const handleFollowToggle = async (target: FollowListUser) => {
-    if (target.is_self) return;
+    if (!canFollowUser(target, me?.id)) return;
     if (!me) {
       onClose();
       navigate("/login", { state: { from: window.location.pathname } });
@@ -96,7 +107,10 @@ export function FollowListModal({
         prev.map((u) => (u.id === target.id ? { ...u, is_following: res.following } : u)),
       );
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : "No se pudo actualizar el seguimiento");
+      showAppToast(
+        e instanceof ApiError ? e.message : "No se pudo actualizar el seguimiento",
+        "error",
+      );
     } finally {
       setFollowLoadingId(null);
     }
@@ -104,8 +118,11 @@ export function FollowListModal({
 
   if (!open) return null;
 
-  const emptyLabel =
-    tab === "followers" ? "Todavía no tiene seguidores." : "Todavía no sigue a nadie.";
+  const emptyLabel = loadFailed
+    ? "No se pudo cargar la lista."
+    : tab === "followers"
+      ? "Todavía no tiene seguidores."
+      : "Todavía no sigue a nadie.";
 
   return (
     <div
@@ -152,21 +169,20 @@ export function FollowListModal({
             <div className="follow-list-state">
               <IconSpinner size={28} />
             </div>
-          ) : error ? (
-            <div className="follow-list-state">
-              <p className="follow-list-error">{error}</p>
-              <button type="button" className="follow-list-retry" onClick={() => void load()}>
-                Reintentar
-              </button>
-            </div>
           ) : users.length === 0 ? (
             <div className="follow-list-state">
               <p className="follow-list-empty">{emptyLabel}</p>
+              {loadFailed && (
+                <button type="button" className="follow-list-retry" onClick={() => void load()}>
+                  Reintentar
+                </button>
+              )}
             </div>
           ) : (
             <ul className="follow-list-users">
               {users.map((item) => {
                 const profilePath = peerPublicProfilePath(item.id, item.role);
+                const showFollow = canFollowUser(item, me?.id);
                 return (
                   <li key={item.id} className="follow-list-row">
                     <Link
@@ -180,7 +196,7 @@ export function FollowListModal({
                         <span className="follow-list-user-handle">@{item.username}</span>
                       </span>
                     </Link>
-                    {!item.is_self && (
+                    {showFollow ? (
                       <button
                         type="button"
                         className={`follow-list-follow-btn${
@@ -195,6 +211,8 @@ export function FollowListModal({
                             ? "Siguiendo"
                             : "Seguir"}
                       </button>
+                    ) : (
+                      <span className="follow-list-you-badge">Tú</span>
                     )}
                   </li>
                 );

@@ -69,6 +69,51 @@ class ReviewDetailSerializer(ReviewListSerializer):
         fields = ReviewListSerializer.Meta.fields + ("status", "author")
 
 
+class PublicProfileReviewSerializer(serializers.ModelSerializer):
+    """Reseñas aprobadas visibles en el perfil público del huésped."""
+
+    hospedaje_nombre = serializers.CharField(source="accommodation.name", read_only=True)
+    hospedaje_id = serializers.IntegerField(source="accommodation_id", read_only=True)
+    habitacion = serializers.SerializerMethodField()
+    check_in = serializers.SerializerMethodField()
+    check_out = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Review
+        fields = (
+            "id",
+            "hospedaje_id",
+            "hospedaje_nombre",
+            "habitacion",
+            "check_in",
+            "check_out",
+            "rating",
+            "category_ratings",
+            "comment",
+            "created_at",
+        )
+
+    def _stay(self, obj) -> Booking | None:
+        cached = getattr(obj, "_review_booking", None)
+        if cached is not None:
+            return cached
+        booking = booking_for_review(obj)
+        obj._review_booking = booking
+        return booking
+
+    def get_habitacion(self, obj):
+        stay = self._stay(obj)
+        return stay.room.number if stay else None
+
+    def get_check_in(self, obj):
+        stay = self._stay(obj)
+        return stay.check_in.isoformat() if stay else None
+
+    def get_check_out(self, obj):
+        stay = self._stay(obj)
+        return stay.check_out.isoformat() if stay else None
+
+
 class ReviewCreateSerializer(serializers.ModelSerializer):
     booking = serializers.PrimaryKeyRelatedField(
         queryset=Booking.objects.select_related("room"),

@@ -46,6 +46,16 @@ urlpatterns = [
         name="usuario-siguiendo",
     ),
     path(
+        "usuarios/<int:pk>/reservas-publicas/",
+        views.UserPublicBookingsListView.as_view(),
+        name="usuario-reservas-publicas",
+    ),
+    path(
+        "usuarios/<int:pk>/resenas-publicas/",
+        views.UserPublicReviewsListView.as_view(),
+        name="usuario-resenas-publicas",
+    ),
+    path(
         "anfitriones/<int:pk>/",
         views.OwnerStoreView.as_view(),
         name="anfitrion-tienda",

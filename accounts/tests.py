@@ -586,3 +586,39 @@ def test_usuario_seguidores_y_siguiendo(api_client, huesped, propietario):
     api_client.force_authenticate(user=huesped)
     followers_auth = api_client.get(f"/api/v1/auth/usuarios/{propietario.pk}/seguidores/")
     assert followers_auth.data["results"][0]["is_following"] is False
+
+
+@pytest.mark.django_db
+def test_usuario_reservas_y_resenas_publicas(api_client, huesped, hospedaje_aprobado):
+    from bookings.models import Booking
+    from reviews.models import Review
+
+    acc, room = hospedaje_aprobado
+
+    booking = Booking.objects.create(
+        guest=huesped,
+        room=room,
+        check_in="2026-01-10",
+        check_out="2026-01-12",
+        total_amount="240.00",
+        status=Booking.Status.COMPLETADA,
+    )
+    Review.objects.create(
+        accommodation=acc,
+        booking=booking,
+        author=huesped,
+        rating=5,
+        comment="Excelente estadía.",
+        status=Review.Status.APROBADA,
+        category_ratings={"limpieza": 5},
+    )
+
+    bookings = api_client.get(f"/api/v1/auth/usuarios/{huesped.pk}/reservas-publicas/")
+    assert bookings.status_code == 200
+    assert bookings.data["count"] == 1
+    assert bookings.data["results"][0]["hospedaje"] == acc.name
+
+    reviews = api_client.get(f"/api/v1/auth/usuarios/{huesped.pk}/resenas-publicas/")
+    assert reviews.status_code == 200
+    assert reviews.data["count"] == 1
+    assert reviews.data["results"][0]["habitacion"] == room.number

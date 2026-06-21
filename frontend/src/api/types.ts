@@ -96,6 +96,31 @@ export interface FollowListUser {
   is_self: boolean;
 }
 
+export interface PublicProfileBooking {
+  id: number;
+  hospedaje: string;
+  habitacion: string;
+  ciudad: string;
+  accommodation_id: number;
+  check_in: string;
+  check_out: string;
+  status: string;
+  created_at: string;
+}
+
+export interface PublicProfileReview {
+  id: number;
+  hospedaje_id: number;
+  hospedaje_nombre: string;
+  habitacion?: string | null;
+  check_in?: string | null;
+  check_out?: string | null;
+  rating: number;
+  category_ratings?: Partial<Record<string, number>>;
+  comment: string;
+  created_at: string;
+}
+
 export interface AccommodationListItem {
   id: number;
   name: string;

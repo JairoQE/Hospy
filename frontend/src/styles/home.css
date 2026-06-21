@@ -525,10 +525,11 @@ html[data-home-entrance="0"] .tab-panel-fade {
   gap: 0.85rem 1rem;
   padding: 0.85rem 1rem;
   margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, rgba(44, 125, 160, 0.08) 0%, rgba(255, 255, 255, 0.95) 55%);
-  border: 1px solid rgba(44, 125, 160, 0.18);
+  color: var(--text);
+  background: linear-gradient(135deg, rgba(44, 125, 160, 0.1) 0%, var(--surface) 62%);
+  border: 1px solid var(--border);
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(30, 58, 95, 0.05);
+  box-shadow: var(--shadow);
 }
 
 .geo-banner-icon {
@@ -551,6 +552,11 @@ html[data-home-entrance="0"] .tab-panel-fade {
   flex-direction: column;
   gap: 0.15rem;
   font-size: 0.95rem;
+  color: var(--text);
+}
+
+.geo-banner-text strong {
+  color: var(--text);
 }
 
 .geo-banner-sub {
@@ -570,10 +576,55 @@ html[data-home-entrance="0"] .tab-panel-fade {
   align-items: center;
   gap: 0.35rem;
   background: var(--home-turquoise);
+  color: #fff;
 }
 
 .geo-banner .btn-primary:hover {
   background: #236b88;
+}
+
+.geo-banner .btn-outline {
+  background: var(--surface);
+  border-color: var(--home-turquoise);
+  color: var(--home-turquoise);
+}
+
+.geo-banner .btn-outline:hover {
+  background: rgba(44, 125, 160, 0.1);
+}
+
+:root[data-theme="dark"] .geo-banner {
+  background: linear-gradient(
+    135deg,
+    rgba(78, 205, 196, 0.14) 0%,
+    var(--surface) 68%
+  );
+  border-color: rgba(78, 205, 196, 0.24);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="dark"] .geo-banner-icon {
+  background: rgba(78, 205, 196, 0.16);
+  color: var(--primary);
+}
+
+:root[data-theme="dark"] .geo-banner .btn-primary {
+  background: var(--primary);
+  color: #0f1722;
+}
+
+:root[data-theme="dark"] .geo-banner .btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+:root[data-theme="dark"] .geo-banner .btn-outline {
+  background: var(--input-bg);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+:root[data-theme="dark"] .geo-banner .btn-outline:hover {
+  background: rgba(78, 205, 196, 0.12);
 }
 
 /* Skeletons */

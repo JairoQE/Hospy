@@ -139,6 +139,31 @@ class AdminDashboardBookingSerializer(serializers.ModelSerializer):
         }
 
 
+class PublicProfileBookingSerializer(serializers.ModelSerializer):
+    """Estadías completadas visibles en el perfil público del huésped."""
+
+    hospedaje = serializers.CharField(source="room.accommodation.name", read_only=True)
+    habitacion = serializers.CharField(source="room.number", read_only=True)
+    ciudad = serializers.CharField(source="room.accommodation.city", read_only=True)
+    accommodation_id = serializers.IntegerField(
+        source="room.accommodation_id", read_only=True
+    )
+
+    class Meta:
+        model = Booking
+        fields = (
+            "id",
+            "hospedaje",
+            "habitacion",
+            "ciudad",
+            "accommodation_id",
+            "check_in",
+            "check_out",
+            "status",
+            "created_at",
+        )
+
+
 class BookingDetailSerializer(BookingListSerializer):
     room_id = serializers.IntegerField(source="room.id", read_only=True)
     desglose_precio = serializers.SerializerMethodField()

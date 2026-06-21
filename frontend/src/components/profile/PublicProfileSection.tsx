@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { PublicUserProfile } from "../../api/types";
 import { PrimeIcon } from "../PrimeIcon";
 import { formatDate } from "../../utils/format";
+import { PublicProfileActivity } from "./PublicProfileActivity";
 
 type Props = {
   profile: PublicUserProfile;
@@ -18,6 +19,7 @@ export function PublicProfileSection({ profile, isLoggedIn }: Props) {
 
   return (
     <div className="profile-public-layout">
+      <div className="profile-public-main">
       <section className="card profile-public-bio-card">
         <h2 className="profile-public-heading">
           <PrimeIcon name="pi-user" size={18} />
@@ -31,6 +33,9 @@ export function PublicProfileSection({ profile, isLoggedIn }: Props) {
           </p>
         )}
       </section>
+
+      <PublicProfileActivity userId={profile.id} firstName={profile.first_name} />
+      </div>
 
       <aside className="profile-public-aside">
         <section className="card profile-public-stats-card">

@@ -6,6 +6,7 @@ import { SessionTimeoutWatcher } from "./SessionTimeoutWatcher";
 import { SiteHeader } from "./header/SiteHeader";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { SiteFooter } from "./footer/SiteFooter";
+import { AppToastHost } from "./ui/AppToast";
 
 export function Layout() {
   const { pathname } = useLocation();
@@ -49,6 +50,7 @@ export function Layout() {
       )}
       {!isPanelShellRoute && <SiteFooter />}
       {!hideBottomNav && <MobileBottomNav />}
+      <AppToastHost />
     </div>
   );
 }
