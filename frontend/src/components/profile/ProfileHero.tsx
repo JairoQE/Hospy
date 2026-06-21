@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { PublicUserProfile, User } from "../../api/types";
+import { resolveMediaUrl } from "../../utils/media";
 import { IconSpinner } from "../icons";
 import { PrimeIcon } from "../PrimeIcon";
+import { ImageLightbox } from "../ui/ImageLightbox";
 import { UserAvatar } from "../UserAvatar";
 
 type ProfileUser = User | PublicUserProfile;
@@ -32,6 +35,13 @@ function formatCount(n: number): string {
   return n.toLocaleString("es-PE");
 }
 
+function profilePhotoUrl(user: ProfileUser): string | null {
+  const raw =
+    user.photo_url ??
+    ("photo" in user ? user.photo : null);
+  return resolveMediaUrl(raw) ?? null;
+}
+
 export function ProfileHero({
   user,
   title,
@@ -53,6 +63,8 @@ export function ProfileHero({
   flash,
   flashError,
 }: Props) {
+  const [lightbox, setLightbox] = useState<"photo" | "cover" | null>(null);
+  const photoUrl = profilePhotoUrl(user);
   const bio = "bio" in user ? user.bio?.trim() : "";
   const roleCategory =
     "role_category" in user && user.role_category
@@ -66,7 +78,14 @@ export function ProfileHero({
         aria-label="Foto de portada"
       >
         {coverUrl ? (
-          <img className="profile-cover-img" src={coverUrl} alt="" />
+          <button
+            type="button"
+            className="profile-cover-open"
+            onClick={() => setLightbox("cover")}
+            aria-label="Ver portada ampliada"
+          >
+            <img className="profile-cover-img" src={coverUrl} alt="" />
+          </button>
         ) : (
           <div className="profile-cover-pattern" aria-hidden />
         )}
@@ -78,9 +97,21 @@ export function ProfileHero({
           <div className="profile-identity-card">
             <div className="profile-identity-top">
               <div
-                className={`profile-avatar-wrap${uploadingPhoto ? " profile-avatar-wrap--uploading" : ""}`}
+                className={`profile-avatar-wrap${uploadingPhoto ? " profile-avatar-wrap--uploading" : ""}${photoUrl ? " profile-avatar-wrap--clickable" : ""}`}
               >
-                <UserAvatar user={user} size="xl" className="profile-avatar" />
+                {photoUrl ? (
+                  <button
+                    type="button"
+                    className="profile-avatar-open"
+                    onClick={() => setLightbox("photo")}
+                    aria-label="Ver foto de perfil ampliada"
+                    disabled={uploadingPhoto}
+                  >
+                    <UserAvatar user={user} size="xl" className="profile-avatar" />
+                  </button>
+                ) : (
+                  <UserAvatar user={user} size="xl" className="profile-avatar" />
+                )}
                 {uploadingPhoto && (
                   <div
                     className="profile-avatar-upload-overlay"
@@ -243,6 +274,21 @@ export function ProfileHero({
           </div>
         </div>
       </div>
+
+      {lightbox === "photo" && photoUrl && (
+        <ImageLightbox
+          src={photoUrl}
+          alt={`Foto de perfil de ${title}`}
+          onClose={() => setLightbox(null)}
+        />
+      )}
+      {lightbox === "cover" && coverUrl && (
+        <ImageLightbox
+          src={coverUrl}
+          alt={`Portada de ${title}`}
+          onClose={() => setLightbox(null)}
+        />
+      )}
     </div>
   );
 }

@@ -308,6 +308,52 @@ img {
   object-position: center top;
 }
 
+.profile-cover-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: zoom-in;
+  line-height: 0;
+}
+
+.profile-cover-open:hover .profile-cover-img,
+.profile-cover-open:focus-visible .profile-cover-img {
+  opacity: 0.92;
+}
+
+.profile-cover-open:focus-visible {
+  outline: 2px solid var(--primary, #0d6e6e);
+  outline-offset: -2px;
+}
+
+.profile-avatar-wrap--clickable .profile-avatar-open {
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: zoom-in;
+  border-radius: 50%;
+  line-height: 0;
+}
+
+.profile-avatar-wrap--clickable .profile-avatar-open:hover:not(:disabled) .profile-avatar,
+.profile-avatar-wrap--clickable .profile-avatar-open:focus-visible:not(:disabled) .profile-avatar {
+  filter: brightness(0.94);
+}
+
+.profile-avatar-wrap--clickable .profile-avatar-open:focus-visible {
+  outline: 2px solid var(--primary, #0d6e6e);
+  outline-offset: 3px;
+}
+
+.profile-avatar-wrap--clickable .profile-avatar-open:disabled {
+  cursor: wait;
+}
+
 .profile-cover-shade {
   position: absolute;
   left: 0;
