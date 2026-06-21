@@ -24,7 +24,7 @@ export function OwnerInquiriesPanel({ initialConversationId = null }: Props) {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const { refresh: refreshInbox } = useInboxSummary(0);
+  const { refresh: refreshInbox } = useInboxSummary();
 
   const selected = conversations.find((c) => c.id === selectedId) ?? null;
 

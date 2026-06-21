@@ -3,6 +3,7 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV DJANGO_SETTINGS_MODULE=config.settings.production
+ENV PORT=8080
 
 WORKDIR /app
 
@@ -15,8 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
 COPY . .
 
-RUN chmod +x scripts/render-start.sh
+RUN sed -i 's/\r$//' scripts/render-start.sh && chmod +x scripts/render-start.sh
 
-EXPOSE 8000
+EXPOSE 8080
 
 CMD ["scripts/render-start.sh"]

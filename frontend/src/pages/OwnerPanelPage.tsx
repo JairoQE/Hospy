@@ -92,7 +92,7 @@ export function OwnerPanelPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-  const { summary: inboxSummary } = useInboxSummary(0);
+  const { summary: inboxSummary } = useInboxSummary();
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");

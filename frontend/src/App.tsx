@@ -16,6 +16,7 @@ import { AccessibilityMenu } from "./components/accessibility/AccessibilityMenu"
 import { ReadingMaskOverlay } from "./components/accessibility/ReadingMaskOverlay";
 import { ThemeProvider } from "./context/ThemeContext";
 import { ProductTourProvider } from "./context/ProductTourContext";
+import { InboxSummaryProvider } from "./context/InboxSummaryContext";
 import { InboxNotificationWatcher } from "./components/inbox/InboxNotificationWatcher";
 import { ProductTourLauncher } from "./components/productTour/ProductTourLauncher";
 import { FloatingChatHeads } from "./components/chat/FloatingChatHeads";
@@ -58,6 +59,7 @@ function AppTree() {
       <SiteDesignProvider>
       <ChatDockProvider>
         <BrowserRouter>
+        <InboxSummaryProvider>
         <ProductTourProvider>
         <HospixChatProvider>
           <Routes>
@@ -156,6 +158,7 @@ function AppTree() {
           <InboxNotificationWatcher />
         </HospixChatProvider>
         </ProductTourProvider>
+        </InboxSummaryProvider>
         </BrowserRouter>
       </ChatDockProvider>
       </SiteDesignProvider>

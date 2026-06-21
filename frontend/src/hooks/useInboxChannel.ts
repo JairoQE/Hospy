@@ -10,7 +10,7 @@ export function useInboxChannel(canal: InboxCanal, enabled = true) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { openChat } = useChatDock();
-  const { refresh: refreshSummary } = useInboxSummary(0);
+  const { refresh: refreshSummary } = useInboxSummary();
   const [items, setItems] = useState<InboxItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<"todas" | "no_leidas">("todas");
@@ -28,12 +28,13 @@ export function useInboxChannel(canal: InboxCanal, enabled = true) {
           : `/bandeja/?canal=${canal}`;
       const data = await api.get<InboxItem[]>(q);
       setItems(Array.isArray(data) ? data : []);
+      await refreshSummary();
     } catch {
       setItems([]);
     } finally {
       setLoading(false);
     }
-  }, [canal, enabled, filter, user]);
+  }, [canal, enabled, filter, user, refreshSummary]);
 
   useEffect(() => {
     if (!user) {

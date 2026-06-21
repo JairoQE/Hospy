@@ -15,7 +15,6 @@ type BannerItem = {
   href: string;
 };
 
-const POLL_MS = 25_000;
 const AUTO_DISMISS_MS = 6000;
 
 function buildMessage(
@@ -54,7 +53,7 @@ function buildMessage(
 export function InboxNotificationWatcher() {
   const { user } = useAuth();
   const { t, tVars } = useLocaleCurrency();
-  const { summary, refresh } = useInboxSummary(POLL_MS);
+  const { summary, refresh } = useInboxSummary();
   const prevRef = useRef<InboxSummary | null>(null);
   const readyRef = useRef(false);
   const [banners, setBanners] = useState<BannerItem[]>([]);

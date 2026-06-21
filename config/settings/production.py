@@ -11,6 +11,12 @@ if not SECRET_KEY or SECRET_KEY == "dev-only-insecure-key":  # noqa: F405
 # Render / reverse proxy terminan TLS delante de Gunicorn
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# Cloud Run (K_SERVICE) y hosts *.run.app
+if os.environ.get("K_SERVICE"):
+    for host in (".run.app", ".a.run.app"):
+        if host not in ALLOWED_HOSTS:  # noqa: F405
+            ALLOWED_HOSTS.append(host)  # noqa: F405
+
 CSRF_TRUSTED_ORIGINS = [
     o.strip()
     for o in os.environ.get("CSRF_TRUSTED_ORIGINS", os.environ.get("CORS_ALLOWED_ORIGINS", "")).split(",")

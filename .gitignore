@@ -6,6 +6,7 @@ dist/
 build/
 .env
 .env.production.local
+.env.gcp
 db.sqlite3
 celerybeat-schedule
 celerybeat-schedule-*

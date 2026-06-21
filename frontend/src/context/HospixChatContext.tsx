@@ -98,7 +98,7 @@ export function HospixChatProvider({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { user, loading: authLoading } = useAuth();
   const { windows: messengerWindows } = useChatDock();
-  const { summary } = useInboxSummary(45000);
+  const { summary } = useInboxSummary();
   const useBackend = hospixUseBackend();
 
   const [isOpen, setIsOpen] = useState(false);

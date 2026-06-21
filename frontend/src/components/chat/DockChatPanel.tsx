@@ -28,7 +28,7 @@ export function DockChatPanel({ session, onMinimize, onClose }: Props) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [draft, setDraft] = useState("");
-  const { refresh: refreshInbox } = useInboxSummary(0);
+  const { refresh: refreshInbox } = useInboxSummary();
 
   const markThreadRead = useCallback(
     (convId: number) => {
