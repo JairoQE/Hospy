@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import math
 from datetime import date
 from functools import reduce
@@ -9,6 +10,8 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Count, Min, Prefetch, Q
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 def public_accommodations_queryset(on_date: date | None = None):
@@ -333,3 +336,21 @@ def notify_owner_approval(accommodation, approved: bool, motivo: str = "") -> No
     from .tasks import notify_owner_approval_task
 
     notify_owner_approval_task.delay(accommodation.pk, approved, motivo)
+
+
+def notify_owner_approval_safe(accommodation, approved: bool, motivo: str = "") -> None:
+    """No debe fallar la moderación si Celery o el correo no están disponibles."""
+    try:
+        notify_owner_approval(accommodation, approved, motivo)
+    except Exception:
+        logger.exception(
+            "No se pudo encolar notificación de hospedaje #%s; intento síncrono",
+            accommodation.pk,
+        )
+        try:
+            _notify_owner_approval_sync(accommodation.pk, approved, motivo)
+        except Exception:
+            logger.exception(
+                "Notificación de moderación hospedaje #%s no enviada",
+                accommodation.pk,
+            )

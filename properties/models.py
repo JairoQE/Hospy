@@ -137,6 +137,18 @@ class Accommodation(TimeStampedModel):
         max_length=2000,
         help_text="Texto libre; obligatorio recomendado si el tipo es Personalizada.",
     )
+    cancel_hours_before_checkin = models.PositiveSmallIntegerField(
+        "horas mínimas antes del check-in para cancelar",
+        null=True,
+        blank=True,
+        help_text="Plazo del huésped para cancelar en la app. Vacío = 48 h (estándar Hospy).",
+    )
+    refund_processing_days = models.PositiveSmallIntegerField(
+        "días para procesar reembolso tras cancelación",
+        default=3,
+        validators=[MinValueValidator(1), MaxValueValidator(7)],
+        help_text="Plazo máximo (1–7 días) para que el anfitrión registre el reembolso directo.",
+    )
 
     class Meta:
         verbose_name = "hospedaje"

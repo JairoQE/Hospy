@@ -34,7 +34,7 @@ from .services import (
     cache_integration_response,
     filter_accommodations_nearby,
     invalidate_accommodation_cache,
-    notify_owner_approval,
+    notify_owner_approval_safe,
     public_accommodations_queryset,
 )
 
@@ -368,7 +368,7 @@ class AccommodationViewSet(viewsets.ModelViewSet):
         accommodation.save(
             update_fields=["status", "rejection_reason", "is_active", "updated_at"]
         )
-        notify_owner_approval(accommodation, aprobado, motivo)
+        notify_owner_approval_safe(accommodation, aprobado, motivo)
         invalidate_accommodation_cache(accommodation.id)
         log_action(
             actor=request.user,
@@ -380,11 +380,18 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             request=request,
         )
 
-        return Response(
-            AccommodationDetailSerializer(
+        try:
+            payload = AccommodationDetailSerializer(
                 accommodation, context={"request": request}
             ).data
-        )
+        except Exception:
+            payload = {
+                "id": accommodation.pk,
+                "name": accommodation.name,
+                "status": accommodation.status,
+            }
+
+        return Response(payload)
 
     @action(detail=True, methods=["post"], url_path="desactivar")
     def desactivar(self, request, pk=None):

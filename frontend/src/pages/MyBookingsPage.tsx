@@ -12,8 +12,14 @@ import {
   guestCanOpenPaymentCheckout,
   guestPaymentLabel,
 } from "../utils/guestBookingPayment";
-import { formatRefundIfCancelNow, refundCancelConfirmMessage } from "../utils/refundEstimate";
+import { confirmBookingRefund, disputeBookingRefund } from "../api/bookingRefunds";
+import {
+  refundDueHint,
+  refundStatusLabel,
+  refundSummaryLine,
+} from "../utils/bookingRefund";
 import { formatApiError } from "../api/errors";
+import { formatRefundIfCancelNow, refundCancelConfirmMessage } from "../utils/refundEstimate";
 import { formatDate, formatMoney } from "../utils/format";
 import { SkeletonBookingList } from "../components/ui/Skeleton";
 
@@ -98,13 +104,40 @@ export function MyBookingsPage() {
     });
   };
 
+  const confirmRefund = async (b: Booking) => {
+    if (!confirm("¿Confirmas que recibiste el reembolso del anfitrión?")) return;
+    try {
+      await confirmBookingRefund(b.id);
+      load();
+      setPaymentMsg("Reembolso confirmado. Gracias.");
+    } catch (e) {
+      alert(e instanceof ApiError ? formatApiError((e as ApiError).data) : "Error");
+    }
+  };
+
+  const disputeRefund = async (b: Booking) => {
+    const notes = prompt(
+      "Describe el problema (opcional). Se enviará a moderación si el anfitrión no cumplió el plazo o el monto no coincide.",
+    );
+    if (notes === null) return;
+    try {
+      await disputeBookingRefund(b.id, notes);
+      load();
+      setPaymentMsg("Caso reportado al administrador.");
+    } catch (e) {
+      alert(e instanceof ApiError ? formatApiError((e as ApiError).data) : "Error");
+    }
+  };
+
   return (
     <div className="container page">
       <h1>Mis reservas</h1>
       <p className="muted booking-list-intro">
         Tras reservar debes <strong>elegir forma de pago</strong> para continuar. Las reservas{" "}
         <strong>pendientes</strong> o <strong>confirmadas</strong> se pueden cancelar desde aquí
-        (hasta 48 h antes del check-in). Las <strong>completadas</strong> solo permiten dejar reseña.
+        (según el plazo del anfitrión, por defecto 48 h antes del check-in). Las{" "}
+        <strong>canceladas</strong> pueden tener reembolso directo que debes confirmar. Las{" "}
+        <strong>completadas</strong> solo permiten dejar reseña.
       </p>
       {reviewMsg && (
         <p className="owner-panel-msg owner-panel-msg--success" role="status">
@@ -169,6 +202,26 @@ export function MyBookingsPage() {
                 {paymentHint.message}
               </p>
             ) : null}
+            {b.status === "cancelada" && b.refund && b.refund.status !== "no_aplica" && (
+              <div className="booking-refund-block">
+                <p className="booking-refund-hint">
+                  <PrimeIcon name="pi-wallet" size={16} />
+                  <strong>{refundStatusLabel(b.refund.status)}</strong>
+                </p>
+                <p className="muted">{refundSummaryLine(b.refund)}</p>
+                {refundDueHint(b.refund) && (
+                  <p className="muted">{refundDueHint(b.refund)}</p>
+                )}
+                {b.refund.owner_operation_number && (
+                  <p className="muted">
+                    Operación del anfitrión: {b.refund.owner_operation_number}
+                    {b.refund.owner_reported_amount
+                      ? ` · ${formatMoney(b.refund.owner_reported_amount)}`
+                      : ""}
+                  </p>
+                )}
+              </div>
+            )}
             <div className="booking-item-actions">
               {canPay && (
                 <button
@@ -218,6 +271,24 @@ export function MyBookingsPage() {
                     Cancelar reserva
                   </button>
                 </>
+              )}
+              {b.refund?.can_guest_confirm && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => void confirmRefund(b)}
+                >
+                  Confirmar reembolso recibido
+                </button>
+              )}
+              {b.refund?.can_guest_dispute && (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => void disputeRefund(b)}
+                >
+                  Reportar a administrador
+                </button>
               )}
               {!b.can_cancel && bookingCancelHint(b) && !canPay && (
                 <p className="booking-cancel-hint muted">{bookingCancelHint(b)}</p>

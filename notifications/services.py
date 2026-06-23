@@ -347,6 +347,94 @@ def notify_check_in_reminder(booking) -> None:
     )
 
 
+def notify_refund_registered_inbox(booking, refund) -> None:
+    from bookings.models import Booking
+
+    booking = Booking.objects.select_related(
+        "guest", "room", "room__accommodation", "room__accommodation__owner"
+    ).get(pk=booking.pk)
+    acc = booking.room.accommodation
+    amount = refund.owner_reported_amount
+
+    notify_user(
+        booking.guest,
+        title="Reembolso reportado",
+        body=(
+            f"El anfitrión de «{acc.name}» registró un reembolso de S/ {amount}. "
+            "Revisa el número de operación en Mis reservas y confirma si lo recibiste."
+        ),
+        link="/mis-reservas",
+        kind="refund_reported",
+    )
+
+
+def notify_refund_confirmed_inbox(booking, refund) -> None:
+    from bookings.models import Booking
+
+    booking = Booking.objects.select_related(
+        "guest", "room", "room__accommodation", "room__accommodation__owner"
+    ).get(pk=booking.pk)
+    acc = booking.room.accommodation
+    guest_name = booking.guest.get_full_name() or booking.guest.email
+
+    notify_user(
+        acc.owner,
+        title="Reembolso confirmado",
+        body=f"{guest_name} confirmó la recepción del reembolso de la reserva #{booking.pk}.",
+        link="/panel?tab=reservas",
+        kind="refund_confirmed_owner",
+    )
+
+
+def notify_refund_disputed_inbox(booking, refund) -> None:
+    from accounts.models import User
+    from bookings.models import Booking
+
+    booking = Booking.objects.select_related(
+        "guest", "room", "room__accommodation", "room__accommodation__owner"
+    ).get(pk=booking.pk)
+    acc = booking.room.accommodation
+    guest_name = booking.guest.get_full_name() or booking.guest.email
+
+    notify_user(
+        acc.owner,
+        title="Reembolso reportado a moderación",
+        body=(
+            f"{guest_name} reportó un problema con el reembolso de la reserva #{booking.pk}. "
+            "Un administrador revisará el caso."
+        ),
+        link="/panel?tab=reservas",
+        kind="refund_disputed_owner",
+    )
+
+    admins = User.objects.filter(role=User.Role.ADMINISTRADOR, is_active=True)
+    for admin in admins:
+        notify_user(
+            admin,
+            title="Disputa de reembolso",
+            body=(
+                f"El huésped {guest_name} reportó al anfitrión de «{acc.name}» "
+                f"por reembolso pendiente (reserva #{booking.pk})."
+            ),
+            link="/admin/moderacion?tab=reembolsos",
+            kind="refund_disputed_admin",
+        )
+
+
+def notify_owner_warned_inbox(owner, warning: str, *, accion: str = "advertencia") -> None:
+    body = warning
+    if accion == "desactivar_cuenta":
+        body = f"{warning}\n\nTu cuenta de anfitrión fue desactivada por incumplimiento grave."
+
+    notify_user(
+        owner,
+        title="Advertencia de Hospy",
+        body=body,
+        link="/panel",
+        kind="owner_warning",
+    )
+
+
 def unread_counts(user) -> dict[str, int]:
     from messaging.services import sync_chat_inbox_for_user
 

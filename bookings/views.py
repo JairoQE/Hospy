@@ -22,6 +22,14 @@ from .serializers import (
 )
 from payments.services import create_payment_for_booking
 
+from .refund_serializers import OwnerRegisterRefundSerializer, GuestDisputeRefundSerializer
+from .refund_services import (
+    guest_confirm_refund,
+    guest_dispute_refund,
+    owner_register_refund,
+    serialize_refund,
+)
+
 from .services import (
     cancel_booking,
     complete_booking,
@@ -54,7 +62,7 @@ class BookingViewSet(viewsets.GenericViewSet):
             "room__accommodation",
             "guest",
             "payment",
-        )
+        ).prefetch_related("refund")
         if user.role == user.Role.HUESPED:
             return qs.filter(guest=user)
         if user.role == user.Role.PROPIETARIO:
@@ -79,6 +87,15 @@ class BookingViewSet(viewsets.GenericViewSet):
             return [permissions.IsAuthenticated(), CanCancelBooking()]
         if self.action == "completar":
             return [IsPropietario(), IsBookingPropertyOwner()]
+        if self.action in (
+            "reembolso_registrar",
+        ):
+            return [IsPropietario(), IsBookingPropertyOwner()]
+        if self.action in (
+            "reembolso_confirmar",
+            "reembolso_disputar",
+        ):
+            return [IsHuesped()]
         if self.action == "mias":
             return [IsHuesped()]
         if self.action == "propietario":
@@ -172,8 +189,8 @@ class BookingViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=["get"], url_path="mias")
     def mias(self, request):
         qs = Booking.objects.filter(guest=request.user).select_related(
-            "room", "room__accommodation", "guest"
-        )
+            "room", "room__accommodation", "guest", "payment"
+        ).prefetch_related("refund")
         status_filter = request.query_params.get("status")
         if status_filter:
             qs = qs.filter(status=status_filter)
@@ -273,4 +290,110 @@ class BookingViewSet(viewsets.GenericViewSet):
         booking = self.get_queryset().get(pk=booking.pk)
         return Response(
             BookingDetailSerializer(booking, context={"request": request}).data
+        )
+
+    @action(detail=True, methods=["post"], url_path="reembolso/registrar")
+    def reembolso_registrar(self, request, pk=None):
+        booking = self.get_object()
+        serializer = OwnerRegisterRefundSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            refund = owner_register_refund(
+                booking,
+                request.user,
+                operation_number=serializer.validated_data["operation_number"],
+                reported_amount=serializer.validated_data["reported_amount"],
+            )
+        except ValueError as exc:
+            raise ValidationError({"detail": str(exc)})
+        from notifications.services import notify_refund_registered_inbox
+
+        notify_refund_registered_inbox(booking, refund)
+        log_action(
+            actor=request.user,
+            action="booking.refund.register",
+            target_type="Booking",
+            target_id=booking.pk,
+            target_label=f"Reserva #{booking.pk}",
+            metadata={
+                "operation_number": refund.owner_operation_number,
+                "amount": str(refund.owner_reported_amount),
+            },
+            request=request,
+        )
+        booking = self.get_queryset().get(pk=booking.pk)
+        return Response(
+            {
+                "refund": serialize_refund(refund),
+                "booking": BookingDetailSerializer(
+                    booking, context={"request": request}
+                ).data,
+            }
+        )
+
+    @action(detail=True, methods=["post"], url_path="reembolso/confirmar")
+    def reembolso_confirmar(self, request, pk=None):
+        booking = self.get_object()
+        if booking.guest_id != request.user.id:
+            raise PermissionDenied()
+        try:
+            refund = guest_confirm_refund(booking, request.user)
+        except ValueError as exc:
+            raise ValidationError({"detail": str(exc)})
+        from notifications.services import notify_refund_confirmed_inbox
+
+        notify_refund_confirmed_inbox(booking, refund)
+        log_action(
+            actor=request.user,
+            action="booking.refund.confirm",
+            target_type="Booking",
+            target_id=booking.pk,
+            target_label=f"Reserva #{booking.pk}",
+            request=request,
+        )
+        booking = self.get_queryset().get(pk=booking.pk)
+        return Response(
+            {
+                "refund": serialize_refund(refund),
+                "booking": BookingDetailSerializer(
+                    booking, context={"request": request}
+                ).data,
+            }
+        )
+
+    @action(detail=True, methods=["post"], url_path="reembolso/disputar")
+    def reembolso_disputar(self, request, pk=None):
+        booking = self.get_object()
+        if booking.guest_id != request.user.id:
+            raise PermissionDenied()
+        serializer = GuestDisputeRefundSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            refund = guest_dispute_refund(
+                booking,
+                request.user,
+                notes=serializer.validated_data.get("notes", ""),
+            )
+        except ValueError as exc:
+            raise ValidationError({"detail": str(exc)})
+        from notifications.services import notify_refund_disputed_inbox
+
+        notify_refund_disputed_inbox(booking, refund)
+        log_action(
+            actor=request.user,
+            action="booking.refund.dispute",
+            target_type="Booking",
+            target_id=booking.pk,
+            target_label=f"Reserva #{booking.pk}",
+            metadata={"notes": refund.dispute_notes},
+            request=request,
+        )
+        booking = self.get_queryset().get(pk=booking.pk)
+        return Response(
+            {
+                "refund": serialize_refund(refund),
+                "booking": BookingDetailSerializer(
+                    booking, context={"request": request}
+                ).data,
+            }
         )

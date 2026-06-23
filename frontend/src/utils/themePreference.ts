@@ -12,13 +12,6 @@ export function themeStorageKey(userId: number | null | undefined): string {
   return userId ? userKey(userId) : GUEST_KEY;
 }
 
-function systemPrefersDark(): boolean {
-  return (
-    typeof window.matchMedia === "function" &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches
-  );
-}
-
 function parseTheme(value: string | null): ThemeMode | null {
   if (value === "dark" || value === "light") return value;
   return null;
@@ -39,7 +32,7 @@ export function readThemePreference(userId: number | null | undefined): ThemeMod
       }
     }
 
-    return systemPrefersDark() ? "dark" : "light";
+    return "light";
   } catch {
     return "light";
   }
@@ -84,7 +77,7 @@ export function initThemePreference(): ThemeMode {
       saved = parseTheme(localStorage.getItem(LEGACY_KEY));
     }
 
-    const theme = saved ?? (systemPrefersDark() ? "dark" : "light");
+    const theme = saved ?? "light";
     applyTheme(theme);
     return theme;
   } catch {

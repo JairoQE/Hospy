@@ -50,3 +50,14 @@ export function daysPending(createdAt: string): number {
   const ms = Date.now() - new Date(createdAt).getTime();
   return Math.max(0, Math.floor(ms / (24 * 60 * 60 * 1000)));
 }
+
+/** El backend devuelve 400 si la cuenta/local ya no está pendiente (doble clic, etc.). */
+export function isModerationAlreadyHandledError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const msg = error.message.toLowerCase();
+  return (
+    msg.includes("solo se pueden moderar") ||
+    msg.includes("estado pendiente") ||
+    msg.includes("ya está cancelada")
+  );
+}

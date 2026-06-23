@@ -2,12 +2,18 @@
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
-:root {
+:root:not([data-theme="dark"]) {
   --home-deep: #1a2e4a;
   --home-turquoise: #18acfe;
   --home-accent: #f4a261;
   --home-radius-lg: 16px;
   --home-radius-hero: 24px;
+}
+
+:root[data-theme="dark"] {
+  --home-deep: #e8f0ff;
+  --home-turquoise: #7dd3fc;
+  --home-accent: #f4a261;
 }
 
 .home-page--v2 {
@@ -1227,7 +1233,8 @@ html[data-home-entrance="0"] .tab-panel-fade {
   padding: 1rem 1.1rem;
   border: 1px solid var(--border, #e2e8f0);
   border-radius: var(--radius, 12px);
-  background: #f8fafc;
+  background: var(--surface, #f8fafc);
+  color: var(--text, #0f172a);
 }
 
 .home-results-toolbar-filters {
@@ -1269,8 +1276,14 @@ html[data-home-entrance="0"] .tab-panel-fade {
   padding: 0.45rem 0.65rem;
   border: 1px solid var(--border, #cbd5e1);
   border-radius: 8px;
-  background: #fff;
+  background: var(--input-bg, #fff);
+  color: var(--text, #0f172a);
   font-size: 0.9rem;
+}
+
+.home-results-filter select option {
+  color: #0f172a;
+  background: #fff;
 }
 
 .home-results-search-wrap {
@@ -1292,8 +1305,14 @@ html[data-home-entrance="0"] .tab-panel-fade {
   padding: 0.45rem 0.65rem 0.45rem 2.1rem;
   border: 1px solid var(--border, #cbd5e1);
   border-radius: 8px;
-  background: #fff;
+  background: var(--input-bg, #fff);
+  color: var(--text, #0f172a);
   font-size: 0.9rem;
+}
+
+.home-results-search-wrap input::placeholder {
+  color: var(--muted, #64748b);
+  opacity: 1;
 }
 
 .home-results-pagination {
@@ -1333,7 +1352,7 @@ html[data-home-entrance="0"] .tab-panel-fade {
   padding: 0 0.5rem;
   border: 1px solid var(--border, #cbd5e1);
   border-radius: 8px;
-  background: #fff;
+  background: var(--input-bg, #fff);
   color: var(--text, #0f172a);
   font-size: 0.875rem;
   font-weight: 600;
@@ -1739,6 +1758,30 @@ html[data-home-entrance="0"] .tab-panel-fade {
 .home-page--v2 .home-block-title {
   color: var(--home-deep);
   font-weight: 800;
+}
+
+:root[data-theme="dark"] .home-results-head .home-block-title {
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .home-results-summary {
+  color: var(--home-turquoise);
+}
+
+:root[data-theme="dark"] .home-results-actions .btn-outline {
+  border-color: var(--home-turquoise);
+  color: var(--home-turquoise);
+}
+
+:root[data-theme="dark"] .home-results-actions .btn-outline:hover {
+  background: rgba(125, 211, 252, 0.12);
+  color: #fff;
+}
+
+:root[data-theme="dark"] .home-results-filter-label,
+:root[data-theme="dark"] .home-results-pagination-summary,
+:root[data-theme="dark"] .home-results-page-ellipsis {
+  color: var(--muted);
 }
 
 /* Banner promocional plataforma web */

@@ -65,6 +65,15 @@ class User(AbstractUser):
         blank=True,
     )
     sponsor_warning_at = models.DateTimeField(null=True, blank=True)
+    owner_warning_message = models.TextField(
+        "última advertencia (propietario)",
+        blank=True,
+    )
+    owner_warning_at = models.DateTimeField(null=True, blank=True)
+    owner_strikes = models.PositiveSmallIntegerField(
+        "amonestaciones por reembolsos",
+        default=0,
+    )
     phone = models.CharField(max_length=20, blank=True)
     photo = models.ImageField(upload_to="usuarios/", blank=True, null=True)
     cover_photo = models.ImageField(

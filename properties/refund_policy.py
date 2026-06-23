@@ -170,6 +170,16 @@ def refund_policy_bullets(accommodation) -> list[str]:
         bullets.append("Consulta las condiciones indicadas por el anfitrión.")
 
     bullets.append(
-        "El abono se procesa según el método de pago (pasarela o acuerdo directo con el anfitrión)."
+        "El reembolso se realiza de forma directa con el anfitrión (transferencia u otro medio acordado). "
+        "El anfitrión registra número de operación y monto; tú confirmas la recepción en la app."
     )
+    proc_days = getattr(accommodation, "refund_processing_days", None) or 3
+    bullets.append(
+        f"Plazo del anfitrión para registrar el reembolso tras la cancelación: hasta {proc_days} día(s)."
+    )
+    cancel_h = getattr(accommodation, "cancel_hours_before_checkin", None)
+    if cancel_h and cancel_h > 0:
+        bullets.append(
+            f"Puedes cancelar en la app hasta {cancel_h} horas antes del check-in."
+        )
     return bullets

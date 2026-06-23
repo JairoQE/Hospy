@@ -10,7 +10,10 @@ from properties.models import Accommodation
 from rooms.models import Room
 from rooms.services import calculate_stay_total, get_day_status
 
+from properties.refund_policy import estimate_refund_percent
+
 from .models import Booking
+from .refund_services import create_refund_on_cancel, guest_cancel_hours_for
 
 logger = logging.getLogger(__name__)
 
@@ -59,11 +62,14 @@ def booking_cancellation_status(booking: Booking, user) -> tuple[bool, str | Non
         datetime.combine(check_in_date, time.min),
         timezone.get_current_timezone(),
     )
-    deadline = check_in_dt - timedelta(hours=CANCELLATION_HOURS_BEFORE_CHECKIN)
+    deadline = check_in_dt - timedelta(
+        hours=guest_cancel_hours_for(booking.room.accommodation)
+    )
     if timezone.now() > deadline:
+        hours = guest_cancel_hours_for(booking.room.accommodation)
         return (
             False,
-            f"Solo puedes cancelar hasta {CANCELLATION_HOURS_BEFORE_CHECKIN} horas antes del check-in.",
+            f"Solo puedes cancelar hasta {hours} horas antes del check-in (política del hospedaje).",
         )
     return True, None
 
@@ -170,6 +176,10 @@ def reject_booking(booking: Booking) -> Booking:
         raise ValueError("Solo se pueden rechazar reservas pendientes.")
     booking.status = Booking.Status.CANCELADA
     booking.save(update_fields=["status", "updated_at"])
+    try:
+        create_refund_on_cancel(booking)
+    except Exception:
+        logger.exception("No se pudo crear reembolso para reserva #%s", booking.pk)
     from properties.panel_cache import invalidate_booking_panel_caches
 
     invalidate_booking_panel_caches(booking)
@@ -186,6 +196,10 @@ def cancel_booking(booking: Booking, *, actor=None) -> Booking:
         raise ValueError("Esta reserva no puede cancelarse.")
     booking.status = Booking.Status.CANCELADA
     booking.save(update_fields=["status", "updated_at"])
+    try:
+        create_refund_on_cancel(booking)
+    except Exception:
+        logger.exception("No se pudo crear reembolso para reserva #%s", booking.pk)
     from properties.panel_cache import invalidate_booking_panel_caches
 
     invalidate_booking_panel_caches(booking)

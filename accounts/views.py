@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.auth import get_user_model
 from django.db.models import Count, OuterRef, Q, Subquery
 from django.shortcuts import get_object_or_404
@@ -21,6 +23,8 @@ from sponsors.serializers import RegisterPatrocinadorSerializer, SponsorApproval
 from accounts.follows import toggle_follow
 
 from audit.services import log_action
+
+logger = logging.getLogger(__name__)
 
 from .captcha import captcha_public_config
 
@@ -600,7 +604,13 @@ class PropietarioAprobarView(APIView):
         owner.save(
             update_fields=["owner_status", "owner_rejection_reason"],
         )
-        notify_owner_registration_moderated(owner, aprobado, motivo)
+        try:
+            notify_owner_registration_moderated(owner, aprobado, motivo)
+        except Exception:
+            logger.exception(
+                "No se pudieron enviar notificaciones de moderación de propietario #%s",
+                owner.pk,
+            )
         log_action(
             actor=request.user,
             action="user.owner.approve" if aprobado else "user.owner.reject",
@@ -611,7 +621,17 @@ class PropietarioAprobarView(APIView):
             request=request,
         )
 
-        return Response(UserSerializer(owner).data)
+        try:
+            payload = UserSerializer(owner).data
+        except Exception:
+            logger.exception("Respuesta UserSerializer falló tras moderar propietario #%s", owner.pk)
+            payload = {
+                "id": owner.pk,
+                "email": owner.email,
+                "owner_status": owner.owner_status,
+            }
+
+        return Response(payload)
 
 
 class PatrocinadoresPendientesView(generics.ListAPIView):
@@ -662,4 +682,13 @@ class PatrocinadorAprobarView(APIView):
             metadata={"motivo": motivo} if not aprobado else {},
             request=request,
         )
-        return Response(UserSerializer(sponsor).data)
+        try:
+            payload = UserSerializer(sponsor).data
+        except Exception:
+            logger.exception("Respuesta UserSerializer falló tras moderar patrocinador #%s", sponsor.pk)
+            payload = {
+                "id": sponsor.pk,
+                "email": sponsor.email,
+                "sponsor_status": sponsor.sponsor_status,
+            }
+        return Response(payload)

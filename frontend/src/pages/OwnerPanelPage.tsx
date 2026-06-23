@@ -27,6 +27,12 @@ import { OwnerInquiriesPanel } from "../components/OwnerInquiriesPanel";
 import { OwnerDashboard } from "../components/owner/OwnerDashboard";
 import { OwnerPropertiesList } from "../components/owner/OwnerPropertiesList";
 import { OwnerPaymentsPanel } from "../components/owner/OwnerPaymentsPanel";
+import { OwnerRefundModal } from "../components/OwnerRefundModal";
+import {
+  refundDueHint,
+  refundStatusLabel,
+  refundSummaryLine,
+} from "../utils/bookingRefund";
 import { ownerTabPath, tabFromParams } from "../utils/ownerPanelRoutes";
 import { useInboxSummary } from "../hooks/useInboxSummary";
 import { StatusBadge } from "../components/StatusBadge";
@@ -61,12 +67,20 @@ function formToPayload(form: AccommodationFormData) {
     form.refund_policy_type === "flexible" && form.refund_hours_before_full.trim()
       ? Number(form.refund_hours_before_full)
       : null;
+  const cancelHours = form.cancel_hours_before_checkin.trim()
+    ? Number(form.cancel_hours_before_checkin)
+    : null;
+  const processingDays = form.refund_processing_days.trim()
+    ? Number(form.refund_processing_days)
+    : 3;
   return {
     ...form,
     latitude: formatCoordinate(form.latitude),
     longitude: formatCoordinate(form.longitude),
     service_ids: form.service_ids,
     refund_hours_before_full: hours,
+    cancel_hours_before_checkin: cancelHours,
+    refund_processing_days: processingDays,
     faqs: faqsPayload(form),
   };
 }
@@ -100,6 +114,7 @@ export function OwnerPanelPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState(emptyAccommodationForm);
   const [bookingBusy, setBookingBusy] = useState<string | null>(null);
+  const [refundTarget, setRefundTarget] = useState<Booking | null>(null);
 
   const load = (options?: { skipCache?: boolean; silent?: boolean }) => {
     if (!ownerApproved) {
@@ -318,6 +333,16 @@ export function OwnerPanelPage() {
           </div>
         )}
 
+        {user?.owner_warning_message && (
+          <div className="owner-approval-banner owner-approval-banner--rejected" role="alert">
+            <h2>Advertencia de Hospy</h2>
+            <p>{user.owner_warning_message}</p>
+            {user.owner_strikes != null && user.owner_strikes > 0 && (
+              <p className="muted">Amonestaciones acumuladas: {user.owner_strikes}</p>
+            )}
+          </div>
+        )}
+
         {ownerApproved && (
           <>
             {!ownerPayoutReady && (
@@ -446,7 +471,34 @@ export function OwnerPanelPage() {
                         </p>
                       ) : null}
                       {hint && <OwnerBookingHintBox hint={hint} />}
+                      {b.status === "cancelada" && b.refund && b.refund.status !== "no_aplica" && (
+                        <div className="owner-booking-refund muted">
+                          <p>
+                            <strong>{refundStatusLabel(b.refund.status)}</strong>
+                          </p>
+                          <p>{refundSummaryLine(b.refund)}</p>
+                          {refundDueHint(b.refund) && <p>{refundDueHint(b.refund)}</p>}
+                          {b.refund.owner_operation_number && (
+                            <p>
+                              Operación: {b.refund.owner_operation_number}
+                              {b.refund.owner_reported_amount
+                                ? ` · S/ ${b.refund.owner_reported_amount}`
+                                : ""}
+                            </p>
+                          )}
+                        </div>
+                      )}
                       <div className="owner-booking-card-actions">
+                        {b.status === "cancelada" && b.refund?.can_owner_register && (
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            disabled={Boolean(bookingBusy)}
+                            onClick={() => setRefundTarget(b)}
+                          >
+                            Registrar reembolso
+                          </button>
+                        )}
                         {canRecordPayment && b.payment && (
                             <button
                               type="button"
@@ -522,6 +574,18 @@ export function OwnerPanelPage() {
             )}
           </>
         )}
+      {refundTarget && (
+        <OwnerRefundModal
+          bookingId={refundTarget.id}
+          suggestedAmount={refundTarget.refund?.refund_amount ?? String(refundTarget.total_amount)}
+          onClose={() => setRefundTarget(null)}
+          onSuccess={() => {
+            setRefundTarget(null);
+            setMsg("Reembolso registrado. El huésped debe confirmar la recepción.");
+            load({ skipCache: true, silent: true });
+          }}
+        />
+      )}
     </div>
   );
 }

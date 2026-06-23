@@ -22,6 +22,7 @@ class BookingListSerializer(serializers.ModelSerializer):
     huesped = serializers.SerializerMethodField()
     payment = serializers.SerializerMethodField()
     refund_if_cancel_now = serializers.SerializerMethodField()
+    refund = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
@@ -43,6 +44,7 @@ class BookingListSerializer(serializers.ModelSerializer):
             "cancel_reason",
             "payment",
             "refund_if_cancel_now",
+            "refund",
         )
 
     def get_can_leave_review(self, obj):
@@ -108,6 +110,15 @@ class BookingListSerializer(serializers.ModelSerializer):
             "label": est.label,
             "policy_type": est.policy_type,
         }
+
+    def get_refund(self, obj):
+        from .refund_services import serialize_refund
+
+        try:
+            refund = obj.refund
+        except ObjectDoesNotExist:
+            return None
+        return serialize_refund(refund)
 
 
 class AdminDashboardBookingSerializer(serializers.ModelSerializer):

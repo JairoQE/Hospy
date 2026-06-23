@@ -25,6 +25,8 @@ export interface AccommodationFormData {
   refund_policy_type: RefundPolicyType;
   refund_hours_before_full: string;
   refund_policy_notes: string;
+  cancel_hours_before_checkin: string;
+  refund_processing_days: string;
   faqs: AccommodationFaqInput[];
 }
 
@@ -47,6 +49,8 @@ export const emptyAccommodationForm = (): AccommodationFormData => ({
   refund_policy_type: "flexible",
   refund_hours_before_full: "48",
   refund_policy_notes: "",
+  cancel_hours_before_checkin: "48",
+  refund_processing_days: "3",
   faqs: [],
 });
 
@@ -372,6 +376,34 @@ export function AccommodationForm({
             required={value.refund_policy_type === "custom"}
           />
         </label>
+        <div className="location-fields-row">
+          <label>
+            Horas antes del check-in para cancelar (huésped)
+            <input
+              type="number"
+              min={1}
+              max={720}
+              value={value.cancel_hours_before_checkin}
+              onChange={(e) => set("cancel_hours_before_checkin", e.target.value)}
+              placeholder="48"
+            />
+          </label>
+          <label>
+            Días para registrar reembolso tras cancelación (1–7)
+            <input
+              type="number"
+              min={1}
+              max={7}
+              value={value.refund_processing_days}
+              onChange={(e) => set("refund_processing_days", e.target.value)}
+              required
+            />
+          </label>
+        </div>
+        <p className="hint">
+          El reembolso es directo (fuera de la app): tú transfieres al huésped y registras número
+          de operación y monto. Si no cumples el plazo, el huésped puede reportarlo a moderación.
+        </p>
       </div>
       <div className="full location-fields">
         <p className="location-fields-label">Ubicación GPS</p>

@@ -328,6 +328,8 @@ class AccommodationDetailSerializer(serializers.ModelSerializer):
             "refund_policy_type",
             "refund_hours_before_full",
             "refund_policy_notes",
+            "cancel_hours_before_checkin",
+            "refund_processing_days",
             "refund_policy_bullets",
             "services",
             "fotos",
@@ -453,8 +455,22 @@ class AccommodationWriteSerializer(serializers.ModelSerializer):
             "refund_policy_type",
             "refund_hours_before_full",
             "refund_policy_notes",
+            "cancel_hours_before_checkin",
+            "refund_processing_days",
             "faqs",
         )
+
+    def validate_cancel_hours_before_checkin(self, value):
+        if value is not None and value < 1:
+            raise serializers.ValidationError("Debe ser al menos 1 hora.")
+        if value is not None and value > 24 * 30:
+            raise serializers.ValidationError("Máximo 720 horas (30 días).")
+        return value
+
+    def validate_refund_processing_days(self, value):
+        if value is not None and (value < 1 or value > 7):
+            raise serializers.ValidationError("Debe estar entre 1 y 7 días.")
+        return value
 
     def validate_refund_hours_before_full(self, value):
         if value is not None and value < 1:

@@ -44,6 +44,12 @@ function detailToForm(d: AccommodationDetail): AccommodationFormData {
     refund_hours_before_full:
       d.refund_hours_before_full != null ? String(d.refund_hours_before_full) : "48",
     refund_policy_notes: d.refund_policy_notes ?? "",
+    cancel_hours_before_checkin:
+      d.cancel_hours_before_checkin != null
+        ? String(d.cancel_hours_before_checkin)
+        : "48",
+    refund_processing_days:
+      d.refund_processing_days != null ? String(d.refund_processing_days) : "3",
     faqs: (d.faqs ?? []).map((f) => ({
       question: f.question,
       answer: f.answer,
@@ -65,12 +71,20 @@ function formToPayload(form: AccommodationFormData) {
     form.refund_policy_type === "flexible" && form.refund_hours_before_full.trim()
       ? Number(form.refund_hours_before_full)
       : null;
+  const cancelHours = form.cancel_hours_before_checkin.trim()
+    ? Number(form.cancel_hours_before_checkin)
+    : null;
+  const processingDays = form.refund_processing_days.trim()
+    ? Number(form.refund_processing_days)
+    : 3;
   return {
     ...form,
     latitude: formatCoordinate(form.latitude),
     longitude: formatCoordinate(form.longitude),
     service_ids: form.service_ids,
     refund_hours_before_full: hours,
+    cancel_hours_before_checkin: cancelHours,
+    refund_processing_days: processingDays,
     faqs: faqsPayload(form),
   };
 }

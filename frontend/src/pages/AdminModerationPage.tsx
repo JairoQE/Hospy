@@ -11,6 +11,11 @@ import {
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { ApiError, api } from "../api/client";
 import { fetchMessageReports, resolveMessageReport } from "../api/messaging";
+import {
+  fetchDisputedRefunds,
+  resolveDisputedRefund,
+  type DisputedRefund,
+} from "../api/bookingRefunds";
 import { unwrapList } from "../api/unwrap";
 import type {
   AccommodationDetail,
@@ -26,13 +31,14 @@ import {
   buildRejectMotivo,
   daysPending,
   isWithinAgeFilter,
+  isModerationAlreadyHandledError,
   matchesSearchQuery,
   REJECT_PRESETS_ACCOUNT,
   REJECT_PRESETS_ACCOMMODATION,
   type ModerationAgeFilter,
   type ModerationTab,
 } from "../utils/adminModerationData";
-import { displayName, formatDate, typeLabel } from "../utils/format";
+import { displayName, formatDate, formatMoney, typeLabel } from "../utils/format";
 import { resolveMediaUrl } from "../utils/media";
 import { formatRelativeTime } from "../utils/relativeTime";
 
@@ -52,6 +58,8 @@ export function AdminModerationPage() {
   const [pendingSponsors, setPendingSponsors] = useState<User[]>([]);
   const [adReports, setAdReports] = useState<SponsorAdReport[]>([]);
   const [messageReports, setMessageReports] = useState<MessageReport[]>([]);
+  const [refundDisputes, setRefundDisputes] = useState<DisputedRefund[]>([]);
+  const [refundWarnings, setRefundWarnings] = useState<Record<number, string>>({});
   const [pending, setPending] = useState<AccommodationDetail[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,6 +80,7 @@ export function AdminModerationPage() {
   const [notasAnuncio] = useState<Record<number, string>>({});
   const [msgNotes, setMsgNotes] = useState<Record<number, string>>({});
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [moderating, setModerating] = useState<Set<string>>(new Set());
 
   const load = useCallback(() => {
     setLoading(true);
@@ -83,13 +92,15 @@ export function AdminModerationPage() {
         "/hospedajes/pendientes/",
       ),
       fetchMessageReports("pendiente").catch(() => [] as MessageReport[]),
+      fetchDisputedRefunds().catch(() => [] as DisputedRefund[]),
     ])
-      .then(([owners, sponsors, reports, hospedajes, messages]) => {
+      .then(([owners, sponsors, reports, hospedajes, messages, refunds]) => {
         setPendingOwners(unwrapList(owners));
         setPendingSponsors(unwrapList(sponsors));
         setAdReports(unwrapList(reports));
         setPending(unwrapList(hospedajes));
         setMessageReports(messages);
+        setRefundDisputes(refunds);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -99,7 +110,9 @@ export function AdminModerationPage() {
   }, [load]);
 
   useEffect(() => {
-    if (searchParams.get("tab") === "mensajes") setTab("reportes");
+    if (searchParams.get("tab") === "mensajes" || searchParams.get("tab") === "reembolsos") {
+      setTab("reportes");
+    }
     const hash = location.hash.replace("#", "");
     if (hash === "propietarios-pendientes" || hash === "patrocinadores-pendientes") {
       setTab("cuentas");
@@ -114,15 +127,16 @@ export function AdminModerationPage() {
       hospedajes: pending.length,
       propietarios: pendingOwners.length,
       patrocinadores: pendingSponsors.length,
-      reportes: adReports.length + messageReports.length,
+      reportes: adReports.length + messageReports.length + refundDisputes.length,
       total:
         pending.length +
         pendingOwners.length +
         pendingSponsors.length +
         adReports.length +
-        messageReports.length,
+        messageReports.length +
+        refundDisputes.length,
     }),
-    [pending, pendingOwners, pendingSponsors, adReports, messageReports],
+    [pending, pendingOwners, pendingSponsors, adReports, messageReports, refundDisputes],
   );
 
   const filteredPending = useMemo(
@@ -204,43 +218,66 @@ export function AdminModerationPage() {
     };
   };
 
-  const moderateOwner = async (id: number, aprobado: boolean, motivo = "") => {
+  const runModeration = async (
+    key: string,
+    request: () => Promise<unknown>,
+    onSuccess: () => void,
+    successMessage: string,
+  ) => {
+    if (moderating.has(key)) return;
+    setModerating((prev) => new Set(prev).add(key));
     try {
-      await api.post(`/auth/propietarios/${id}/aprobar/`, { aprobado, motivo });
-      showAdminToast(aprobado ? "Propietario aprobado." : "Cuenta rechazada.", "success");
-      setRejectingOwner(null);
+      await request();
+      showAdminToast(successMessage, "success");
+      onSuccess();
       load();
     } catch (e) {
+      if (isModerationAlreadyHandledError(e)) {
+        showAdminToast(successMessage, "success");
+        onSuccess();
+        load();
+        return;
+      }
       showAdminToast(e instanceof ApiError ? e.message : "Error", "error");
-    }
-  };
-
-  const moderateSponsor = async (id: number, aprobado: boolean, motivo = "") => {
-    try {
-      await api.post(`/auth/patrocinadores/${id}/aprobar/`, { aprobado, motivo });
-      showAdminToast(aprobado ? "Patrocinador aprobado." : "Cuenta rechazada.", "success");
-      setRejectingSponsor(null);
-      load();
-    } catch (e) {
-      showAdminToast(e instanceof ApiError ? e.message : "Error", "error");
-    }
-  };
-
-  const moderateAccommodation = async (id: number, aprobado: boolean, motivo = "") => {
-    try {
-      await api.post(`/hospedajes/${id}/aprobar/`, { aprobado, motivo });
-      showAdminToast(aprobado ? "Hospedaje publicado." : "Hospedaje rechazado.", "success");
-      setRejectingAcc(null);
-      setSelectedAcc((prev) => {
+    } finally {
+      setModerating((prev) => {
         const next = new Set(prev);
-        next.delete(id);
+        next.delete(key);
         return next;
       });
-      load();
-    } catch (e) {
-      showAdminToast(e instanceof ApiError ? e.message : "Error", "error");
     }
   };
+
+  const moderateOwner = (id: number, aprobado: boolean, motivo = "") =>
+    runModeration(
+      `owner-${id}`,
+      () => api.post(`/auth/propietarios/${id}/aprobar/`, { aprobado, motivo }),
+      () => setRejectingOwner(null),
+      aprobado ? "Propietario aprobado." : "Cuenta rechazada.",
+    );
+
+  const moderateSponsor = (id: number, aprobado: boolean, motivo = "") =>
+    runModeration(
+      `sponsor-${id}`,
+      () => api.post(`/auth/patrocinadores/${id}/aprobar/`, { aprobado, motivo }),
+      () => setRejectingSponsor(null),
+      aprobado ? "Patrocinador aprobado." : "Cuenta rechazada.",
+    );
+
+  const moderateAccommodation = (id: number, aprobado: boolean, motivo = "") =>
+    runModeration(
+      `acc-${id}`,
+      () => api.post(`/hospedajes/${id}/aprobar/`, { aprobado, motivo }),
+      () => {
+        setRejectingAcc(null);
+        setSelectedAcc((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      },
+      aprobado ? "Hospedaje publicado." : "Hospedaje rechazado.",
+    );
 
   const resolveAdReport = async (id: number, accion: "baja" | "descartar") => {
     try {
@@ -531,9 +568,10 @@ export function AdminModerationPage() {
                         <button
                           type="button"
                           className="btn btn-primary btn-sm"
+                          disabled={moderating.has(`acc-${h.id}`)}
                           onClick={() => moderateAccommodation(h.id, true)}
                         >
-                          Aprobar
+                          {moderating.has(`acc-${h.id}`) ? "Procesando…" : "Aprobar"}
                         </button>
                         <button
                           type="button"
@@ -569,6 +607,7 @@ export function AdminModerationPage() {
                       key={o.id}
                       user={o}
                       rejecting={rejectingOwner === o.id}
+                      approveBusy={moderating.has(`owner-${o.id}`)}
                       onApprove={() => moderateOwner(o.id, true)}
                       onStartReject={() => setRejectingOwner(o.id)}
                       onCancelReject={() => setRejectingOwner(null)}
@@ -616,6 +655,7 @@ export function AdminModerationPage() {
                       key={s.id}
                       user={s}
                       rejecting={rejectingSponsor === s.id}
+                      approveBusy={moderating.has(`sponsor-${s.id}`)}
                       onApprove={() => moderateSponsor(s.id, true)}
                       onStartReject={() => setRejectingSponsor(s.id)}
                       onCancelReject={() => setRejectingSponsor(null)}
@@ -779,6 +819,125 @@ export function AdminModerationPage() {
               </div>
             )}
           </section>
+
+          <section className="admin-mod-section" id="reembolsos-disputados">
+            <h2 className="admin-section-title">
+              Reembolsos disputados ({refundDisputes.length})
+            </h2>
+            <p className="muted section-lead">
+              El huésped reportó que el anfitrión no cumplió el plazo o el reembolso. Envía una
+              advertencia con datos concretos o desactiva la cuenta en casos graves.
+            </p>
+            {refundDisputes.length === 0 ? (
+              <ModEmpty icon="pi-wallet" title="Sin disputas de reembolso" />
+            ) : (
+              <div className="admin-mod-card-grid">
+                {refundDisputes.map((r) => (
+                  <article key={r.id} className="admin-mod-card">
+                    <div className="admin-mod-card-main">
+                      <h3>
+                        {r.hospedaje} · Hab. {r.habitacion}
+                      </h3>
+                      <p className="muted">
+                        Reserva #{r.booking_id} · Check-in {formatDate(r.check_in)}
+                      </p>
+                      <p>
+                        Huésped: {r.huesped.nombre} ({r.huesped.email})
+                      </p>
+                      <p>
+                        Anfitrión: {r.propietario.nombre} ({r.propietario.email}) ·{" "}
+                        {r.owner_strikes} amonestación(es)
+                      </p>
+                      <p>
+                        Reembolso esperado: {formatMoney(r.refund_amount)}
+                        {r.refund_percent != null ? ` (${r.refund_percent} %)` : ""}
+                      </p>
+                      {r.due_at && (
+                        <p className="muted">Plazo del anfitrión: {formatDate(r.due_at)}</p>
+                      )}
+                      {r.dispute_notes && <p>Notas del huésped: {r.dispute_notes}</p>}
+                    </div>
+                    <div className="admin-mod-fields">
+                      <div className="admin-mod-reject-field">
+                        <span className="admin-mod-reject-label">Advertencia al propietario</span>
+                        <textarea
+                          rows={3}
+                          placeholder="Ej.: No registraste el reembolso de S/ … antes del …"
+                          value={refundWarnings[r.id] ?? ""}
+                          onChange={(e) =>
+                            setRefundWarnings({ ...refundWarnings, [r.id]: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="admin-mod-actions">
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => {
+                          const warning = (refundWarnings[r.id] ?? "").trim();
+                          if (!warning) {
+                            showAdminToast("Escribe la advertencia.", "error");
+                            return;
+                          }
+                          void resolveDisputedRefund(r.id, {
+                            warning,
+                            accion: "advertencia",
+                          })
+                            .then(() => {
+                              showAdminToast("Advertencia enviada al propietario.", "success");
+                              load();
+                            })
+                            .catch((e) =>
+                              showAdminToast(
+                                e instanceof ApiError ? String(e.message) : "Error",
+                                "error",
+                              ),
+                            );
+                        }}
+                      >
+                        Enviar advertencia
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => {
+                          const warning = (refundWarnings[r.id] ?? "").trim();
+                          if (
+                            !confirm(
+                              "¿Desactivar la cuenta del propietario? Solo para casos muy graves.",
+                            )
+                          ) {
+                            return;
+                          }
+                          if (!warning) {
+                            showAdminToast("Escribe el motivo de la sanción.", "error");
+                            return;
+                          }
+                          void resolveDisputedRefund(r.id, {
+                            warning,
+                            accion: "desactivar_cuenta",
+                          })
+                            .then(() => {
+                              showAdminToast("Cuenta desactivada y caso registrado.", "success");
+                              load();
+                            })
+                            .catch((e) =>
+                              showAdminToast(
+                                e instanceof ApiError ? String(e.message) : "Error",
+                                "error",
+                              ),
+                            );
+                        }}
+                      >
+                        Desactivar cuenta
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
         </>
       )}
 
@@ -819,12 +978,14 @@ function ModEmpty({ icon, title }: { icon: string; title: string }) {
 function AccountModCard({
   user,
   rejecting,
+  approveBusy = false,
   onApprove,
   onStartReject,
   rejectPanel,
 }: {
   user: User;
   rejecting: boolean;
+  approveBusy?: boolean;
   onApprove: () => void;
   onStartReject: () => void;
   onCancelReject: () => void;
@@ -856,8 +1017,13 @@ function AccountModCard({
         rejectPanel
       ) : (
         <div className="admin-mod-actions">
-          <button type="button" className="btn btn-primary btn-sm" onClick={onApprove}>
-            Aprobar cuenta
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            disabled={approveBusy}
+            onClick={onApprove}
+          >
+            {approveBusy ? "Procesando…" : "Aprobar cuenta"}
           </button>
           <button
             type="button"

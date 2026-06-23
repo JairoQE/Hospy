@@ -1,6 +1,8 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from bookings.admin_refund_views import PropietarioAmonestarView
+
 from . import views
 
 app_name = "accounts"
@@ -84,6 +86,11 @@ urlpatterns = [
         "propietarios/<int:pk>/aprobar/",
         views.PropietarioAprobarView.as_view(),
         name="propietario-aprobar",
+    ),
+    path(
+        "propietarios/<int:pk>/amonestar/",
+        PropietarioAmonestarView.as_view(),
+        name="propietario-amonestar",
     ),
     path(
         "patrocinadores-pendientes/",

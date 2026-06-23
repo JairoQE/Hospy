@@ -34,6 +34,9 @@ export interface User {
   sponsor_rejection_reason?: string;
   sponsor_warning_message?: string;
   sponsor_warning_at?: string | null;
+  owner_warning_message?: string;
+  owner_warning_at?: string | null;
+  owner_strikes?: number;
   phone: string;
   photo: string | null;
   photo_url?: string | null;
@@ -248,6 +251,8 @@ export interface AccommodationDetail {
   refund_policy_type?: string;
   refund_hours_before_full?: number | null;
   refund_policy_notes?: string;
+  cancel_hours_before_checkin?: number | null;
+  refund_processing_days?: number;
   refund_policy_bullets?: string[];
   services: Service[];
   fotos: AccommodationPhoto[];
@@ -397,6 +402,21 @@ export interface Booking {
     percent: number | null;
     label: string;
     policy_type: string;
+  } | null;
+  refund?: {
+    status: string;
+    refund_percent: number | null;
+    refund_amount: string;
+    due_at: string | null;
+    owner_operation_number: string;
+    owner_reported_amount: string | null;
+    owner_reported_at: string | null;
+    guest_confirmed_at: string | null;
+    dispute_notes: string;
+    disputed_at: string | null;
+    can_owner_register: boolean;
+    can_guest_confirm: boolean;
+    can_guest_dispute: boolean;
   } | null;
   room_id?: number;
   desglose_precio?: PriceBreakdown | null;
