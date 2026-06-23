@@ -24,6 +24,11 @@ urlpatterns = [
     path("token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     path("perfil/", views.PerfilView.as_view(), name="perfil"),
     path(
+        "solicitar-propietario/",
+        views.SolicitarPropietarioView.as_view(),
+        name="solicitar-propietario",
+    ),
+    path(
         "perfil/cambiar-email/",
         views.ChangeEmailView.as_view(),
         name="perfil-cambiar-email",

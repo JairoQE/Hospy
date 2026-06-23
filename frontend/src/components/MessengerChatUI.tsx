@@ -13,6 +13,7 @@ import { ChatPeerAvatar } from "./ChatPeerAvatar";
 import { IconSend, IconSpinner } from "./icons";
 import { PrimeIcon } from "./PrimeIcon";
 import { ReportMessageModal } from "./ReportMessageModal";
+import { ChatEmojiPicker, insertEmojiInTextarea } from "./chat/ChatEmojiPicker";
 
 type Props = {
   title: string;
@@ -231,6 +232,12 @@ export function MessengerChatUI({
 
       <form className="messenger-composer" onSubmit={handleSubmit}>
         <div className="messenger-composer-inner">
+          <ChatEmojiPicker
+            disabled={sending}
+            onPick={(emoji) =>
+              insertEmojiInTextarea(inputRef.current, emoji, draft, onDraftChange)
+            }
+          />
           <textarea
             ref={inputRef}
             rows={1}

@@ -221,7 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isOwnerPayoutReady = useCallback(
     () =>
-      user?.role === "propietario" ? user.payout_profile_complete === true : false,
+      user?.role === "propietario" ? user.online_payout_ready === true : false,
     [user],
   );
 

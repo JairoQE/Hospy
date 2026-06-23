@@ -8,6 +8,7 @@ import { PublicProfileSection } from "../components/profile/PublicProfileSection
 import { PhoneInput, formatPhoneDisplay } from "../components/profile/PhoneInput";
 import { ProfileSecuritySection } from "../components/profile/ProfileSecuritySection";
 import { OwnerPayoutSection } from "../components/profile/OwnerPayoutSection";
+import { BecomeOwnerSection } from "../components/profile/BecomeOwnerSection";
 import { useAuth } from "../context/AuthContext";
 import { formatDate, profileHeading, roleLabel } from "../utils/format";
 import { formatLastAccessRelative } from "../utils/relativeTime";
@@ -302,6 +303,8 @@ export function ProfilePage() {
                 )}
               </section>
             </aside>
+
+            <BecomeOwnerSection user={me!} onUpdated={refreshUser} />
 
             <section className="card profile-form-card">
               <h2>Editar perfil</h2>

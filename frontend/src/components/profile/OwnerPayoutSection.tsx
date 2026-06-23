@@ -27,8 +27,7 @@ export function OwnerPayoutSection({ user, phone, onUpdated }: OwnerPayoutSectio
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const complete = user.payout_profile_complete === true;
-  const missing = user.payout_missing_fields ?? [];
+  const onlineReady = user.online_payout_ready === true;
 
   useEffect(() => {
     setForm({
@@ -60,35 +59,30 @@ export function OwnerPayoutSection({ user, phone, onUpdated }: OwnerPayoutSectio
 
   return (
     <section className="card profile-form-card owner-payout-card">
-      <h2>Datos para cobrar</h2>
+      <h2>Datos para cobrar (opcional)</h2>
       <p className="muted profile-form-hint">
-        Con teléfono y DNI puedes recibir reservas y cobrar directamente al huésped.
-        Para cobro en línea dentro de Hospy (Yape, tarjeta), agrega Mercado Pago o tu CCI bancario.
+        Puedes recibir reservas sin completar esta sección. Usa pago directo con el huésped
+        (Yape, transferencia o efectivo) coordinando por chat o WhatsApp.
+        Para cobro en línea dentro de Hospy (Yape con código, tarjeta), agrega Mercado Pago o
+        tu CCI bancario.
       </p>
 
-      {!complete && (
+      {!onlineReady && (
         <div className="owner-payout-banner" role="status">
-          <strong>Faltan datos básicos.</strong>{" "}
-          {missing.includes("phone") && "Agrega tu teléfono en el formulario de arriba. "}
-          Completa tu DNI para habilitar reservas (incluye pago directo con huéspedes).
+          <strong>Cobro en línea no configurado.</strong> Los huéspedes podrán reservar y
+          elegir <em>pago directo</em>. Agrega Mercado Pago o CCI para habilitar checkout en la app.
         </div>
       )}
 
-      {complete && (
+      {onlineReady && (
         <p className="success-msg owner-payout-ready">
-          Datos básicos completos. Tus hospedajes aceptan reservas.
-          {!form.payout_mp_email.trim() && !form.payout_bank_cci.trim() && (
-            <>
-              {" "}
-              Agrega Mercado Pago o CCI para habilitar cobro en línea (Yape/tarjeta).
-            </>
-          )}
+          Cobro en línea habilitado. Los huéspedes pueden pagar con Yape o tarjeta en Hospy.
         </p>
       )}
 
       <form className="profile-form owner-payout-form" onSubmit={save}>
         <label>
-          DNI del titular
+          DNI del titular (opcional)
           <input
             inputMode="numeric"
             maxLength={8}
@@ -132,8 +126,9 @@ export function OwnerPayoutSection({ user, phone, onUpdated }: OwnerPayoutSectio
 
       {!phone.trim() && (
         <p className="muted owner-payout-phone-hint">
-          También necesitas un teléfono en{" "}
-          <Link to="/perfil">Editar perfil</Link> (sección superior).
+          Recomendado: agrega un teléfono en{" "}
+          <Link to="/perfil">Editar perfil</Link> para que los huéspedes te contacten al pagar
+          directo.
         </p>
       )}
     </section>

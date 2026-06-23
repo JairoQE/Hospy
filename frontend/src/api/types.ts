@@ -45,6 +45,7 @@ export interface User {
   payout_bank_cci?: string;
   payout_profile_complete?: boolean | null;
   payout_missing_fields?: string[] | null;
+  online_payout_ready?: boolean | null;
   followers_count?: number;
   following_count?: number;
   owner_average_rating?: number;

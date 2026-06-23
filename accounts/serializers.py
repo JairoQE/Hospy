@@ -70,6 +70,7 @@ class UserSerializer(serializers.ModelSerializer):
     has_password = serializers.SerializerMethodField()
     payout_profile_complete = serializers.SerializerMethodField()
     payout_missing_fields = serializers.SerializerMethodField()
+    online_payout_ready = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -93,6 +94,7 @@ class UserSerializer(serializers.ModelSerializer):
             "payout_bank_cci",
             "payout_profile_complete",
             "payout_missing_fields",
+            "online_payout_ready",
             "photo",
             "photo_url",
             "cover_photo",
@@ -126,6 +128,7 @@ class UserSerializer(serializers.ModelSerializer):
             "has_password",
             "payout_profile_complete",
             "payout_missing_fields",
+            "online_payout_ready",
         )
 
     def get_payout_profile_complete(self, obj):
@@ -139,6 +142,13 @@ class UserSerializer(serializers.ModelSerializer):
         from .payout import owner_payout_missing_fields
 
         return owner_payout_missing_fields(obj)
+
+    def get_online_payout_ready(self, obj):
+        if obj.role != User.Role.PROPIETARIO:
+            return None
+        from .payout import owner_has_online_payout_profile
+
+        return owner_has_online_payout_profile(obj)
 
     def get_photo_url(self, obj):
         return media_public_path(obj.photo) if obj.photo else None

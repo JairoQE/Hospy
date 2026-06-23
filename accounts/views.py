@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Count, OuterRef, Q, Subquery
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -127,6 +128,47 @@ class PerfilView(generics.RetrieveUpdateAPIView):
             target_label=user.email,
             metadata={"fields": fields},
             request=self.request,
+        )
+
+
+class SolicitarPropietarioView(APIView):
+    """POST /api/v1/auth/solicitar-propietario/ — huésped solicita ser anfitrión."""
+
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        from integrations.security import assess_owner_location
+
+        from .owner_request import request_owner_role
+
+        try:
+            user, notify = request_owner_role(request.user)
+        except ValidationError as exc:
+            return Response(exc.detail, status=status.HTTP_400_BAD_REQUEST)
+
+        if notify:
+            notify_owner_registration_submitted(user)
+            assess_owner_location(request=request, user=user)
+            log_action(
+                actor=user,
+                action="auth.request_owner",
+                target_type="User",
+                target_id=user.pk,
+                target_label=user.email,
+                request=request,
+            )
+            detail = (
+                "Solicitud enviada. Un administrador revisará tu cuenta antes de "
+                "que puedas publicar hospedajes."
+            )
+        else:
+            detail = "Tu solicitud ya está en revisión. Te avisaremos cuando sea aprobada."
+
+        return Response(
+            {
+                "detail": detail,
+                "user": UserSerializer(user, context={"request": request}).data,
+            }
         )
 
 

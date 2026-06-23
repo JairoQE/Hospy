@@ -8,11 +8,11 @@ DNI_RE = re.compile(r"^\d{8}$")
 CCI_RE = re.compile(r"^\d{20}$")
 
 PAYOUT_INCOMPLETE_MESSAGE = (
-    "El anfitrión aún no completó sus datos básicos de cobro (teléfono y DNI). "
-    "Este hospedaje no acepta reservas por ahora."
+    "El anfitrión aún no completó sus datos de cobro en línea. "
+    "Usa pago directo o coordina con el anfitrión."
 )
 PAYOUT_ONLINE_INCOMPLETE_MESSAGE = (
-    "Este anfitrión no tiene configurado cobro en línea. "
+    "Este anfitrión no tiene configurado cobro en línea (Mercado Pago o CCI). "
     "Coordina el pago directamente con el anfitrión."
 )
 
@@ -33,7 +33,7 @@ def validate_dni(value: str) -> str:
 
 
 def owner_payout_missing_fields(user) -> list[str]:
-    """Mínimo para aceptar reservas (incluye pago directo con anfitrión)."""
+    """Campos básicos opcionales del perfil de cobro (informativo)."""
     if user.role != User.Role.PROPIETARIO:
         return []
     missing: list[str] = []
@@ -47,8 +47,10 @@ def owner_payout_missing_fields(user) -> list[str]:
 
 
 def owner_online_payout_missing_fields(user) -> list[str]:
-    """Requisitos adicionales para cobrar por la plataforma (Yape, tarjeta, etc.)."""
-    missing = list(owner_payout_missing_fields(user))
+    """Requisitos para cobrar por la plataforma (Yape, tarjeta, etc.)."""
+    if user.role != User.Role.PROPIETARIO:
+        return []
+    missing: list[str] = []
     mp_email = (getattr(user, "payout_mp_email", "") or "").strip()
     cci = normalize_cci(getattr(user, "payout_bank_cci", ""))
     if not mp_email and not (cci and CCI_RE.match(cci)):

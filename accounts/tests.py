@@ -39,6 +39,64 @@ def test_registro_email_duplicado(api_client, huesped):
 
 
 @pytest.mark.django_db
+def test_huesped_solicita_ser_propietario(api_client, huesped):
+    api_client.force_authenticate(user=huesped)
+    with patch("accounts.views.notify_owner_registration_submitted") as notify:
+        response = api_client.post("/api/v1/auth/solicitar-propietario/", {}, format="json")
+    assert response.status_code == 200
+    assert "solicitud" in response.data["detail"].lower()
+    huesped.refresh_from_db()
+    assert huesped.role == "propietario"
+    assert huesped.owner_status == "pendiente"
+    notify.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_solicitud_propietario_ya_pendiente(api_client):
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    owner = User.objects.create_user(
+        email="pendiente@hospy.local",
+        username="pendiente",
+        password="Testpass123!",
+        first_name="Pend",
+        role=User.Role.PROPIETARIO,
+        owner_status=User.OwnerStatus.PENDIENTE,
+    )
+    api_client.force_authenticate(user=owner)
+    with patch("accounts.views.notify_owner_registration_submitted") as notify:
+        response = api_client.post("/api/v1/auth/solicitar-propietario/", {}, format="json")
+    assert response.status_code == 200
+    assert "revisión" in response.data["detail"].lower()
+    notify.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_propietario_rechazado_puede_reenviar(api_client):
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    owner = User.objects.create_user(
+        email="rechazado@hospy.local",
+        username="rechazado",
+        password="Testpass123!",
+        first_name="Rech",
+        role=User.Role.PROPIETARIO,
+        owner_status=User.OwnerStatus.RECHAZADO,
+        owner_rejection_reason="Datos incompletos",
+    )
+    api_client.force_authenticate(user=owner)
+    with patch("accounts.views.notify_owner_registration_submitted") as notify:
+        response = api_client.post("/api/v1/auth/solicitar-propietario/", {}, format="json")
+    assert response.status_code == 200
+    owner.refresh_from_db()
+    assert owner.owner_status == "pendiente"
+    assert owner.owner_rejection_reason == ""
+    notify.assert_called_once()
+
+
+@pytest.mark.django_db
 def test_registro_propietario_pendiente(api_client):
     response = api_client.post(
         "/api/v1/auth/registro-propietario/",
@@ -543,7 +601,7 @@ def test_reserva_permitida_sin_mercado_pago(api_client, huesped, hospedaje_aprob
 
 
 @pytest.mark.django_db
-def test_reserva_bloqueada_sin_payout(api_client, huesped, hospedaje_aprobado):
+def test_reserva_permitida_sin_datos_cobro(api_client, huesped, hospedaje_aprobado):
     _, room = hospedaje_aprobado
     owner = room.accommodation.owner
     owner.phone = ""
@@ -561,8 +619,7 @@ def test_reserva_bloqueada_sin_payout(api_client, huesped, hospedaje_aprobado):
         },
         format="json",
     )
-    assert response.status_code == 400
-    assert "datos" in str(response.data).lower()
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db

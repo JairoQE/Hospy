@@ -651,6 +651,35 @@ html[data-sidebar-animated="0"] .owner-sidebar-bg {
   border-radius: var(--owner-radius);
   box-shadow: var(--owner-shadow);
   padding: 1.25rem 1.5rem;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+@media (max-width: 767px) {
+  .owner-panel-form-wrap {
+    padding: 0.85rem;
+    border-radius: 12px;
+  }
+
+  .owner-panel-form-wrap .accommodation-form.card {
+    padding: 1rem;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+  }
+
+  .owner-edit-section {
+    padding: 1rem;
+  }
+
+  .owner-content {
+    padding: 0.75rem;
+  }
+
+  .location-fields {
+    padding: 0.85rem;
+  }
 }
 
 .owner-action-btn {

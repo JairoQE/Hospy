@@ -320,11 +320,11 @@ export function OwnerPanelPage() {
         {ownerApproved && (
           <>
             {!ownerPayoutReady && (
-              <div className="owner-approval-banner owner-payout-banner-panel" role="alert">
-                <h2>Completa tus datos de cobro</h2>
+              <div className="owner-approval-banner owner-payout-banner-panel" role="status">
+                <h2>Cobro en línea (opcional)</h2>
                 <p className="muted">
-                  Los huéspedes no pueden reservar en tus hospedajes hasta que cargues tu
-                  teléfono y DNI. Mercado Pago o CCI son opcionales (solo para cobro en línea).
+                  Tus hospedajes ya aceptan reservas. Agrega Mercado Pago o tu CCI si quieres
+                  que los huéspedes paguen con Yape o tarjeta dentro de Hospy.
                 </p>
                 <Link to="/perfil" className="btn btn-primary owner-payout-banner-link">
                   Ir a datos de cobro
