@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ApiError, api } from "../api/client";
 import type { Booking, Paginated } from "../api/types";
+import { PaymentCheckoutModal } from "../components/payments/PaymentCheckoutModal";
 import { LeaveReviewModal } from "../components/reviews/LeaveReviewModal";
 import { StatusBadge } from "../components/StatusBadge";
 import { PrimeIcon } from "../components/PrimeIcon";
 import { bookingCancelHint } from "../utils/bookingCancellation";
+import {
+  guestBookingPaymentHint,
+  guestCanOpenPaymentCheckout,
+  guestPaymentLabel,
+} from "../utils/guestBookingPayment";
 import { formatRefundIfCancelNow, refundCancelConfirmMessage } from "../utils/refundEstimate";
 import { formatApiError } from "../api/errors";
 import { formatDate, formatMoney } from "../utils/format";
@@ -21,12 +27,21 @@ type ReviewTarget = {
   totalAmount: string | number;
 };
 
+type CheckoutTarget = {
+  bookingId: number;
+  amount: string;
+  accommodationName: string;
+};
+
 export function MyBookingsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
   const [reviewMsg, setReviewMsg] = useState("");
+  const [checkoutTarget, setCheckoutTarget] = useState<CheckoutTarget | null>(null);
+  const [paymentMsg, setPaymentMsg] = useState("");
 
   const load = () => {
     setLoading(true);
@@ -43,6 +58,28 @@ export function MyBookingsPage() {
     load();
   }, []);
 
+  useEffect(() => {
+    const payId = searchParams.get("pagar");
+    if (!payId || loading || bookings.length === 0) return;
+    const bookingId = Number(payId);
+    if (!Number.isFinite(bookingId)) return;
+    const booking = bookings.find((b) => b.id === bookingId);
+    if (!booking || !guestCanOpenPaymentCheckout(booking)) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("pagar");
+      setSearchParams(next, { replace: true });
+      return;
+    }
+    setCheckoutTarget({
+      bookingId: booking.id,
+      amount: String(booking.payment?.amount ?? booking.total_amount),
+      accommodationName: booking.hospedaje,
+    });
+    const next = new URLSearchParams(searchParams);
+    next.delete("pagar");
+    setSearchParams(next, { replace: true });
+  }, [bookings, loading, searchParams, setSearchParams]);
+
   const cancel = async (b: Booking) => {
     if (!confirm(refundCancelConfirmMessage(b))) return;
     try {
@@ -53,17 +90,30 @@ export function MyBookingsPage() {
     }
   };
 
+  const openCheckout = (b: Booking) => {
+    setCheckoutTarget({
+      bookingId: b.id,
+      amount: String(b.payment?.amount ?? b.total_amount),
+      accommodationName: b.hospedaje,
+    });
+  };
+
   return (
     <div className="container page">
       <h1>Mis reservas</h1>
       <p className="muted booking-list-intro">
-        Las reservas <strong>pendientes</strong> o <strong>confirmadas</strong> se pueden cancelar
-        desde aquí (hasta 48 h antes del check-in). Las <strong>completadas</strong> solo permiten
-        dejar reseña.
+        Tras reservar debes <strong>elegir forma de pago</strong> para continuar. Las reservas{" "}
+        <strong>pendientes</strong> o <strong>confirmadas</strong> se pueden cancelar desde aquí
+        (hasta 48 h antes del check-in). Las <strong>completadas</strong> solo permiten dejar reseña.
       </p>
       {reviewMsg && (
         <p className="owner-panel-msg owner-panel-msg--success" role="status">
           {reviewMsg}
+        </p>
+      )}
+      {paymentMsg && (
+        <p className="owner-panel-msg owner-panel-msg--success" role="status">
+          {paymentMsg}
         </p>
       )}
       {loading && <SkeletonBookingList count={4} />}
@@ -75,7 +125,12 @@ export function MyBookingsPage() {
       )}
       {!loading && (
       <ul className="booking-list">
-        {bookings.map((b) => (
+        {bookings.map((b) => {
+          const paymentHint = guestBookingPaymentHint(b);
+          const paymentLabel = b.payment ? guestPaymentLabel(b.payment) : null;
+          const canPay = guestCanOpenPaymentCheckout(b);
+
+          return (
           <li key={b.id} className="card booking-item">
             <div className="booking-item-head">
               <h3>
@@ -99,7 +154,32 @@ export function MyBookingsPage() {
               {formatDate(b.check_in)} → {formatDate(b.check_out)} ·{" "}
               <strong>{formatMoney(b.total_amount)}</strong>
             </p>
+            {paymentLabel ? (
+              <p className={`booking-payment-status${canPay ? " booking-payment-status--warn" : ""}`}>
+                {paymentLabel}
+              </p>
+            ) : null}
+            {paymentHint ? (
+              <p
+                className={`booking-payment-hint${
+                  paymentHint.tone === "warn" ? " booking-payment-hint--warn" : ""
+                }`}
+                role="status"
+              >
+                {paymentHint.message}
+              </p>
+            ) : null}
             <div className="booking-item-actions">
+              {canPay && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => openCheckout(b)}
+                >
+                  <PrimeIcon name="pi-wallet" size={16} />
+                  Elegir forma de pago
+                </button>
+              )}
               {b.status === "completada" && b.can_leave_review && b.accommodation_id != null && (
                 <button
                   type="button"
@@ -139,12 +219,13 @@ export function MyBookingsPage() {
                   </button>
                 </>
               )}
-              {!b.can_cancel && bookingCancelHint(b) && (
+              {!b.can_cancel && bookingCancelHint(b) && !canPay && (
                 <p className="booking-cancel-hint muted">{bookingCancelHint(b)}</p>
               )}
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
       )}
 
@@ -161,6 +242,20 @@ export function MyBookingsPage() {
           onClose={() => setReviewTarget(null)}
           onSuccess={() => {
             setReviewMsg("Gracias por tu reseña. Ya está visible en la ficha del hospedaje.");
+            load();
+          }}
+        />
+      )}
+
+      {checkoutTarget && (
+        <PaymentCheckoutModal
+          bookingId={checkoutTarget.bookingId}
+          amount={checkoutTarget.amount}
+          accommodationName={checkoutTarget.accommodationName}
+          onClose={() => setCheckoutTarget(null)}
+          onPaid={() => {
+            setCheckoutTarget(null);
+            setPaymentMsg("Pago registrado. La reserva se confirmará según el método elegido.");
             load();
           }}
         />

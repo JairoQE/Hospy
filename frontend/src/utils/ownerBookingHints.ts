@@ -15,6 +15,12 @@ const ONLINE_METHODS = new Set(["yape", "card", "pagoefectivo"]);
 export function ownerBookingPaymentLabel(payment: PaymentSlice): string {
   if (payment.status === "pagado") return "Pago registrado en Hospy";
   if (payment.method === "externo" && payment.status === "procesando") {
+    if (payment.external_operation_number) {
+      const amountPart = payment.guest_reported_amount
+        ? ` · S/ ${payment.guest_reported_amount}`
+        : "";
+      return `Pago directo reportado (op. ${payment.external_operation_number}${amountPart}) — confirma el cobro`;
+    }
     return "Pago directo — esperando tu confirmación";
   }
   if (payment.status === "pendiente") return "Esperando pago del huésped";
@@ -107,11 +113,15 @@ export function ownerBookingHint(booking: Booking): OwnerBookingHint | null {
   }
 
   if (isExternalPending(payment)) {
+    const opDetail = payment.external_operation_number
+      ? ` N.º operación: ${payment.external_operation_number}${
+          payment.guest_reported_amount ? ` · Monto: S/ ${payment.guest_reported_amount}` : ""
+        }.`
+      : "";
     return {
       tone: "warning",
       label: "Pago directo con el huésped",
-      detail:
-        "El huésped pagará o ya pagó fuera de Hospy. Cuando tengas el dinero, pulsa «Confirmar pago recibido» para registrar el cobro y confirmar la reserva.",
+      detail: `El huésped reportó un pago fuera de Hospy.${opDetail} Cuando tengas el dinero, pulsa «Confirmar pago recibido» para registrar el cobro y confirmar la reserva.`,
     };
   }
 

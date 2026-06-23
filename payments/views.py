@@ -13,6 +13,8 @@ from integrations.security import assess_payment_risk
 from .models import Payment
 from .serializers import (
     CardPaySerializer,
+    ExternalPaymentRequestSerializer,
+    OwnerPaymentListSerializer,
     PaymentMethodsSerializer,
     PaymentSerializer,
     YapePaySerializer,
@@ -242,8 +244,16 @@ class PaymentExternalRequestView(APIView):
         except Payment.DoesNotExist as exc:
             raise NotFound("Pago no encontrado.") from exc
 
+        body = ExternalPaymentRequestSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+
         try:
-            payment = request_external_payment(payment, request.user)
+            payment = request_external_payment(
+                payment,
+                request.user,
+                operation_number=body.validated_data["operation_number"],
+                reported_amount=body.validated_data["reported_amount"],
+            )
         except ValueError as exc:
             raise ValidationError({"detail": str(exc)}) from exc
 
@@ -253,7 +263,11 @@ class PaymentExternalRequestView(APIView):
             target_type="Payment",
             target_id=payment.pk,
             target_label=f"Pago directo reserva #{payment.booking_id}",
-            metadata={"amount": str(payment.amount)},
+            metadata={
+                "amount": str(payment.amount),
+                "reported_amount": str(payment.guest_reported_amount),
+                "operation_number": payment.external_operation_number,
+            },
             request=request,
         )
 
@@ -297,3 +311,30 @@ class PaymentExternalConfirmView(APIView):
         )
 
         return Response(_payment_response(payment, request))
+
+
+class OwnerPaymentsListView(APIView):
+    """GET /api/v1/propietario/pagos/ — cobros de reservas del anfitrión."""
+
+    permission_classes = (permissions.IsAuthenticated, IsPropietario)
+
+    def get(self, request):
+        qs = (
+            Payment.objects.filter(booking__room__accommodation__owner=request.user)
+            .select_related(
+                "booking",
+                "booking__room",
+                "booking__room__accommodation",
+                "booking__guest",
+            )
+            .order_by("-created_at")
+        )
+        method = (request.query_params.get("method") or "").strip()
+        if method:
+            qs = qs.filter(method=method)
+        status = (request.query_params.get("status") or "").strip()
+        if status:
+            qs = qs.filter(status=status)
+        return Response(
+            OwnerPaymentListSerializer(qs[:200], many=True, context={"request": request}).data
+        )

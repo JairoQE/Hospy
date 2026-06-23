@@ -229,3 +229,9 @@
   border-color: #fca5a5;
   color: #991b1b;
 }
+
+.payment-external-summary {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-muted, #6b7280);
+}

@@ -88,6 +88,12 @@ class BookingListSerializer(serializers.ModelSerializer):
             "status": payment.status,
             "method": payment.method or None,
             "amount": str(payment.amount),
+            "external_operation_number": payment.external_operation_number or "",
+            "guest_reported_amount": (
+                str(payment.guest_reported_amount)
+                if payment.guest_reported_amount is not None
+                else None
+            ),
         }
 
     def get_refund_if_cancel_now(self, obj):

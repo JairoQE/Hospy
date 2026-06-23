@@ -48,6 +48,20 @@ class Payment(TimeStampedModel):
     failure_message = models.CharField(max_length=255, blank=True)
     paid_at = models.DateTimeField(null=True, blank=True)
     expires_at = models.DateTimeField(null=True, blank=True)
+    external_operation_number = models.CharField(
+        "número de operación (pago directo)",
+        max_length=64,
+        blank=True,
+        help_text="Referencia que reporta el huésped al registrar pago directo.",
+    )
+    guest_reported_amount = models.DecimalField(
+        "monto reportado por huésped",
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Importe que el huésped indica haber pagado fuera de la pasarela.",
+    )
 
     class Meta:
         verbose_name = "pago"

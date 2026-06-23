@@ -76,10 +76,16 @@ def test_external_payment_flow(api_client, huesped, hospedaje_aprobado, propieta
     assert booking_res.status_code == 201
     payment_id = booking_res.data["payment"]["id"]
 
-    ext_res = api_client.post(f"/api/v1/pagos/{payment_id}/externo/", {}, format="json")
+    ext_res = api_client.post(
+        f"/api/v1/pagos/{payment_id}/externo/",
+        {"operation_number": "OP-123456", "reported_amount": "70.00"},
+        format="json",
+    )
     assert ext_res.status_code == 200
     assert ext_res.data["method"] == "externo"
     assert ext_res.data["status"] == "procesando"
+    assert ext_res.data["external_operation_number"] == "OP-123456"
+    assert ext_res.data["guest_reported_amount"] == "70.00"
 
     booking = Booking.objects.get(pk=booking_res.data["id"])
     assert booking.status == Booking.Status.PENDIENTE
@@ -95,6 +101,73 @@ def test_external_payment_flow(api_client, huesped, hospedaje_aprobado, propieta
 
     booking.refresh_from_db()
     assert booking.status == Booking.Status.CONFIRMADA
+
+
+@pytest.mark.django_db
+def test_external_payment_requires_operation_and_amount(
+    api_client, huesped, hospedaje_aprobado
+):
+    from datetime import date, timedelta
+
+    _, room = hospedaje_aprobado
+    api_client.force_authenticate(user=huesped)
+    check_in = date.today() + timedelta(days=30)
+    check_out = check_in + timedelta(days=2)
+    booking_res = api_client.post(
+        "/api/v1/reservas/",
+        {
+            "room": room.id,
+            "check_in": check_in.isoformat(),
+            "check_out": check_out.isoformat(),
+        },
+        format="json",
+    )
+    payment_id = booking_res.data["payment"]["id"]
+
+    missing = api_client.post(f"/api/v1/pagos/{payment_id}/externo/", {}, format="json")
+    assert missing.status_code == 400
+
+    short_op = api_client.post(
+        f"/api/v1/pagos/{payment_id}/externo/",
+        {"operation_number": "12", "reported_amount": "50.00"},
+        format="json",
+    )
+    assert short_op.status_code == 400
+
+
+@pytest.mark.django_db
+def test_owner_payments_list(api_client, huesped, hospedaje_aprobado):
+    from datetime import date, timedelta
+
+    _, room = hospedaje_aprobado
+    owner = room.accommodation.owner
+    api_client.force_authenticate(user=huesped)
+    check_in = date.today() + timedelta(days=40)
+    check_out = check_in + timedelta(days=2)
+    booking_res = api_client.post(
+        "/api/v1/reservas/",
+        {
+            "room": room.id,
+            "check_in": check_in.isoformat(),
+            "check_out": check_out.isoformat(),
+        },
+        format="json",
+    )
+    payment_id = booking_res.data["payment"]["id"]
+    api_client.post(
+        f"/api/v1/pagos/{payment_id}/externo/",
+        {"operation_number": "YAPE-998877", "reported_amount": "150.00"},
+        format="json",
+    )
+
+    api_client.force_authenticate(user=owner)
+    list_res = api_client.get("/api/v1/propietario/pagos/")
+    assert list_res.status_code == 200
+    assert len(list_res.data) >= 1
+    row = next(p for p in list_res.data if p["id"] == payment_id)
+    assert row["external_operation_number"] == "YAPE-998877"
+    assert row["guest_reported_amount"] == "150.00"
+    assert row["hospedaje"] == room.accommodation.name
 
 
 @pytest.mark.django_db

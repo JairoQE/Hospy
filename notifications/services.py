@@ -219,9 +219,13 @@ def notify_booking_created_inbox(booking) -> None:
     )
     notify_user(
         guest,
-        title="Reserva enviada",
-        body=f"Tu solicitud en «{acc.name}» está pendiente de confirmación.",
-        link=link_guest,
+        title="Reserva creada — elige cómo pagar",
+        body=(
+            f"Tu solicitud en «{acc.name}» está registrada. "
+            f"Aún debes elegir forma de pago (en línea o directo con el anfitrión) "
+            f"desde Mis reservas para continuar."
+        ),
+        link=f"/mis-reservas?pagar={booking.pk}",
         kind="booking_created",
     )
     notify_user(

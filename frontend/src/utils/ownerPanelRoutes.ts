@@ -1,9 +1,10 @@
-export type OwnerPanelTab = "dashboard" | "hospedajes" | "reservas" | "consultas" | "nuevo";
+export type OwnerPanelTab = "dashboard" | "hospedajes" | "reservas" | "consultas" | "pagos" | "nuevo";
 
 export function tabFromParams(searchParams: URLSearchParams): OwnerPanelTab {
   const t = searchParams.get("tab");
   if (t === "consultas" || t === "mensajes") return "consultas";
   if (t === "reservas") return "reservas";
+  if (t === "pagos") return "pagos";
   if (t === "nuevo") return "nuevo";
   if (t === "hospedajes") return "hospedajes";
   return "dashboard";

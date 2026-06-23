@@ -407,6 +407,8 @@ export interface Booking {
     method: string | null;
     amount: string;
     expires_at: string | null;
+    external_operation_number?: string;
+    guest_reported_amount?: string | null;
   } | null;
 }
 

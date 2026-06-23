@@ -1825,3 +1825,94 @@ html[data-sidebar-animated="0"] .owner-sidebar-bg {
 .owner-occupancy-loading {
   margin: 0.5rem 0;
 }
+
+.owner-payments-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.owner-payments-summary {
+  margin: 0.75rem 0 0;
+  font-size: 0.95rem;
+}
+
+.owner-payments-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.owner-payments-filter {
+  border: 1px solid var(--owner-shell-border);
+  background: #fff;
+  color: var(--owner-shell-text);
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.owner-payments-filter.is-active {
+  background: var(--owner-shell-primary);
+  border-color: var(--owner-shell-primary);
+  color: #fff;
+}
+
+.owner-payments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.owner-payment-card {
+  padding: 1rem 1.1rem;
+}
+
+.owner-payment-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.owner-payment-card-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.owner-payment-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.65rem 1rem;
+  margin: 0.75rem 0 0;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.owner-payment-details div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.owner-payment-details dt {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--owner-shell-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.owner-payment-details dd {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.owner-booking-external-detail {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+}

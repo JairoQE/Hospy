@@ -220,7 +220,13 @@ def process_mercadopago_webhook(mp_payment_id: str) -> bool:
     return True
 
 
-def request_external_payment(payment: Payment, user) -> Payment:
+def request_external_payment(
+    payment: Payment,
+    user,
+    *,
+    operation_number: str,
+    reported_amount,
+) -> Payment:
     _ensure_payable(payment, user)
     with transaction.atomic():
         payment = Payment.objects.select_for_update().get(pk=payment.pk)
@@ -229,6 +235,8 @@ def request_external_payment(payment: Payment, user) -> Payment:
         payment.gateway = "externo"
         payment.expires_at = None
         payment.failure_message = ""
+        payment.external_operation_number = operation_number
+        payment.guest_reported_amount = reported_amount
         payment.save(
             update_fields=[
                 "method",
@@ -236,6 +244,8 @@ def request_external_payment(payment: Payment, user) -> Payment:
                 "gateway",
                 "expires_at",
                 "failure_message",
+                "external_operation_number",
+                "guest_reported_amount",
                 "updated_at",
             ]
         )

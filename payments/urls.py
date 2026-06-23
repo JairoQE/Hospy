@@ -40,4 +40,9 @@ urlpatterns = [
         MercadoPagoWebhookView.as_view(),
         name="payment-mp-webhook",
     ),
+    path(
+        "propietario/pagos/",
+        views.OwnerPaymentsListView.as_view(),
+        name="owner-payments-list",
+    ),
 ]

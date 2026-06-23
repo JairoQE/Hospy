@@ -48,6 +48,8 @@ export function PaymentCheckoutModal({
   const [error, setError] = useState("");
   const [instruction, setInstruction] = useState("");
   const [ipRisk, setIpRisk] = useState<PaymentIpRisk | null>(null);
+  const [operationNumber, setOperationNumber] = useState("");
+  const [reportedAmount, setReportedAmount] = useState(amount);
 
   useEffect(() => {
     let cancelled = false;
@@ -118,6 +120,19 @@ export function PaymentCheckoutModal({
   const externalPending =
     payment?.method === "externo" && payment.status === "procesando";
 
+  const paymentChoicePending =
+    payment?.status === "pendiente" && !payment.method;
+
+  const handleClose = useCallback(() => {
+    if (paymentChoicePending) {
+      const leave = window.confirm(
+        "Aún no elegiste forma de pago. ¿Cerrar de todos modos? Podrás continuar desde Mis reservas.",
+      );
+      if (!leave) return;
+    }
+    onClose();
+  }, [onClose, paymentChoicePending]);
+
   const handleYape = useCallback(async () => {
     if (!payment) return;
     setSubmitting(true);
@@ -178,10 +193,24 @@ export function PaymentCheckoutModal({
 
   const handleExternal = useCallback(async () => {
     if (!payment) return;
+    const op = operationNumber.trim();
+    const amt = reportedAmount.trim();
+    if (op.length < 4) {
+      setError("Ingresa un número de operación válido (mínimo 4 caracteres).");
+      return;
+    }
+    const parsed = Number(amt.replace(",", "."));
+    if (!amt || Number.isNaN(parsed) || parsed <= 0) {
+      setError("Ingresa el monto que pagaste.");
+      return;
+    }
     setSubmitting(true);
     setError("");
     try {
-      const result = await requestExternalPayment(payment.id);
+      const result = await requestExternalPayment(payment.id, {
+        operation_number: op,
+        reported_amount: parsed.toFixed(2),
+      });
       setPayment(result);
       setInstruction(
         result.instruction ||
@@ -192,11 +221,11 @@ export function PaymentCheckoutModal({
     } finally {
       setSubmitting(false);
     }
-  }, [payment]);
+  }, [payment, operationNumber, reportedAmount]);
 
   return (
     <>
-      <div className="payment-modal-backdrop" onClick={onClose} aria-hidden />
+      <div className="payment-modal-backdrop" onClick={handleClose} aria-hidden />
       <div
         className="payment-modal"
         role="dialog"
@@ -208,7 +237,7 @@ export function PaymentCheckoutModal({
             <h2>Pagar reserva</h2>
             <p className="muted">{accommodationName}</p>
           </div>
-          <button type="button" className="payment-modal-close" onClick={onClose} aria-label="Cerrar">
+          <button type="button" className="payment-modal-close" onClick={handleClose} aria-label="Cerrar">
             ×
           </button>
         </div>
@@ -381,6 +410,17 @@ export function PaymentCheckoutModal({
                       <PrimeIcon name="pi-clock" size={18} /> Pago directo registrado. Espera la
                       confirmación del anfitrión.
                     </p>
+                    {payment?.external_operation_number ? (
+                      <p className="payment-external-summary">
+                        Operación: <strong>{payment.external_operation_number}</strong>
+                        {payment.guest_reported_amount ? (
+                          <>
+                            {" "}
+                            · Monto: <strong>S/ {payment.guest_reported_amount}</strong>
+                          </>
+                        ) : null}
+                      </p>
+                    ) : null}
                     {onContactHost ? (
                       <button
                         type="button"
@@ -402,10 +442,36 @@ export function PaymentCheckoutModal({
                         Contactar anfitrión
                       </button>
                     ) : null}
+                    <label>
+                      Número de operación
+                      <input
+                        type="text"
+                        placeholder="Ej. YAPE-123456 o código de transferencia"
+                        value={operationNumber}
+                        onChange={(e) => setOperationNumber(e.target.value)}
+                        maxLength={64}
+                        autoComplete="off"
+                      />
+                    </label>
+                    <label>
+                      Cantidad de monto (S/)
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Ej. 70.00"
+                        value={reportedAmount}
+                        onChange={(e) => setReportedAmount(e.target.value)}
+                      />
+                    </label>
                     <button
                       type="button"
                       className="btn btn-primary btn-block payment-submit"
-                      disabled={submitting || payment?.status === "pagado"}
+                      disabled={
+                        submitting ||
+                        payment?.status === "pagado" ||
+                        operationNumber.trim().length < 4 ||
+                        !reportedAmount.trim()
+                      }
                       onClick={handleExternal}
                     >
                       {submitting ? "Registrando…" : "Registrar pago directo con anfitrión"}

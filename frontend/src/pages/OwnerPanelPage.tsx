@@ -26,6 +26,7 @@ import { OwnerOccupancyCalendar } from "../components/owner/OwnerOccupancyCalend
 import { OwnerInquiriesPanel } from "../components/OwnerInquiriesPanel";
 import { OwnerDashboard } from "../components/owner/OwnerDashboard";
 import { OwnerPropertiesList } from "../components/owner/OwnerPropertiesList";
+import { OwnerPaymentsPanel } from "../components/owner/OwnerPaymentsPanel";
 import { ownerTabPath, tabFromParams } from "../utils/ownerPanelRoutes";
 import { useInboxSummary } from "../hooks/useInboxSummary";
 import { StatusBadge } from "../components/StatusBadge";
@@ -373,6 +374,8 @@ export function OwnerPanelPage() {
               />
             )}
 
+            {tab === "pagos" && !loading && <OwnerPaymentsPanel />}
+
             {tab === "reservas" && !loading && (
               <section className="owner-bookings-section" aria-label="Reservas">
                 <OwnerCheckInAlerts bookings={bookings} />
@@ -433,6 +436,15 @@ export function OwnerPanelPage() {
                           {ownerBookingPaymentLabel(b.payment)}
                         </p>
                       )}
+                      {b.payment?.method === "externo" &&
+                      b.payment.external_operation_number ? (
+                        <p className="owner-booking-external-detail muted">
+                          Operación: {b.payment.external_operation_number}
+                          {b.payment.guest_reported_amount
+                            ? ` · Monto reportado: ${formatMoney(b.payment.guest_reported_amount)}`
+                            : ""}
+                        </p>
+                      ) : null}
                       {hint && <OwnerBookingHintBox hint={hint} />}
                       <div className="owner-booking-card-actions">
                         {canRecordPayment && b.payment && (

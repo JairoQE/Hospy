@@ -19,6 +19,7 @@ const NAV: { id: OwnerPanelTab; label: string; icon: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: "pi-chart-bar" },
   { id: "hospedajes", label: "Mis hospedajes", icon: "pi-home" },
   { id: "reservas", label: "Reservas", icon: "pi-calendar" },
+  { id: "pagos", label: "Pagos", icon: "pi-wallet" },
   { id: "consultas", label: "Consultas", icon: "pi-comments" },
 ];
 

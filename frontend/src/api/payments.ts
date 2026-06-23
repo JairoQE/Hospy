@@ -30,6 +30,8 @@ export interface PaymentRecord {
   failure_message: string;
   paid_at: string | null;
   expires_at: string | null;
+  external_operation_number?: string;
+  guest_reported_amount?: string | null;
   is_mock: boolean;
   created_at: string;
   instruction?: string;
@@ -71,10 +73,41 @@ export function createPagoEfectivo(paymentId: number) {
   return api.post<PaymentRecord>(`/pagos/${paymentId}/pagoefectivo/`, {});
 }
 
-export function requestExternalPayment(paymentId: number) {
-  return api.post<PaymentRecord>(`/pagos/${paymentId}/externo/`, {});
+export function requestExternalPayment(
+  paymentId: number,
+  payload: { operation_number: string; reported_amount: string },
+) {
+  return api.post<PaymentRecord>(`/pagos/${paymentId}/externo/`, payload);
 }
 
 export function confirmExternalPayment(paymentId: number) {
   return api.post<PaymentRecord>(`/pagos/${paymentId}/confirmar-externo/`, {});
+}
+
+export interface OwnerPaymentRow {
+  id: number;
+  booking_id: number;
+  hospedaje: string;
+  habitacion: string;
+  accommodation_id: number;
+  huesped: { id: number; nombre: string; email: string };
+  check_in: string;
+  check_out: string;
+  booking_status: string;
+  amount: string;
+  currency: string;
+  method: string;
+  status: PaymentRecord["status"];
+  external_operation_number: string;
+  guest_reported_amount: string | null;
+  paid_at: string | null;
+  created_at: string;
+}
+
+export function fetchOwnerPayments(params?: { method?: string; status?: string }) {
+  const search = new URLSearchParams();
+  if (params?.method) search.set("method", params.method);
+  if (params?.status) search.set("status", params.status);
+  const qs = search.toString();
+  return api.get<OwnerPaymentRow[]>(`/propietario/pagos/${qs ? `?${qs}` : ""}`);
 }
