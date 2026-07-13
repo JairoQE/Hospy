@@ -1,0 +1,162 @@
+.developers-guide {
+  max-width: 52rem;
+  padding-bottom: 3rem;
+}
+
+.developers-guide-hero {
+  margin-bottom: 2rem;
+}
+
+.developers-guide-kicker {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent, #0d9488);
+}
+
+.developers-guide-lead {
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--muted, #5a6a7a);
+  margin: 0.75rem 0 1.25rem;
+}
+
+.developers-guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.developers-guide-toc {
+  padding: 1rem 1.15rem;
+  border-radius: 12px;
+  background: rgba(13, 148, 136, 0.06);
+  border: 1px solid rgba(13, 148, 136, 0.18);
+  margin-bottom: 2rem;
+}
+
+.developers-guide-toc h2 {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+}
+
+.developers-guide-toc ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.developers-guide-toc a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.developers-guide-section {
+  margin-bottom: 2rem;
+}
+
+.developers-guide-section h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.75rem;
+}
+
+.developers-guide-section h3 {
+  font-size: 1.05rem;
+  margin: 1.1rem 0 0.5rem;
+}
+
+.developers-guide-section p,
+.developers-guide-section li,
+.developers-guide-faq dd {
+  line-height: 1.55;
+}
+
+.developers-guide-callout {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  margin: 1rem 0;
+}
+
+.developers-guide-callout p {
+  margin: 0;
+}
+
+.developers-guide-steps {
+  display: grid;
+  gap: 0.65rem;
+  padding-left: 1.25rem;
+}
+
+.developers-guide-table-wrap {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.developers-guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.developers-guide-table th,
+.developers-guide-table td {
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid rgba(15, 39, 68, 0.1);
+  vertical-align: top;
+}
+
+.developers-guide-table th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted, #5a6a7a);
+}
+
+.developers-guide-code {
+  margin: 0.85rem 0;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  background: rgba(15, 39, 68, 0.06);
+  overflow-x: auto;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.developers-guide-faq dt {
+  font-weight: 700;
+  margin-top: 0.85rem;
+}
+
+.developers-guide-faq dd {
+  margin: 0.25rem 0 0;
+  color: var(--muted, #5a6a7a);
+}
+
+.developers-guide-footer {
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(15, 39, 68, 0.1);
+}
+
+:root[data-theme="dark"] .developers-guide-toc {
+  background: rgba(13, 148, 136, 0.12);
+}
+
+:root[data-theme="dark"] .developers-guide-code {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme="dark"] .developers-guide-table th,
+:root[data-theme="dark"] .developers-guide-table td {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}

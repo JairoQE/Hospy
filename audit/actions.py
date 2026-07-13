@@ -42,6 +42,7 @@ ACTION_LABELS: dict[str, str] = {
     "auth.register_owner": "Registró cuenta de propietario",
     "integration.api.access": "Acceso API de integración",
     "integration.client.request": "Solicitó acceso API de integración",
+    "integration.client.activate": "Activó acceso de desarrollador (API)",
     "integration.client.approve": "Aprobó cliente de integración",
     "integration.client.reject": "Rechazó cliente de integración",
     "integration.client.revoke": "Revocó cliente de integración",

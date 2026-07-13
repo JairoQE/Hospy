@@ -15,6 +15,7 @@ export const FOOTER_COMPANY_LINKS = [
   { label: "Trabaja con nosotros", to: "/contacto" },
   { label: "Preguntas frecuentes", to: "/centro-ayuda#faq" },
   { label: "Centro de ayuda", to: "/centro-ayuda" },
+  { label: "¿Eres desarrollador?", to: "/desarrolladores" },
 ] as const;
 
 export const FOOTER_LEGAL_LINKS = [

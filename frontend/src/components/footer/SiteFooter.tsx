@@ -92,6 +92,8 @@ export function SiteFooter() {
 
     { label: t("footer.help"), to: "/centro-ayuda" },
 
+    { label: t("footer.developers"), to: "/desarrolladores" },
+
   ];
 
 

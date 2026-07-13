@@ -128,12 +128,6 @@ def test_request_approve_and_issue_key_via_api(db):
         password="pass12345",
         role=User.Role.HUESPED,
     )
-    admin = User.objects.create_user(
-        username="adm1",
-        email="adm1@hospy.test",
-        password="pass12345",
-        role=User.Role.ADMINISTRADOR,
-    )
     client = APIClient()
     client.force_authenticate(user=user)
     res = client.post(
@@ -143,23 +137,12 @@ def test_request_approve_and_issue_key_via_api(db):
     )
     assert res.status_code == 201
     client_id = res.data["client"]["id"]
-    assert res.data["client"]["status"] == "pendiente"
-
-    client.force_authenticate(user=admin)
-    res = client.post(
-        f"/api/v1/integracion/clientes/{client_id}/decidir/",
-        {"aprobado": True},
-        format="json",
-    )
-    assert res.status_code == 200
     assert res.data["client"]["status"] == "activo"
 
-    client.force_authenticate(user=user)
     res = client.post(f"/api/v1/integracion/clientes/mios/{client_id}/emitir-key/")
     assert res.status_code == 200
     raw = res.data["api_key"]
     assert raw.startswith("hspy_")
     assert authenticate_integration_key(raw) is not None
-    assert AuditLog.objects.filter(action="integration.client.request").exists()
-    assert AuditLog.objects.filter(action="integration.client.approve").exists()
+    assert AuditLog.objects.filter(action="integration.client.activate").exists()
     assert AuditLog.objects.filter(action="integration.client.issue_key").exists()

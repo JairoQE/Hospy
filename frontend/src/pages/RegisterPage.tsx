@@ -21,6 +21,7 @@ import { TurnstileWidget } from "../components/auth/TurnstileWidget";
 import { useAuth } from "../context/AuthContext";
 import { useCaptchaConfig } from "../hooks/useCaptchaConfig";
 import { scorePassword } from "../utils/passwordStrength";
+import { requestIntegrationClient } from "../api/integrationClients";
 import "../styles/login.css";
 import "../styles/register.css";
 
@@ -46,9 +47,14 @@ function friendlyFieldError(key: string, message: string): string {
 interface Props {
   asOwner?: boolean;
   asSponsor?: boolean;
+  asDeveloper?: boolean;
 }
 
-export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
+export function RegisterPage({
+  asOwner = false,
+  asSponsor = false,
+  asDeveloper = false,
+}: Props) {
   const { register, loginWithGoogle, loginWithFacebook } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -159,6 +165,28 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
 
   const socialBusy = loading || googleLoading || facebookLoading || success;
 
+  const activateDeveloperAccess = async (systemName?: string, contactEmail?: string) => {
+    const name =
+      (systemName || "").trim() ||
+      `App de ${form.first_name.trim() || form.email.split("@")[0] || "desarrollador"}`;
+    await requestIntegrationClient({
+      name,
+      contact_email: contactEmail || form.email.trim(),
+      organization: "",
+      notes: "Registro como desarrollador",
+    });
+  };
+
+  const afterAuthNavigate = (opts?: { developerDone?: boolean }) => {
+    window.setTimeout(() => {
+      if (asDeveloper || opts?.developerDone) {
+        navigate("/perfil", { replace: true });
+        return;
+      }
+      navigate(asSponsor ? "/patrocinio" : asOwner ? "/panel" : "/", { replace: true });
+    }, asDeveloper ? 1100 : 900);
+  };
+
   const handleGoogleCredential = async (credential: string) => {
     setError("");
     setFieldErrors({});
@@ -171,13 +199,18 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
     setGoogleLoading(true);
     try {
       await loginWithGoogle(credential, {
-        asOwner: asOwner && !asSponsor,
+        asOwner: asOwner && !asSponsor && !asDeveloper,
         asSponsor,
       });
+      if (asDeveloper) {
+        try {
+          await activateDeveloperAccess();
+        } catch {
+          /* el usuario podrá activar desde el perfil */
+        }
+      }
       setSuccess(true);
-      window.setTimeout(() => {
-        navigate(asSponsor ? "/patrocinio" : asOwner ? "/panel" : "/", { replace: true });
-      }, 900);
+      afterAuthNavigate({ developerDone: asDeveloper });
     } catch (err) {
       if (err instanceof ApiError) {
         setError(formatApiError(err.data));
@@ -201,13 +234,18 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
     setFacebookLoading(true);
     try {
       await loginWithFacebook(accessToken, {
-        asOwner: asOwner && !asSponsor,
+        asOwner: asOwner && !asSponsor && !asDeveloper,
         asSponsor,
       });
+      if (asDeveloper) {
+        try {
+          await activateDeveloperAccess();
+        } catch {
+          /* el usuario podrá activar desde el perfil */
+        }
+      }
       setSuccess(true);
-      window.setTimeout(() => {
-        navigate(asSponsor ? "/patrocinio" : asOwner ? "/panel" : "/", { replace: true });
-      }, 900);
+      afterAuthNavigate({ developerDone: asDeveloper });
     } catch (err) {
       if (err instanceof ApiError) {
         setError(formatApiError(err.data));
@@ -241,15 +279,23 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
           password: form.password,
         },
         {
-          asOwner: asOwner && !asSponsor,
+          asOwner: asOwner && !asSponsor && !asDeveloper,
           asSponsor,
           captchaToken: captchaToken || undefined,
         },
       );
+      if (asDeveloper) {
+        try {
+          await activateDeveloperAccess(
+            `App de ${form.first_name.trim() || form.email.split("@")[0]}`,
+            form.email.trim(),
+          );
+        } catch {
+          /* activar desde perfil si falla */
+        }
+      }
       setSuccess(true);
-      window.setTimeout(() => {
-        navigate(asSponsor ? "/patrocinio" : asOwner ? "/panel" : "/", { replace: true });
-      }, 1400);
+      afterAuthNavigate({ developerDone: asDeveloper });
     } catch (err) {
       resetCaptcha();
       if (err instanceof ApiError) {
@@ -276,22 +322,32 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
   const sponsorLabel = asSponsor
     ? "Registrarme como huésped"
     : "¿Deseas patrocinar este sistema?";
+  const developerLink = asDeveloper ? "/registro" : "/registro-desarrollador";
+  const developerLabel = asDeveloper
+    ? "Registrarme como huésped"
+    : "¿Eres desarrollador? Acceso API";
 
   const title = asSponsor
     ? "Registro patrocinador"
     : asOwner
       ? "Registro propietario"
-      : "Crear cuenta";
+      : asDeveloper
+        ? "Registro desarrollador"
+        : "Crear cuenta";
   const subtitle = asSponsor
     ? "Los anuncios requieren un acuerdo financiero con el administrador. Tras registrarte, contáctalo por WhatsApp; cuando apruebe tu cuenta podrás subir creativos."
     : asOwner
       ? "Un administrador validará tu cuenta como anfitrión. Cuando te aprueben podrás publicar hospedajes."
-      : "Con tu cuenta podrás reservar hospedajes. El inicio de sesión es con tu correo.";
+      : asDeveloper
+        ? "Crea tu cuenta y activa el acceso API al instante (sin aprobación del administrador). Luego genera tu API Key en el perfil."
+        : "Con tu cuenta podrás reservar hospedajes. El inicio de sesión es con tu correo.";
   const submitLabel = asSponsor
     ? "Solicitar cuenta de patrocinador"
     : asOwner
       ? "Solicitar cuenta de propietario"
-      : "Crear cuenta";
+      : asDeveloper
+        ? "Crear cuenta de desarrollador"
+        : "Crear cuenta";
 
   return (
     <div className="login-page register-page">
@@ -605,9 +661,14 @@ export function RegisterPage({ asOwner = false, asSponsor = false }: Props) {
               <PrimeIcon name="pi-building" size={16} /> {ownerLabel}
             </Link>
           )}
-          {!asOwner && !asSponsor && (
+          {!asOwner && !asSponsor && !asDeveloper && (
             <Link to={sponsorLink} className="login-link-secondary register-sponsor-link">
               <PrimeIcon name="pi-flag" size={16} /> {sponsorLabel}
+            </Link>
+          )}
+          {!asOwner && !asSponsor && (
+            <Link to={developerLink} className="login-link-secondary">
+              <PrimeIcon name="pi-key" size={16} /> {developerLabel}
             </Link>
           )}
           {asSponsor && (

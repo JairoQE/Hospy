@@ -45,6 +45,7 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { SponsorLayout } from "./components/sponsor/SponsorLayout";
 import { SponsorPanelPage } from "./pages/SponsorPanelPage";
+import { DevelopersGuidePage } from "./pages/DevelopersGuidePage";
 import { InfoPage } from "./pages/InfoPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
@@ -79,10 +80,12 @@ function AppTree() {
             <Route path="recuperar-contraseña" element={<ForgotPasswordPage />} />
             <Route path="registro" element={<RegisterPage />} />
             <Route path="registro-propietario" element={<RegisterPage asOwner />} />
+            <Route path="registro-desarrollador" element={<RegisterPage asDeveloper />} />
             <Route path="registro-patrocinador" element={<RegisterPage asSponsor />} />
             <Route path="sobre-nosotros" element={<InfoPage pageId="sobre-nosotros" />} />
             <Route path="centro-ayuda" element={<InfoPage pageId="centro-ayuda" />} />
             <Route path="contacto" element={<InfoPage pageId="contacto" />} />
+            <Route path="desarrolladores" element={<DevelopersGuidePage />} />
             <Route path="legal/:slug" element={<InfoPage />} />
             <Route
               path="mis-reservas"

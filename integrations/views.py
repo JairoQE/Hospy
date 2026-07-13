@@ -113,6 +113,18 @@ class MyIntegrationClientsView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if IntegrationClient.objects.filter(
+            owner=request.user,
+            status=IntegrationClient.Status.ACTIVE,
+        ).exists():
+            return Response(
+                {
+                    "detail": "Ya tienes un acceso de desarrollador activo. "
+                    "Puedes emitir o rotar tu API Key desde el perfil."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         email = (data.get("contact_email") or "").strip() or request.user.email
         client = IntegrationClient.objects.create(
             name=data["name"],
@@ -120,20 +132,22 @@ class MyIntegrationClientsView(APIView):
             contact_email=email,
             notes=(data.get("notes") or "").strip(),
             owner=request.user,
-            status=IntegrationClient.Status.PENDING,
+            status=IntegrationClient.Status.ACTIVE,
         )
         log_action(
             actor=request.user,
-            action="integration.client.request",
+            action="integration.client.activate",
             target_type="IntegrationClient",
             target_id=client.pk,
             target_label=client.name,
-            metadata={"contact_email": client.contact_email},
+            metadata={"contact_email": client.contact_email, "self_service": True},
             request=request,
         )
         return Response(
             {
-                "detail": "Solicitud enviada. Un administrador la revisará.",
+                "detail": (
+                    "Acceso de desarrollador activado. Ya puedes generar tu API Key."
+                ),
                 "client": IntegrationClientSerializer(client).data,
             },
             status=status.HTTP_201_CREATED,

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import {
   fetchMyIntegrationClients,
   issueIntegrationApiKey,
@@ -20,6 +21,7 @@ export function IntegrationApiSection({ user }: Props) {
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     name: "",
     organization: "",
@@ -42,9 +44,36 @@ export function IntegrationApiSection({ user }: Props) {
     void reload();
   }, [reload]);
 
-  const pending = clients.find((c) => c.status === "pendiente");
   const active = clients.filter((c) => c.status === "activo");
   const revoked = clients.filter((c) => c.status === "revocado");
+  const isDeveloper = active.length > 0;
+
+  const defaultSystemName = () => {
+    const full = `${user.first_name || ""} ${user.last_name || ""}`.trim();
+    return full ? `App de ${full}` : `Integración ${user.email.split("@")[0] || "Hospy"}`;
+  };
+
+  const activateQuick = async () => {
+    setSaving(true);
+    setMsg("");
+    setError("");
+    setRevealedKey(null);
+    try {
+      const res = await requestIntegrationClient({
+        name: defaultSystemName(),
+        contact_email: user.email,
+        organization: "",
+        notes: "Activación desde perfil",
+      });
+      setMsg(res.detail);
+      setShowForm(false);
+      await reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudo activar el acceso");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -55,10 +84,11 @@ export function IntegrationApiSection({ user }: Props) {
     try {
       const res = await requestIntegrationClient(form);
       setMsg(res.detail);
+      setShowForm(false);
       setForm((f) => ({ ...f, name: "", organization: "", notes: "" }));
       await reload();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo enviar la solicitud");
+      setError(err instanceof ApiError ? err.message : "No se pudo activar el acceso");
     } finally {
       setSaving(false);
     }
@@ -84,87 +114,49 @@ export function IntegrationApiSection({ user }: Props) {
     <section className="card profile-integration-card" aria-labelledby="integration-api-title">
       <div className="profile-become-owner-head">
         <PrimeIcon name="pi-key" size={22} />
-        <h2 id="integration-api-title">API de integración</h2>
+        <h2 id="integration-api-title">¿Eres desarrollador?</h2>
       </div>
-      <p className="muted profile-become-owner-hint">
-        Solicita acceso para que otro sistema consuma el catálogo de hospedajes de Hospy
-        (REST + API Key). Un administrador aprueba la solicitud; luego emites tu clave desde
-        aquí.
-      </p>
 
-      {loading ? (
-        <p className="muted">Cargando…</p>
-      ) : (
+      {!isDeveloper ? (
         <>
-          {pending && (
-            <div className="profile-integration-banner profile-integration-banner--pending" role="status">
-              <PrimeIcon name="pi-clock" size={18} />
-              <div>
-                <strong>Solicitud en revisión:</strong> {pending.name}
-                <p className="muted" style={{ margin: "0.25rem 0 0" }}>
-                  Cuando te aprueben, podrás generar tu API Key aquí.
-                </p>
-              </div>
-            </div>
-          )}
+          <p className="muted profile-become-owner-hint">
+            Activa el acceso de desarrollador al instante (sin aprobación del administrador) y
+            genera tu API Key para integrar el catálogo de Hospy en otro sistema. Guía:{" "}
+            <Link to="/desarrolladores">leer el boletín</Link>.
+          </p>
+          <ul className="profile-become-owner-steps">
+            <li>Activa tu acceso con un clic (o completa los datos del sistema)</li>
+            <li>Genera tu API Key y cópiala (solo se muestra una vez)</li>
+            <li>
+              Consume <code>/api/v1/integracion/hospedajes/</code> con el header{" "}
+              <code>X-Hospy-Integration-Key</code>
+            </li>
+          </ul>
 
-          {active.map((c) => (
-            <div key={c.id} className="profile-integration-client">
-              <div>
-                <strong>{c.name}</strong>
-                {c.organization ? <span className="muted"> · {c.organization}</span> : null}
-                <p className="muted" style={{ margin: "0.35rem 0 0", fontSize: "0.9rem" }}>
-                  Estado: {c.status_display}
-                  {c.key_prefix ? ` · Prefijo: ${c.key_prefix}…` : " · Sin clave emitida"}
-                  {` · Usos: ${c.request_count}`}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                disabled={saving}
-                onClick={() => void issueKey(c.id)}
-              >
-                {c.has_api_key ? "Rotar API Key" : "Generar API Key"}
-              </button>
-            </div>
-          ))}
+          {msg && <p className="success-msg">{msg}</p>}
+          {error && <p className="error-msg">{error}</p>}
 
-          {revoked.length > 0 && (
-            <p className="muted" style={{ fontSize: "0.9rem" }}>
-              Accesos revocados: {revoked.map((c) => c.name).join(", ")}. Puedes solicitar uno nuevo.
-            </p>
-          )}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={saving || loading}
+              onClick={() => void activateQuick()}
+            >
+              {saving ? "Activando…" : "Activar acceso desarrollador"}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              disabled={saving}
+              onClick={() => setShowForm((v) => !v)}
+            >
+              {showForm ? "Cancelar formulario" : "Completar datos del sistema"}
+            </button>
+          </div>
 
-          {revealedKey && (
-            <div className="profile-integration-key-reveal" role="status">
-              <p>
-                <strong>Tu API Key</strong> (cópiala ahora; no se mostrará otra vez):
-              </p>
-              <code className="profile-integration-key-code">{revealedKey}</code>
-              <p className="muted" style={{ marginTop: "0.5rem", fontSize: "0.85rem" }}>
-                Header: <code>X-Hospy-Integration-Key: {revealedKey.slice(0, 12)}…</code>
-              </p>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  void navigator.clipboard?.writeText(revealedKey);
-                  setMsg("API Key copiada al portapapeles.");
-                }}
-              >
-                Copiar
-              </button>
-            </div>
-          )}
-
-          {!pending && (
+          {showForm && (
             <form className="profile-form" onSubmit={submit} style={{ marginTop: "1rem" }}>
-              <h3 style={{ margin: "0 0 0.75rem", fontSize: "1.05rem" }}>
-                {active.length || revoked.length
-                  ? "Nueva solicitud de acceso"
-                  : "Solicitar acceso"}
-              </h3>
               <label>
                 Nombre del sistema *
                 <input
@@ -180,7 +172,6 @@ export function IntegrationApiSection({ user }: Props) {
                 <input
                   value={form.organization}
                   onChange={(e) => setForm({ ...form, organization: e.target.value })}
-                  placeholder="Empresa o institución"
                 />
               </label>
               <label>
@@ -191,28 +182,67 @@ export function IntegrationApiSection({ user }: Props) {
                   onChange={(e) => setForm({ ...form, contact_email: e.target.value })}
                 />
               </label>
-              <label>
-                Notas (opcional)
-                <textarea
-                  rows={2}
-                  value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  placeholder="Para qué usarás la API…"
-                />
-              </label>
-              {msg && <p className="success-msg">{msg}</p>}
-              {error && <p className="error-msg">{error}</p>}
               <button type="submit" className="btn btn-primary" disabled={saving}>
-                {saving ? "Enviando…" : "Solicitar API de integración"}
+                {saving ? "Activando…" : "Activar con estos datos"}
               </button>
             </form>
           )}
+        </>
+      ) : (
+        <>
+          <p className="muted profile-become-owner-hint">
+            Tu acceso de desarrollador está <strong>activo</strong>. Genera o rota tu API Key.
+            Documentación: <Link to="/desarrolladores">guía de integración</Link>.
+          </p>
 
-          {(msg || error) && pending && (
-            <>
-              {msg && <p className="success-msg">{msg}</p>}
-              {error && <p className="error-msg">{error}</p>}
-            </>
+          {active.map((c) => (
+            <div key={c.id} className="profile-integration-client">
+              <div>
+                <strong>{c.name}</strong>
+                {c.organization ? <span className="muted"> · {c.organization}</span> : null}
+                <p className="muted" style={{ margin: "0.35rem 0 0", fontSize: "0.9rem" }}>
+                  {c.key_prefix ? `Prefijo: ${c.key_prefix}…` : "Sin clave emitida todavía"}
+                  {` · Usos: ${c.request_count}`}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                disabled={saving}
+                onClick={() => void issueKey(c.id)}
+              >
+                {c.has_api_key ? "Rotar API Key" : "Generar API Key"}
+              </button>
+            </div>
+          ))}
+
+          {revealedKey && (
+            <div className="profile-integration-key-reveal" role="status">
+              <p>
+                <strong>Tu API Key</strong> (cópiala ahora; no se mostrará otra vez):
+              </p>
+              <code className="profile-integration-key-code">{revealedKey}</code>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                style={{ marginTop: "0.5rem" }}
+                onClick={() => {
+                  void navigator.clipboard?.writeText(revealedKey);
+                  setMsg("API Key copiada al portapapeles.");
+                }}
+              >
+                Copiar
+              </button>
+            </div>
+          )}
+
+          {msg && <p className="success-msg">{msg}</p>}
+          {error && <p className="error-msg">{error}</p>}
+
+          {revoked.length > 0 && (
+            <p className="muted" style={{ fontSize: "0.9rem", marginTop: "0.75rem" }}>
+              Accesos revocados anteriormente: {revoked.map((c) => c.name).join(", ")}.
+            </p>
           )}
         </>
       )}

@@ -3,17 +3,14 @@
 Hospy permite que **otros sistemas** consulten el catálogo mediante REST + API Key,
 con **registro por interfaz gráfica**, aprobación admin, auditoría y monitoreo.
 
-## Flujo (UI)
+## Flujo (UI — sin aprobación admin)
 
-1. El usuario entra a **Perfil** → sección **API de integración**.
-2. Completa nombre del sistema / organización y envía la solicitud (**pendiente**).
-3. Un administrador en **Admin → Integración** aprueba o rechaza.
-4. El solicitante vuelve al perfil → **Generar API Key** (se muestra **una sola vez**).
-5. Usa el header:
+1. Login → **¿Eres desarrollador? Registro API** → `/registro-desarrollador`, **o**
+2. Perfil → **Activar acceso desarrollador** (instantáneo).
+3. **Generar API Key** (se muestra una sola vez).
+4. Consume el catálogo con `X-Hospy-Integration-Key`.
 
-```http
-X-Hospy-Integration-Key: hspy_xxxxxxxx...
-```
+El panel Admin → Integración sirve para **monitoreo y revocación**.
 
 ## Endpoints de datos (catálogo)
 

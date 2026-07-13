@@ -292,6 +292,9 @@ export function LoginPage() {
           <Link to="/registro-propietario" className="login-link-secondary">
             ¿Publicas hospedajes? Registro propietario
           </Link>
+          <Link to="/registro-desarrollador" className="login-link-secondary">
+            ¿Eres desarrollador? Registro API
+          </Link>
         </div>
 
         <p className="login-explore">

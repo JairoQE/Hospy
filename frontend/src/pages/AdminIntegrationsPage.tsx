@@ -74,7 +74,8 @@ export function AdminIntegrationsPage() {
         <div>
           <h1>Clientes de integración</h1>
           <p className="muted">
-            Aprueba solicitudes de API Key, monitorea usos y revoca accesos.
+            Monitorea clientes de API, usos y revoca accesos. Los desarrolladores activan su acceso
+            solos desde el perfil o el registro; aquí puedes fiscalizar y revocar.
           </p>
         </div>
       </header>
