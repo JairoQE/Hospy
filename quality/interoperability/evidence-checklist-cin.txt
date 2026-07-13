@@ -1,0 +1,31 @@
+EVIDENCIAS — Interoperabilidad (Tabla 8: CIn-1-G / CIn-2-G / CIn-3-S)
+
+Guardar en quality/interoperability/evidence/
+
+[ ] 01-openapi-schema.png
+    Navegador o Postman: GET /api/schema/ → 200
+
+[x] 01-json — ver evidence/cin1-01-json-integration.png
+
+[x] 03-openapi — ver evidence/cin1-03-openapi-schema.png
+
+[x] 05-06 dates/images — ver evidence/cin1-05-06-dates-images.png
+    https://hospy-api-.../api/docs/ — documentación interactiva
+
+[ ] 03-integration-api-200.png
+    Postman: GET /api/v1/integracion/hospedajes/
+    Header X-Hospy-Integration-Key → 200 JSON
+
+[ ] 04-geo-sugerencias.png
+    GET /api/v1/geo/sugerencias/ → 200 (ip.guide)
+
+[ ] 05-cloud-run-external-env.png
+    Cloud Run → Variables: CLOUDINARY, GEMINI, GOOGLE_OAUTH, TURNSTILE, IP_GUIDE
+
+[ ] 06-cin-csv-tables.png
+    Captura de los 3 CSV completados
+
+Cálculos:
+- CIn-1-G = 7/7 = 100 %
+- CIn-2-G = 7/7 = 100 %
+- CIn-3-S = 9/9 = 100 %

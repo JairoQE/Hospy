@@ -1,0 +1,33 @@
+RFt-2-S — Lista de evidencia (capturas)
+
+Guardar en quality/fault_tolerance/evidence/ (crear carpeta) con estos nombres:
+
+[ ] 01-cloudflare-pages-project.png
+    Cloudflare Dashboard → Workers & Pages → hospy → Overview (dominio hospy.pages.dev)
+
+[ ] 02-cloud-run-scaling.png
+    GCP Console → Cloud Run → hospy-api → Revisions → Scaling
+    Debe verse max instances = 3 (y min = 0 si aplica)
+
+[ ] 03-cloud-run-env-no-redis.png
+    GCP Console → Cloud Run → hospy-api → Variables y secretos
+    Evidencia: USE_CLOUDINARY=true, sin REDIS_URL
+
+[ ] 04-supabase-infrastructure.png
+    Supabase → Project Settings → Infrastructure / Database
+    Plan, región sa-east-1, backups
+
+[ ] 05-cloudinary-dashboard.png
+    Cloudinary → Dashboard (cloud name configurado en producción)
+
+[ ] 06-gcp-uptime-check.png
+    GCP → Monitoring → Uptime checks → Monitoreo de Hospy Pages
+    URL hospy.pages.dev, intervalo 60s
+
+[ ] 07-redundancy-components.csv
+    Copia o captura de la tabla completada en este repo
+
+Datos para el informe:
+- A = 5 (Sí + Parcial)
+- B = 6
+- X = 83,3 %

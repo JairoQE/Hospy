@@ -1,0 +1,23 @@
+pattern_id,severity,area,description,pytest_test,postman_request,expected_status
+F-01,alta,salud,Caché no disponible — health degradado sin 500,test_health_responde_json_aunque_degraded,01 Health (JSON),503
+F-02,alta,salud,Base de datos no disponible — health degradado sin 500,test_health_db_degradada,01 Health (JSON),503
+F-03,alta,auth,Login sin credenciales,test_login_sin_credenciales,02 Login sin credenciales,400
+F-04,alta,auth,Login con contraseña incorrecta,test_login_password_incorrecta,03 Login password incorrecta,401
+F-05,alta,auth,Perfil sin token JWT,test_perfil_sin_autenticacion,04 Perfil sin token,401
+F-06,alta,auth,JSON malformado en login,test_login_json_invalido,11 Login JSON inválido,400
+F-07,media,integracion,Listado sin API key,test_integracion_sin_api_key,05 Integración sin API key,401
+F-08,media,integracion,API key inválida,test_integracion_api_key_invalida,06 Integración API key inválida,401
+F-09,media,integracion,Cercanos sin lat/lng,test_integracion_cercanos_sin_coordenadas,12 Integración cercanos sin params,400
+F-10,baja,integracion,Listado con API key válida (control positivo),test_integracion_api_key_valida,07 Integración API key válida,200
+F-11,alta,reservas,Crear reserva sin autenticación,test_reserva_sin_autenticacion,08 Reservas sin token,401
+F-12,alta,reservas,Fechas de estadía inválidas,test_reserva_fechas_invalidas,,400
+F-13,media,reservas,Habitación inexistente,test_reserva_habitacion_inexistente,,400
+F-14,media,reservas,Tipo de dato incorrecto en room,test_reserva_room_tipo_incorrecto,13 Reserva room tipo incorrecto,400
+F-15,alta,reservas,Cancelar reserva de otro huésped,test_cancelar_reserva_ajena,,404
+F-16,alta,reservas,Propietario confirma reserva ajena,test_propietario_confirma_reserva_ajena,,404
+F-17,alta,pagos,Operación de pago directo demasiado corta,test_pago_externo_operacion_corta,,400
+F-18,alta,pagos,Pago directo sobre reserva ajena,test_pago_externo_reserva_ajena,,404
+F-19,alta,pagos,Propietario confirma cobro ajeno,test_propietario_confirma_pago_ajeno,,400
+F-20,alta,reembolsos,Registrar reembolso sin ser anfitrión,test_reembolso_registrar_sin_ser_propietario,,404
+F-21,media,reembolsos,Disputar reembolso antes del plazo,test_reembolso_disputar_antes_de_plazo,,400
+F-22,baja,routing,Ruta API inexistente,test_endpoint_inexistente,09 Ruta inexistente,404

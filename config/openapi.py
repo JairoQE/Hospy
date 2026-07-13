@@ -8,7 +8,7 @@ import re
 OPENAPI_TAGS = [
     {
         "name": "Sistema",
-        "description": "Salud del servicio y utilidades de infraestructura.",
+        "description": "Salud del servicio, documentación de interoperabilidad y utilidades.",
     },
     {
         "name": "Autenticación",
@@ -83,6 +83,7 @@ OPENAPI_TAGS = [
 # Reglas en orden de prioridad (la primera coincidencia gana).
 _TAG_RULES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"^/health/"), "Sistema"),
+    (re.compile(r"^/api/v1/sistema"), "Sistema"),
     (re.compile(r"^/api/v1/auth/(admin-usuarios|propietarios|patrocinadores)"), "Administración"),
     (re.compile(r"^/api/v1/auth/"), "Autenticación"),
     (re.compile(r"^/api/v1/hospedajes/\d+/resenas/"), "Reseñas"),
@@ -103,6 +104,7 @@ _TAG_RULES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"^/api/v1/diseno"), "Sitio público"),
     (re.compile(r"^/api/v1/propietario"), "Panel propietario"),
     (re.compile(r"^/api/v1/admin/"), "Administración"),
+    (re.compile(r"^/api/v1/integracion/clientes"), "Integración externa"),
     (re.compile(r"^/api/v1/integracion/"), "Integración externa"),
     (re.compile(r"^/api/v1/hospix"), "Hospix"),
     (re.compile(r"^/api/v1/anuncios"), "Patrocinadores"),

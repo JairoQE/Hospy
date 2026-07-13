@@ -54,6 +54,12 @@ def log_action(
         except Exception:
             pass
 
+    # Accesos de API de integración (sin User autenticado)
+    if actor is None and meta.get("integration_client_name"):
+        actor_role = "integracion"
+        actor_email = meta.get("integration_client_email", "") or ""
+        actor_name = meta.get("integration_client_name", "") or ""
+
     try:
         return AuditLog.objects.create(
             actor_id=actor_id,

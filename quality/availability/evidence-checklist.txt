@@ -1,0 +1,34 @@
+EVIDENCIAS — Disponibilidad (RAv-1-G / RAv-2-G)
+=============================================
+
+Guardar en: quality/availability/evidence/
+
+OBLIGATORIAS
+------------
+[ ] 01-uptime-percent.png       — Tarjeta "Percent Uptime" (última semana)
+[ ] 02-passed-checks.png        — Gráfico Passed checks (línea en 1 = sin caídas)
+[ ] 03-latency.png              — Gráfico Uptime check latency (complemento)
+[ ] 04-check-config.png         — Detalle: host, path, frecuencia, regiones
+
+OPCIONALES
+----------
+[ ] 05-api-health-check.png     — Si añades uptime check a /health/
+[ ] 06-alerting-policy.png      — Si configuras alertas (RFt-3-S relacionado)
+
+DATOS A ANOTAR EN measurements.csv
+----------------------------------
+- period_start / period_end
+- uptime_percent (del dashboard)
+- total_downtime_min (estimado: (100 - uptime%) × horas × 60)
+- incident_count_B (fallos visibles en Passed checks)
+- RAv-2-G = total_downtime_min / incident_count_B  (si B=0: reportar 0)
+
+CÁLCULO RÁPIDO RAv-1-G
+----------------------
+X = uptime_percent / 100   (ej. 99.99 % → 0.9999)
+
+CÁLCULO RÁPIDO RAv-2-G (si 99.99 % en 7 días)
+---------------------------------------------
+Tiempo total ≈ 10 080 min
+Downtime ≈ 0.01 % × 10 080 ≈ 1 min
+Si B=1 → RAv-2-G ≈ 1 min

@@ -40,6 +40,12 @@ ACTION_LABELS: dict[str, str] = {
     "auth.login": "Inició sesión",
     "auth.register": "Registró cuenta",
     "auth.register_owner": "Registró cuenta de propietario",
+    "integration.api.access": "Acceso API de integración",
+    "integration.client.request": "Solicitó acceso API de integración",
+    "integration.client.approve": "Aprobó cliente de integración",
+    "integration.client.reject": "Rechazó cliente de integración",
+    "integration.client.revoke": "Revocó cliente de integración",
+    "integration.client.issue_key": "Emitió/rotó API Key de integración",
 }
 
 # critical = seguridad / gobernanza · high = moderación · medium = operaciones · low = rutina
@@ -112,5 +118,6 @@ def action_category(action: str) -> str:
         "sponsor_report": "moderation",
         "payment": "booking",
         "auth": "account",
+        "integration": "integration",
     }
     return mapping.get(prefix, "other")

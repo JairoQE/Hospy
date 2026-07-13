@@ -1,0 +1,8 @@
+format_id,format,mime_or_std,exchangeable,counts_as_A,evidence,notes
+F-01,JSON,application/json,Sí,Sí,Prod: GET integracion/hospedajes → 200; Content-Type application/json; count=106,Cuerpo y respuestas de la API REST
+F-02,JWT,RFC 7519,Sí,Sí,POST /api/v1/auth/login/ → access+refresh; Bearer en DRF,Tokens access/refresh para clientes
+F-03,OpenAPI 3.0,application/vnd.oai.openapi+json,Sí,Sí,Prod: GET /api/schema/ → 200 ~222KB; application/vnd.oai.openapi,Swagger /api/docs/ y ReDoc
+F-04,multipart/form-data,multipart/form-data,Sí,Sí,rooms/tests.py upload; serializers fotos hospedajes,Subida de imágenes propietario
+F-05,ISO 8601 en JSON,date-time,Sí,Sí,Prod: created_at=2026-06-22T22:30:54.004263-05:00 en integracion,Fechas intercambiables con otros sistemas
+F-06,Imágenes WebP/JPEG/PNG,image/*,Sí,Sí,Prod: foto_principal res.cloudinary.com/...webp (id 106),CDN multimedia
+F-07,URL-encoded,application/x-www-form-urlencoded,Parcial,Sí,accounts/captcha.py POST siteverify Turnstile,Solo salida hacia Cloudflare; no entrada API

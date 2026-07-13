@@ -1,0 +1,124 @@
+{
+  "info": {
+    "name": "Hospy — Interoperabilidad (Tabla 8)",
+    "description": "Verificación CIn-1-G / CIn-2-G / CIn-3-S contra Cloud Run.\n\nImportar Hospy-GCP.postman_environment.json y completar integration_key.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "CIn — Interfaces CIn-3-S (inventario B)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/v1/sistema/interfaces/"
+      }
+    },
+    {
+      "name": "CIn — Protocolos CIn-2-G (inventario B)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/v1/sistema/protocolos/"
+      }
+    },
+    {
+      "name": "CIn — Índice documentación sistema",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/v1/sistema/"
+      }
+    },
+    {
+      "name": "CIn — OpenAPI schema (F-03)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/schema/"
+      }
+    },
+    {
+      "name": "CIn — Swagger UI",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/docs/"
+      }
+    },
+    {
+      "name": "CIn — Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/health/"
+      }
+    },
+    {
+      "name": "CIn — Geo sugerencias (IF-07)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/v1/geo/sugerencias/"
+      }
+    },
+    {
+      "name": "CIn — Integración hospedajes (IF-02, F-01, P-06)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Hospy-Integration-Key",
+            "value": "{{integration_key}}",
+            "type": "text"
+          }
+        ],
+        "url": "{{base_url}}/api/v1/integracion/hospedajes/"
+      }
+    },
+    {
+      "name": "CIn — Integración disponibles",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Hospy-Integration-Key",
+            "value": "{{integration_key}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/integracion/hospedajes/disponibles/?entrada=2026-08-01&salida=2026-08-03",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "integracion", "hospedajes", "disponibles", ""],
+          "query": [
+            {"key": "entrada", "value": "2026-08-01"},
+            {"key": "salida", "value": "2026-08-03"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "CIn — Integración cercanos",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Hospy-Integration-Key",
+            "value": "{{integration_key}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/integracion/hospedajes/cercanos/?lat=-12.0464&lng=-77.0428&radio_km=10",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "integracion", "hospedajes", "cercanos", ""],
+          "query": [
+            {"key": "lat", "value": "-12.0464"},
+            {"key": "lng", "value": "-77.0428"},
+            {"key": "radio_km", "value": "10"}
+          ]
+        }
+      }
+    }
+  ]
+}

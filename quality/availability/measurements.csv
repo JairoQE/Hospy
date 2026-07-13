@@ -1,0 +1,3 @@
+period_start,period_end,component,check_id,check_url,probe_interval_sec,scheduled_hours,uptime_percent,RAv-1-G,A_hours,B_hours,total_downtime_min,incident_count_B,RAv-2-G_min_per_incident,mean_latency_ms,notes
+2026-07-01,2026-07-07,frontend,monitoreo-de-hospy-pages-JF1kMNGsb5A,https://hospy.pages.dev/,60,168,99.99,0.9999,167.98,168,1,1,1,70.13,Ejemplo: reemplazar con tus datos reales
+,,api,,https://hospy-api-wm7v5futiq-rj.a.run.app/health/,,,,,,,,,,

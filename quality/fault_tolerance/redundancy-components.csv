@@ -1,0 +1,7 @@
+component_id,component,provider,redundancy,counts_as_A,notes
+C-01,Frontend web (hospy.pages.dev),Cloudflare Pages,Sí,Sí,CDN global; despliegue estático distribuido en edge
+C-02,API REST (Cloud Run),Google Cloud,Parcial,Sí,maxScale=3; sin min instances (scale-to-zero); región southamerica-east1
+C-03,Base de datos PostgreSQL,Supabase,Parcial,Sí,Pooler aws-0-sa-east-1; backups gestionados; HA según plan (verificar panel)
+C-04,Caché aplicación,Django LocMem (Cloud Run),No,No,Sin REDIS_URL en variables de Cloud Run; caché en memoria por instancia
+C-05,Almacenamiento multimedia,Cloudinary,Sí,Sí,USE_CLOUDINARY=true; CDN y réplicas del proveedor
+C-06,Monitoreo uptime,GCP Monitoring,Sí,Sí,Check monitoreo-de-hospy-pages; periodo 60s; STATIC_IP_CHECKERS multi-región

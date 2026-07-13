@@ -1,0 +1,396 @@
+{
+  "info": {
+    "name": "Hospy — RFt-1-G Failure avoidance",
+    "description": "Casos de fallo / entrada inválida para medir RFt-1-G (Tabla 17).\n\nX = A / B\nA = requests con error controlado (4xx/503 JSON, sin 500)\nB = total de requests en esta colección\n\nImportar también Hospy-GCP.postman_environment.json y completar integration_key.\nPara requests autenticados: pega access_token JWT (login en el frontend → DevTools).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "RFt-1-G — Evitación de fallos",
+      "item": [
+        {
+          "name": "01 Health (JSON)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 o 503', () => {",
+                  "  pm.expect([200, 503]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Respuesta JSON', () => {",
+                  "  pm.response.to.have.header('Content-Type');",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('json');",
+                  "});",
+                  "pm.test('Cuerpo con status', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('status');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/health/"
+          }
+        },
+        {
+          "name": "02 Login sin credenciales",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Error controlado 400', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('JSON', () => {",
+                  "  pm.response.to.be.json;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": "{{base_url}}/api/v1/auth/login/"
+          }
+        },
+        {
+          "name": "03 Login password incorrecta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Error controlado 401', () => {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "pm.test('JSON', () => {",
+                  "  pm.response.to.be.json;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"noexiste@hospy.local\",\n  \"password\": \"MalPassword123!\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/auth/login/"
+          }
+        },
+        {
+          "name": "04 Perfil sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Error controlado 401/403', () => {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('JSON', () => {",
+                  "  pm.response.to.be.json;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/auth/perfil/"
+          }
+        },
+        {
+          "name": "05 Integración sin API key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Error controlado 401/403', () => {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('JSON', () => {",
+                  "  pm.response.to.be.json;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/integracion/hospedajes/"
+          }
+        },
+        {
+          "name": "06 Integración API key inválida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Error controlado 401/403', () => {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('JSON', () => {",
+                  "  pm.response.to.be.json;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Hospy-Integration-Key",
+                "value": "clave-invalida"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/integracion/hospedajes/"
+          }
+        },
+        {
+          "name": "07 Integración API key válida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('OK 200', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('JSON', () => {",
+                  "  pm.response.to.be.json;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Hospy-Integration-Key",
+                "value": "{{integration_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/integracion/hospedajes/"
+          }
+        },
+        {
+          "name": "08 Reservas sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Error controlado 401/403', () => {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('JSON', () => {",
+                  "  pm.response.to.be.json;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/reservas/mias/"
+          }
+        },
+        {
+          "name": "09 Ruta inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Error controlado 404', () => {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/ruta-que-no-existe/"
+          }
+        },
+        {
+          "name": "11 Login JSON inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Error controlado 400', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"email\": \"x@hospy.local\","
+            },
+            "url": "{{base_url}}/api/v1/auth/login/"
+          }
+        },
+        {
+          "name": "12 Integración cercanos sin params",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Error controlado 400', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('JSON', () => {",
+                  "  pm.response.to.be.json;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Hospy-Integration-Key",
+                "value": "{{integration_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/integracion/hospedajes/cercanos/"
+          }
+        },
+        {
+          "name": "13 Reserva room tipo incorrecto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (!pm.environment.get('access_token')) {",
+                  "  pm.test.skip('Sin access_token');",
+                  "}",
+                  "pm.test('Error controlado 400', () => {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"room\": \"no-es-un-id\",\n  \"check_in\": \"2026-12-01\",\n  \"check_out\": \"2026-12-03\"\n}"
+            },
+            "url": "{{base_url}}/api/v1/reservas/"
+          }
+        },
+        {
+          "name": "10 Perfil con token (opcional)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (!pm.environment.get('access_token')) {",
+                  "  pm.test.skip('Sin access_token — copia JWT del frontend');",
+                  "}",
+                  "pm.test('OK 200 con token', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/auth/perfil/"
+          }
+        }
+      ]
+    }
+  ]
+}

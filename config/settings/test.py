@@ -2,11 +2,18 @@
 
 import os
 
-os.environ.setdefault("USE_SQLITE", "true")
+os.environ["USE_SQLITE"] = "true"
 os.environ.setdefault("REDIS_URL", "")
 os.environ.setdefault("CELERY_TASK_ALWAYS_EAGER", "true")
 
 from .development import *  # noqa: F403
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
+    }
+}
 
 CACHES = {
     "default": {

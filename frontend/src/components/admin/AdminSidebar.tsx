@@ -15,6 +15,7 @@ const NAV: { to: string; label: string; icon: string; end?: boolean }[] = [
   { to: "/admin/moderacion", label: "Hospedajes", icon: "pi-home" },
   { to: "/admin/reservas", label: "Reservas", icon: "pi-calendar" },
   { to: "/admin/consultas", label: "Consultas", icon: "pi-comments" },
+  { to: "/admin/integracion", label: "Integración", icon: "pi-key" },
   { to: "/admin/registro-actividad", label: "Auditoría", icon: "pi-list" },
   { to: "/admin/inicio", label: "Configuración", icon: "pi-cog" },
 ];

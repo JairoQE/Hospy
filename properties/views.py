@@ -719,7 +719,24 @@ class AccommodationViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class _IntegrationCachedListMixin:
+class _IntegrationAccessMixin:
+    """Audita y contabiliza cada request autenticado de integración."""
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(request, response, *args, **kwargs)
+        if getattr(request, "integration_auth", None) is not None:
+            try:
+                from integrations.access_log import record_integration_access
+
+                record_integration_access(
+                    request, response_status=getattr(response, "status_code", None)
+                )
+            except Exception:
+                pass
+        return response
+
+
+class _IntegrationCachedListMixin(_IntegrationAccessMixin):
     cache_prefix = "list"
 
     def list(self, request, *args, **kwargs):
@@ -766,7 +783,7 @@ class IntegrationAccommodationDisponiblesView(
         return apply_accommodation_search_params(qs, self.request.query_params)
 
 
-class IntegrationAccommodationNearbyView(APIView):
+class IntegrationAccommodationNearbyView(_IntegrationAccessMixin, APIView):
     permission_classes = (IsIntegrationClient,)
 
     def get(self, request):
@@ -790,7 +807,7 @@ class IntegrationAccommodationNearbyView(APIView):
         return Response(data)
 
 
-class IntegrationAccommodationDetailView(generics.RetrieveAPIView):
+class IntegrationAccommodationDetailView(_IntegrationAccessMixin, generics.RetrieveAPIView):
     serializer_class = IntegrationAccommodationDetailSerializer
     permission_classes = (IsIntegrationClient,)
     lookup_url_kwarg = "pk"

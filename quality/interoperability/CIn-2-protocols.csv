@@ -1,0 +1,8 @@
+protocol_id,protocol,scope,supported,counts_as_A,evidence,notes
+P-01,HTTPS/TLS 1.2+,Transporte,Sí,Sí,Prod: todas las URLs https://; Cloud Run + Pages,TLS en frontend y API
+P-02,HTTP REST,API pública,Sí,Sí,Prod: GET integracion + OpenAPI paths/methods,Prefijo /api/v1/
+P-03,OAuth 2.0 / OpenID Connect,Auth social,Sí,Sí,OpenAPI /auth/google/; GOOGLE_OAUTH_CLIENT_ID Cloud Run,POST /api/v1/auth/google/
+P-04,Facebook Graph API,Auth social,Sí,Sí,OpenAPI /auth/facebook/; FACEBOOK_APP_ID Cloud Run,POST /api/v1/auth/facebook/
+P-05,JWT Bearer,RFC 6750,Sí,Sí,OpenAPI Bearer; DRF JWTAuthentication,Autenticación principal SPA
+P-06,API Key header,Integración SIST,Sí,Sí,Postman: X-Hospy-Integration-Key → 200,Header X-Hospy-Integration-Key
+P-07,PostgreSQL wire protocol,Base de datos,Sí,Sí,Prod: /health/ database ok; Supabase pooler,Acceso estándar PG desde Django

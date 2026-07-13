@@ -30,6 +30,7 @@ import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import { AdminHomeContentPage } from "./pages/AdminHomeContentPage";
 import { AdminModerationPage } from "./pages/AdminModerationPage";
 import { AdminReservationsPage } from "./pages/AdminReservationsPage";
+import { AdminIntegrationsPage } from "./pages/AdminIntegrationsPage";
 import { AdminUsersPage } from "./pages/AdminUsersPage";
 import { HomePage } from "./pages/HomePage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
@@ -125,6 +126,7 @@ function AppTree() {
               <Route path="moderacion" element={<AdminModerationPage />} />
               <Route path="reservas" element={<AdminReservationsPage />} />
               <Route path="consultas" element={<AdminConsultasPage />} />
+              <Route path="integracion" element={<AdminIntegrationsPage />} />
               <Route path="registro-actividad" element={<AdminAuditLogPage />} />
               <Route path="auditoria" element={<Navigate to="/admin/registro-actividad" replace />} />
               <Route path="inicio" element={<AdminHomeContentPage />} />

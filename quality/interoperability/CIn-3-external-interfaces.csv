@@ -1,0 +1,10 @@
+interface_id,interface,external_system,functional,counts_as_A,evidence,notes
+IF-01,SPA React ↔ API REST,Frontend hospy.pages.dev,Sí,Sí,Frontend en producción consume /api/v1/,Cliente principal
+IF-02,API integración SIST,Sistema externo / terceros,Sí,Sí,GET /api/v1/integracion/hospedajes/ → 200 con API key,4 endpoints bajo /api/v1/integracion/
+IF-03,Login Google OAuth,Google Identity,Sí,Sí,GOOGLE_OAUTH_CLIENT_ID configurado,POST /api/v1/auth/google/
+IF-04,Login Facebook,Meta Graph API,Sí,Sí,FACEBOOK_APP_ID/SECRET en Cloud Run,POST /api/v1/auth/facebook/
+IF-05,Almacenamiento multimedia,Cloudinary,Sí,Sí,USE_CLOUDINARY=true,Subida y entrega CDN
+IF-06,Base de datos,Supabase PostgreSQL,Sí,Sí,POSTGRES_HOST pooler Supabase,Persistencia producción
+IF-07,Geolocalización IP,ip.guide,Sí,Sí,IP_GUIDE_ENABLED; GET /api/v1/geo/sugerencias/ → 200,Auditoría y sugerencias locale
+IF-08,LLM asistente Hospix,Google Gemini,Sí,Sí,GEMINI_API_KEY + HOSPIX_LLM_PROVIDER=gemini,POST /api/v1/hospix/chat/
+IF-09,Captcha login,Cloudflare Turnstile,Sí,Sí,TURNSTILE_SITE_KEY/SECRET en Cloud Run,Verificación en auth

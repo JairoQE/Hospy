@@ -1,0 +1,13 @@
+RFt-3-S — Lista de evidencia (notificación de fallos)
+
+[x] 08-gcp-alert-policy.png
+    GCP Monitoring → Alerting → Alerta de Uptime - Hospy Pages. (habilitada)
+
+[ ] 09-gcp-uptime-check-no-failures.png  (opcional)
+    GCP Monitoring → Uptime checks → Monitoreo de Hospy Pages
+    Gráfico Passed checks = 1 en el periodo
+
+Datos para el informe:
+- n = 0 (sin incidentes)
+- RFt-3-S: no numérico en el periodo; mecanismo documentado
+- Ver RFt-3-results.md y fault-notification-log.csv
