@@ -11,7 +11,8 @@ import { OwnerPayoutSection } from "../components/profile/OwnerPayoutSection";
 import { BecomeOwnerSection } from "../components/profile/BecomeOwnerSection";
 import { IntegrationApiSection } from "../components/profile/IntegrationApiSection";
 import { useAuth } from "../context/AuthContext";
-import { formatDate, profileHeading, roleLabel } from "../utils/format";
+import { formatDate, profileHeading, rolesLabel } from "../utils/format";
+import { hasCapability } from "../utils/roles";
 import { formatLastAccessRelative } from "../utils/relativeTime";
 import { resolveMediaUrl } from "../utils/media";
 import { SkeletonProfilePage } from "../components/ui/Skeleton";
@@ -268,8 +269,10 @@ export function ProfilePage() {
                     <dd>{me?.username || "—"}</dd>
                   </div>
                   <div>
-                    <dt>Rol en Hospy</dt>
-                    <dd>{roleLabel(me?.role ?? "huesped")}</dd>
+                    <dt>Roles en Hospy</dt>
+                    <dd className="profile-roles">
+                      {rolesLabel(me?.roles, me?.role ?? "huesped")}
+                    </dd>
                   </div>
                   <div>
                     <dt>Miembro desde</dt>
@@ -291,12 +294,22 @@ export function ProfilePage() {
                 <Link to={panelLink} className="profile-quick-link">
                   {panelLabel}
                 </Link>
+                {!isRole("huesped") && (
+                  <Link to="/mis-reservas" className="profile-quick-link">
+                    Mis reservas
+                  </Link>
+                )}
                 <Link to="/bandeja?canal=notificacion" className="profile-quick-link">
                   Notificaciones
                 </Link>
                 <Link to="/bandeja?canal=mensaje" className="profile-quick-link">
                   Mensajes
                 </Link>
+                {hasCapability(me, "desarrollador") && (
+                  <Link to="/desarrolladores" className="profile-quick-link">
+                    Guía de desarrolladores
+                  </Link>
+                )}
                 {me?.role === "propietario" && (
                   <Link to={`/anfitrion/${me.id}`} className="profile-quick-link">
                     Ver mi perfil de propietario
@@ -305,65 +318,69 @@ export function ProfilePage() {
               </section>
             </aside>
 
-            <BecomeOwnerSection user={me!} onUpdated={refreshUser} />
+            <div className="profile-main-stack">
+              <BecomeOwnerSection user={me!} onUpdated={refreshUser} />
 
-            {me && <IntegrationApiSection user={me} />}
+              {me && (
+                <IntegrationApiSection user={me} onUpdated={refreshUser} />
+              )}
 
-            <section className="card profile-form-card">
-              <h2>Editar perfil</h2>
-              <p className="muted profile-form-hint">
-                Personaliza cómo te ven otros usuarios en Hospy.
-              </p>
-              <form className="profile-form" onSubmit={save}>
-                <label>
-                  Biografía (visible en tu perfil público)
-                  <textarea
-                    rows={4}
-                    maxLength={500}
-                    value={form.bio}
-                    onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                    placeholder="Cuéntanos sobre ti o tu negocio…"
-                  />
-                </label>
-                <div className="form-row">
+              <section className="card profile-form-card">
+                <h2>Editar perfil</h2>
+                <p className="muted profile-form-hint">
+                  Personaliza cómo te ven otros usuarios en Hospy.
+                </p>
+                <form className="profile-form" onSubmit={save}>
                   <label>
-                    Nombre
-                    <input
-                      value={form.first_name}
-                      onChange={(e) => setForm({ ...form, first_name: e.target.value })}
-                      autoComplete="given-name"
+                    Biografía (visible en tu perfil público)
+                    <textarea
+                      rows={4}
+                      maxLength={500}
+                      value={form.bio}
+                      onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                      placeholder="Cuéntanos sobre ti o tu negocio…"
                     />
                   </label>
-                  <label>
-                    Apellido
-                    <input
-                      value={form.last_name}
-                      onChange={(e) => setForm({ ...form, last_name: e.target.value })}
-                      autoComplete="family-name"
+                  <div className="form-row">
+                    <label>
+                      Nombre
+                      <input
+                        value={form.first_name}
+                        onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+                        autoComplete="given-name"
+                      />
+                    </label>
+                    <label>
+                      Apellido
+                      <input
+                        value={form.last_name}
+                        onChange={(e) => setForm({ ...form, last_name: e.target.value })}
+                        autoComplete="family-name"
+                      />
+                    </label>
+                  </div>
+                  <div className="profile-phone-field">
+                    <label htmlFor="profile-phone">Teléfono</label>
+                    <PhoneInput
+                      id="profile-phone"
+                      value={form.phone}
+                      onChange={(phone) => setForm({ ...form, phone })}
                     />
-                  </label>
-                </div>
-                <div className="profile-phone-field">
-                  <label htmlFor="profile-phone">Teléfono</label>
-                  <PhoneInput
-                    id="profile-phone"
-                    value={form.phone}
-                    onChange={(phone) => setForm({ ...form, phone })}
-                  />
-                </div>
-                {msg && <p className="success-msg">{msg}</p>}
-                {error && <p className="error-msg">{error}</p>}
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? "Guardando…" : "Guardar cambios"}
-                </button>
-              </form>
-            </section>
+                  </div>
+                  {msg && <p className="success-msg">{msg}</p>}
+                  {error && <p className="error-msg">{error}</p>}
+                  <button type="submit" className="btn btn-primary" disabled={saving}>
+                    {saving ? "Guardando…" : "Guardar cambios"}
+                  </button>
+                </form>
+              </section>
 
-            {me?.role === "propietario" && me.owner_status === "aprobado" && (
-              <OwnerPayoutSection user={me} phone={form.phone} onUpdated={refreshUser} />
-            )}
+              {me?.role === "propietario" && me.owner_status === "aprobado" && (
+                <OwnerPayoutSection user={me} phone={form.phone} onUpdated={refreshUser} />
+              )}
 
-            <ProfileSecuritySection user={me!} onUpdated={refreshUser} />
+              <ProfileSecuritySection user={me!} onUpdated={refreshUser} />
+            </div>
           </div>
         ) : (
           publicProfile && (

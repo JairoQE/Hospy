@@ -12,9 +12,10 @@ import { PrimeIcon } from "../PrimeIcon";
 
 interface Props {
   user: User;
+  onUpdated?: () => Promise<void>;
 }
 
-export function IntegrationApiSection({ user }: Props) {
+export function IntegrationApiSection({ user, onUpdated }: Props) {
   const [clients, setClients] = useState<IntegrationClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,11 +47,18 @@ export function IntegrationApiSection({ user }: Props) {
 
   const active = clients.filter((c) => c.status === "activo");
   const revoked = clients.filter((c) => c.status === "revocado");
-  const isDeveloper = active.length > 0;
+  const isDeveloper = Boolean(user.is_developer) || active.length > 0;
 
   const defaultSystemName = () => {
     const full = `${user.first_name || ""} ${user.last_name || ""}`.trim();
     return full ? `App de ${full}` : `Integración ${user.email.split("@")[0] || "Hospy"}`;
+  };
+
+  const afterActivate = async (detail: string) => {
+    setMsg(detail);
+    setShowForm(false);
+    await reload();
+    await onUpdated?.();
   };
 
   const activateQuick = async () => {
@@ -65,9 +73,7 @@ export function IntegrationApiSection({ user }: Props) {
         organization: "",
         notes: "Activación desde perfil",
       });
-      setMsg(res.detail);
-      setShowForm(false);
-      await reload();
+      await afterActivate(res.detail);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo activar el acceso");
     } finally {
@@ -83,10 +89,8 @@ export function IntegrationApiSection({ user }: Props) {
     setRevealedKey(null);
     try {
       const res = await requestIntegrationClient(form);
-      setMsg(res.detail);
-      setShowForm(false);
       setForm((f) => ({ ...f, name: "", organization: "", notes: "" }));
-      await reload();
+      await afterActivate(res.detail);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo activar el acceso");
     } finally {
@@ -111,17 +115,18 @@ export function IntegrationApiSection({ user }: Props) {
   };
 
   return (
-    <section className="card profile-integration-card" aria-labelledby="integration-api-title">
+    <section className="card profile-become-owner-card profile-integration-card" aria-labelledby="integration-api-title">
       <div className="profile-become-owner-head">
-        <PrimeIcon name="pi-key" size={22} />
-        <h2 id="integration-api-title">¿Eres desarrollador?</h2>
+        <PrimeIcon name="pi-code" size={22} />
+        <h2 id="integration-api-title">Convertirme en desarrollador</h2>
       </div>
 
       {!isDeveloper ? (
         <>
           <p className="muted profile-become-owner-hint">
             Activa el acceso de desarrollador al instante (sin aprobación del administrador) y
-            genera tu API Key para integrar el catálogo de Hospy en otro sistema. Guía:{" "}
+            genera tu API Key para integrar el catálogo de Hospy en otro sistema. Puedes
+            combinarlo con tu rol actual (huésped, propietario, admin, etc.). Guía:{" "}
             <Link to="/desarrolladores">leer el boletín</Link>.
           </p>
           <ul className="profile-become-owner-steps">
@@ -136,14 +141,14 @@ export function IntegrationApiSection({ user }: Props) {
           {msg && <p className="success-msg">{msg}</p>}
           {error && <p className="error-msg">{error}</p>}
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+          <div className="profile-become-owner-actions">
             <button
               type="button"
               className="btn btn-primary"
               disabled={saving || loading}
               onClick={() => void activateQuick()}
             >
-              {saving ? "Activando…" : "Activar acceso desarrollador"}
+              {saving ? "Activando…" : "Solicitar acceso de desarrollador"}
             </button>
             <button
               type="button"

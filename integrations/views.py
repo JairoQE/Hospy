@@ -15,6 +15,17 @@ from .serializers import (
 from .stats import activity_map_for_admin, booking_origins_for_owner, security_alerts_summary
 
 
+def _sync_owner_developer_flag(user) -> None:
+    """Alinea User.is_developer con clientes de integración activos."""
+    has_active = IntegrationClient.objects.filter(
+        owner=user,
+        status=IntegrationClient.Status.ACTIVE,
+    ).exists()
+    if bool(getattr(user, "is_developer", False)) != has_active:
+        user.is_developer = has_active
+        user.save(update_fields=["is_developer"])
+
+
 class GeoHintsView(APIView):
     """GET /api/v1/geo/sugerencias/ — idioma/moneda sugeridos por IP (público)."""
 
@@ -96,6 +107,7 @@ class MyIntegrationClientsView(APIView):
 
     def get(self, request):
         qs = IntegrationClient.objects.filter(owner=request.user).order_by("-created_at")
+        _sync_owner_developer_flag(request.user)
         return Response(IntegrationClientSerializer(qs, many=True).data)
 
     def post(self, request):
@@ -134,6 +146,9 @@ class MyIntegrationClientsView(APIView):
             owner=request.user,
             status=IntegrationClient.Status.ACTIVE,
         )
+        if not request.user.is_developer:
+            request.user.is_developer = True
+            request.user.save(update_fields=["is_developer"])
         log_action(
             actor=request.user,
             action="integration.client.activate",
@@ -149,6 +164,7 @@ class MyIntegrationClientsView(APIView):
                     "Acceso de desarrollador activado. Ya puedes generar tu API Key."
                 ),
                 "client": IntegrationClientSerializer(client).data,
+                "is_developer": True,
             },
             status=status.HTTP_201_CREATED,
         )
@@ -230,12 +246,17 @@ class AdminIntegrationClientDecideView(APIView):
             if motivo:
                 client.notes = (client.notes + "\n" if client.notes else "") + f"Aprobado: {motivo}"
             client.save(update_fields=["status", "notes", "updated_at"])
+            if client.owner_id:
+                client.owner.is_developer = True
+                client.owner.save(update_fields=["is_developer"])
             action = "integration.client.approve"
             detail = "Cliente de integración aprobado. El solicitante ya puede emitir su API Key."
         else:
             client.status = IntegrationClient.Status.REVOKED
             client.notes = (client.notes + "\n" if client.notes else "") + f"Rechazado: {motivo}"
             client.save(update_fields=["status", "notes", "updated_at"])
+            if client.owner_id:
+                _sync_owner_developer_flag(client.owner)
             action = "integration.client.reject"
             detail = "Solicitud rechazada."
 
@@ -267,6 +288,8 @@ class AdminIntegrationClientRevokeView(APIView):
         except IntegrationClient.DoesNotExist:
             return Response({"detail": "Cliente no encontrado."}, status=status.HTTP_404_NOT_FOUND)
         client.revoke()
+        if client.owner_id:
+            _sync_owner_developer_flag(client.owner)
         log_action(
             actor=request.user,
             action="integration.client.revoke",

@@ -119,8 +119,23 @@ export function roleLabel(role: string): string {
     propietario: "Propietario",
     patrocinador: "Patrocinador",
     administrador: "Administrador",
+    desarrollador: "Desarrollador",
   };
   return map[role] ?? role;
+}
+
+/** Etiqueta de todos los roles/capacidades (multirol). */
+export function rolesLabel(
+  roles: string[] | undefined | null,
+  fallbackRole?: string,
+): string {
+  const list =
+    roles && roles.length > 0
+      ? roles
+      : fallbackRole
+        ? [fallbackRole]
+        : ["huesped"];
+  return list.map(roleLabel).join(", ");
 }
 
 /** Clave i18n del título de cabecera según rol (p. ej. perfil de propietario de {name}). */

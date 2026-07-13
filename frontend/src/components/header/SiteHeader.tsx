@@ -101,29 +101,59 @@ export function SiteHeader() {
     }
     if (isRole("propietario")) {
       return (
-        <NavLink to="/panel" className={navClassName} onClick={() => setMobileOpen(false)}>
-          {t("nav.myPanel")}
-        </NavLink>
+        <>
+          <NavLink to="/panel" className={navClassName} onClick={() => setMobileOpen(false)}>
+            {t("nav.myPanel")}
+          </NavLink>
+          <NavLink
+            to="/mis-reservas"
+            className={navClassName}
+            onClick={() => setMobileOpen(false)}
+            data-tour="nav-bookings-desktop"
+          >
+            {t("nav.myBookings")}
+          </NavLink>
+        </>
       );
     }
     if (isRole("patrocinador")) {
       return (
-        <NavLink
-          to="/patrocinio"
-          className={({ isActive }) =>
-            `header-nav-link header-nav-link--sponsor${isActive ? " is-active" : ""}`
-          }
-          onClick={() => setMobileOpen(false)}
-        >
-          {t("nav.myAds")}
-        </NavLink>
+        <>
+          <NavLink
+            to="/patrocinio"
+            className={({ isActive }) =>
+              `header-nav-link header-nav-link--sponsor${isActive ? " is-active" : ""}`
+            }
+            onClick={() => setMobileOpen(false)}
+          >
+            {t("nav.myAds")}
+          </NavLink>
+          <NavLink
+            to="/mis-reservas"
+            className={navClassName}
+            onClick={() => setMobileOpen(false)}
+            data-tour="nav-bookings-desktop"
+          >
+            {t("nav.myBookings")}
+          </NavLink>
+        </>
       );
     }
     if (isRole("administrador")) {
       return (
-        <NavLink to="/admin" className={navClassName} onClick={() => setMobileOpen(false)}>
-          {t("nav.panel")}
-        </NavLink>
+        <>
+          <NavLink to="/admin" className={navClassName} onClick={() => setMobileOpen(false)}>
+            {t("nav.panel")}
+          </NavLink>
+          <NavLink
+            to="/mis-reservas"
+            className={navClassName}
+            onClick={() => setMobileOpen(false)}
+            data-tour="nav-bookings-desktop"
+          >
+            {t("nav.myBookings")}
+          </NavLink>
+        </>
       );
     }
     return null;
@@ -291,15 +321,13 @@ export function SiteHeader() {
                 >
                   Mi perfil
                 </Link>
-                {isRole("huesped") && (
-                  <Link
-                    to="/mis-reservas"
-                    className="header-mobile-menu-item"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    Mis reservas
-                  </Link>
-                )}
+                <Link
+                  to="/mis-reservas"
+                  className="header-mobile-menu-item"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Mis reservas
+                </Link>
                 {isRole("propietario") && (
                   <Link
                     to="/panel"
@@ -316,6 +344,15 @@ export function SiteHeader() {
                     onClick={() => setMobileOpen(false)}
                   >
                     {t("nav.myAds")}
+                  </Link>
+                )}
+                {isRole("administrador") && (
+                  <Link
+                    to="/admin"
+                    className="header-mobile-menu-item"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {t("nav.panel")}
                   </Link>
                 )}
                 <button

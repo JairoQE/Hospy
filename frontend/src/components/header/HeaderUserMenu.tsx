@@ -83,16 +83,14 @@ export function HeaderUserMenu({ user, onLogout, className = "" }: Props) {
           <Link to="/perfil" role="menuitem" className="header-user-item" onClick={close}>
             Mi perfil
           </Link>
-          {user.role === "huesped" && (
-            <Link
-              to="/mis-reservas"
-              role="menuitem"
-              className="header-user-item"
-              onClick={close}
-            >
-              Mis reservas
-            </Link>
-          )}
+          <Link
+            to="/mis-reservas"
+            role="menuitem"
+            className="header-user-item"
+            onClick={close}
+          >
+            Mis reservas
+          </Link>
           {user.role === "propietario" && (
             <Link to="/panel" role="menuitem" className="header-user-item" onClick={close}>
               Mi panel

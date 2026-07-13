@@ -1015,6 +1015,23 @@ img {
   min-width: 0;
 }
 
+.profile-main-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.profile-become-owner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.profile-roles {
+  line-height: 1.45;
+}
+
 @media (min-width: 900px) {
   .profile-grid {
     grid-template-columns: minmax(260px, 320px) 1fr;

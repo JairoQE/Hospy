@@ -1,4 +1,6 @@
 export type UserRole = "huesped" | "propietario" | "patrocinador" | "administrador";
+/** Capacidades aditivas / roles efectivos (p. ej. propietario + huesped + desarrollador). */
+export type CapabilityRole = UserRole | "desarrollador";
 
 export type OwnerStatus = "pendiente" | "aprobado" | "rechazado" | "";
 export type SponsorStatus = "pendiente" | "aprobado" | "rechazado" | "";
@@ -28,6 +30,9 @@ export interface User {
   first_name: string;
   last_name: string;
   role: UserRole;
+  /** Roles/capacidades efectivos (multirol). */
+  roles?: CapabilityRole[];
+  is_developer?: boolean;
   owner_status?: OwnerStatus;
   owner_rejection_reason?: string;
   sponsor_status?: SponsorStatus;

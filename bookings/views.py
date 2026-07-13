@@ -1,6 +1,7 @@
 import logging
 
 from django.db import transaction
+from django.db.models import Q
 from django.db.utils import DatabaseError, ProgrammingError
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
@@ -8,7 +9,11 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.permissions import IsAdministrador, IsHuesped, IsPropietario
+from accounts.permissions import (
+    CanBookAsGuest,
+    IsAdministrador,
+    IsPropietario,
+)
 
 from audit.services import log_action
 
@@ -63,13 +68,13 @@ class BookingViewSet(viewsets.GenericViewSet):
             "guest",
             "payment",
         ).prefetch_related("refund")
-        if user.role == user.Role.HUESPED:
-            return qs.filter(guest=user)
-        if user.role == user.Role.PROPIETARIO:
-            return qs.filter(room__accommodation__owner=user)
         if user.role == user.Role.ADMINISTRADOR:
             return qs
-        return qs.none()
+        # Multirol: ver reservas propias como huésped y, si es propietario, las de sus hospedajes.
+        q = Q(guest=user)
+        if user.role == user.Role.PROPIETARIO:
+            q |= Q(room__accommodation__owner=user)
+        return qs.filter(q).distinct()
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -80,7 +85,7 @@ class BookingViewSet(viewsets.GenericViewSet):
 
     def get_permissions(self):
         if self.action == "create":
-            return [IsHuesped()]
+            return [CanBookAsGuest()]
         if self.action in ("confirmar", "rechazar"):
             return [IsPropietario(), IsBookingPropertyOwner()]
         if self.action == "cancelar":
@@ -95,9 +100,9 @@ class BookingViewSet(viewsets.GenericViewSet):
             "reembolso_confirmar",
             "reembolso_disputar",
         ):
-            return [IsHuesped()]
+            return [CanBookAsGuest()]
         if self.action == "mias":
-            return [IsHuesped()]
+            return [CanBookAsGuest()]
         if self.action == "propietario":
             return [IsPropietario()]
         if self.action == "retrieve":
@@ -116,15 +121,12 @@ class BookingViewSet(viewsets.GenericViewSet):
 
     def retrieve(self, request, pk=None):
         booking = self.get_object()
-        if (
-            request.user.role == request.user.Role.HUESPED
-            and booking.guest_id != request.user.id
-        ):
-            raise PermissionDenied()
-        if (
-            request.user.role == request.user.Role.PROPIETARIO
-            and booking.room.accommodation.owner_id != request.user.id
-        ):
+        user = request.user
+        if user.role == user.Role.ADMINISTRADOR:
+            return Response(BookingDetailSerializer(booking).data)
+        is_guest = booking.guest_id == user.id
+        is_property_owner = booking.room.accommodation.owner_id == user.id
+        if not (is_guest or is_property_owner):
             raise PermissionDenied()
         return Response(BookingDetailSerializer(booking).data)
 
@@ -202,7 +204,11 @@ class BookingViewSet(viewsets.GenericViewSet):
 
     @action(detail=False, methods=["get"], url_path="propietario")
     def propietario(self, request):
-        qs = self.get_queryset()
+        qs = (
+            Booking.objects.filter(room__accommodation__owner=request.user)
+            .select_related("room", "room__accommodation", "guest", "payment")
+            .prefetch_related("refund")
+        )
         status_filter = request.query_params.get("status")
         if status_filter:
             qs = qs.filter(status=status_filter)

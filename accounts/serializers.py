@@ -71,6 +71,7 @@ class UserSerializer(serializers.ModelSerializer):
     payout_profile_complete = serializers.SerializerMethodField()
     payout_missing_fields = serializers.SerializerMethodField()
     online_payout_ready = serializers.SerializerMethodField()
+    roles = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -81,6 +82,8 @@ class UserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "role",
+            "roles",
+            "is_developer",
             "owner_status",
             "owner_rejection_reason",
             "sponsor_status",
@@ -116,6 +119,8 @@ class UserSerializer(serializers.ModelSerializer):
             "id",
             "email",
             "role",
+            "roles",
+            "is_developer",
             "owner_status",
             "owner_rejection_reason",
             "sponsor_status",
@@ -136,6 +141,9 @@ class UserSerializer(serializers.ModelSerializer):
             "payout_missing_fields",
             "online_payout_ready",
         )
+
+    def get_roles(self, obj):
+        return obj.capability_roles()
 
     def get_payout_profile_complete(self, obj):
         if obj.role != User.Role.PROPIETARIO:

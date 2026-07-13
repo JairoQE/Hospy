@@ -96,7 +96,7 @@ export function AccommodationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user, isRole } = useAuth();
+  const { user } = useAuth();
   const { openChat } = useChatDock();
   const { t, tVars } = useLocaleCurrency();
 
@@ -344,10 +344,6 @@ export function AccommodationDetailPage() {
     const room = roomId ?? selectedRoom;
     if (!user) {
       navigate("/login", { state: { from: { pathname: `/hospedajes/${id}` } } });
-      return;
-    }
-    if (!isRole("huesped")) {
-      setError(t("detail.guestsOnly"));
       return;
     }
     const bookIn = entrada || localEntrada;

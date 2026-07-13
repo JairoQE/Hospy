@@ -40,6 +40,11 @@ class User(AbstractUser):
         choices=Role.choices,
         default=Role.HUESPED,
     )
+    is_developer = models.BooleanField(
+        "acceso desarrollador API",
+        default=False,
+        help_text="Capacidad aditiva: puede usar la API de integración sin cambiar su rol principal.",
+    )
     owner_status = models.CharField(
         max_length=20,
         choices=OwnerStatus.choices,
@@ -123,6 +128,32 @@ class User(AbstractUser):
     @property
     def is_huesped(self):
         return self.role == self.Role.HUESPED
+
+    @property
+    def can_book_as_guest(self) -> bool:
+        """Cualquier cuenta autenticada puede alquilar (multirol)."""
+        return True
+
+    def capability_roles(self) -> list[str]:
+        """
+        Roles/capacidades efectivos para UI y auditoría.
+        El rol principal del panel se combina con alquiler y desarrollador.
+        """
+        roles: list[str] = []
+        if self.role == self.Role.PROPIETARIO:
+            roles.append(self.Role.PROPIETARIO)
+            roles.append(self.Role.HUESPED)
+        elif self.role == self.Role.ADMINISTRADOR:
+            roles.append(self.Role.ADMINISTRADOR)
+            roles.append(self.Role.HUESPED)
+        elif self.role == self.Role.PATROCINADOR:
+            roles.append(self.Role.PATROCINADOR)
+            roles.append(self.Role.HUESPED)
+        else:
+            roles.append(self.Role.HUESPED)
+        if self.is_developer:
+            roles.append("desarrollador")
+        return roles
 
     @property
     def is_owner_approved(self) -> bool:
