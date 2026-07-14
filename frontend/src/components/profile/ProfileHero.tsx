@@ -7,6 +7,7 @@ import { PrimeIcon } from "../PrimeIcon";
 import { ImageLightbox } from "../ui/ImageLightbox";
 import { UserAvatar } from "../UserAvatar";
 import { VerifiedBadge } from "../VerifiedBadge";
+import { PhotoSourcePicker } from "./PhotoSourcePicker";
 
 type ProfileUser = User | PublicUserProfile;
 
@@ -128,28 +129,16 @@ export function ProfileHero({
                   </div>
                 )}
                 {isOwn && onPhotoSelect && (
-                  <label
-                    className="profile-avatar-edit"
-                    title={uploadingPhoto ? "Subiendo foto…" : "Cambiar foto"}
-                    aria-busy={uploadingPhoto}
-                  >
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      hidden
-                      disabled={uploadingPhoto}
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) onPhotoSelect(f);
-                        e.target.value = "";
-                      }}
-                    />
-                    {uploadingPhoto ? (
-                      <IconSpinner size={14} />
-                    ) : (
-                      <PrimeIcon name="pi-camera" size={14} />
-                    )}
-                  </label>
+                  <PhotoSourcePicker
+                    triggerClassName="profile-avatar-edit"
+                    triggerTitle={uploadingPhoto ? "Subiendo foto…" : "Cambiar foto"}
+                    disabled={uploadingPhoto}
+                    uploading={uploadingPhoto}
+                    cameraFacing="user"
+                    menuAlign="left"
+                    onSelect={onPhotoSelect}
+                    trigger={<PrimeIcon name="pi-camera" size={14} />}
+                  />
                 )}
               </div>
 
@@ -191,29 +180,33 @@ export function ProfileHero({
                   <div className="profile-identity-actions">
                     {isOwn && (
                       <div className="profile-card-toolbar">
-                        <label className="profile-cover-btn">
-                          <input
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            hidden
+                        {onCoverSelect && (
+                          <PhotoSourcePicker
+                            triggerClassName="profile-cover-btn"
+                            triggerTitle={
+                              uploadingCover
+                                ? "Subiendo portada…"
+                                : coverUrl
+                                  ? "Editar portada"
+                                  : "Añadir portada"
+                            }
                             disabled={uploadingCover}
-                            onChange={(e) => {
-                              const f = e.target.files?.[0];
-                              if (f && onCoverSelect) onCoverSelect(f);
-                              e.target.value = "";
-                            }}
+                            uploading={uploadingCover}
+                            cameraFacing="environment"
+                            menuAlign="right"
+                            onSelect={onCoverSelect}
+                            trigger={
+                              <>
+                                <PrimeIcon name="pi-camera" size={15} />
+                                {uploadingCover
+                                  ? "Subiendo portada…"
+                                  : coverUrl
+                                    ? "Editar portada"
+                                    : "Añadir portada"}
+                              </>
+                            }
                           />
-                          {uploadingCover ? (
-                            <IconSpinner size={15} />
-                          ) : (
-                            <PrimeIcon name="pi-camera" size={15} />
-                          )}
-                          {uploadingCover
-                            ? "Subiendo portada…"
-                            : coverUrl
-                              ? "Editar portada"
-                              : "Añadir portada"}
-                        </label>
+                        )}
                         {coverUrl && onCoverRemove && (
                           <button
                             type="button"
