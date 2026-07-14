@@ -565,6 +565,104 @@ img {
   display: inline-flex;
 }
 
+.camera-capture-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.camera-capture-modal {
+  width: min(560px, 100%);
+  max-height: min(92vh, 720px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: 16px;
+  background: #0b1220;
+  color: #f8fafc;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+}
+
+.camera-capture-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.camera-capture-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.camera-capture-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+}
+
+.camera-capture-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #020617;
+  aspect-ratio: 4 / 3;
+}
+
+.camera-capture-stage.is-mirrored .camera-capture-video {
+  transform: scaleX(-1);
+}
+
+.camera-capture-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #020617;
+}
+
+.camera-capture-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(2, 6, 23, 0.7);
+  font-size: 0.9rem;
+}
+
+.camera-capture-error {
+  margin: 0;
+}
+
+.camera-capture-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.camera-capture-actions .btn-ghost {
+  color: #e2e8f0;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 .profile-avatar-wrap--uploading .profile-avatar {
   opacity: 0.55;
 }

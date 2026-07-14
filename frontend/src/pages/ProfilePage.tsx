@@ -17,6 +17,7 @@ import { formatDate, profileHeading, rolesLabel } from "../utils/format";
 import { hasCapability } from "../utils/roles";
 import { formatLastAccessRelative } from "../utils/relativeTime";
 import { resolveMediaUrl } from "../utils/media";
+import { normalizeImageFileForUpload } from "../utils/normalizeImageFile";
 import { SkeletonProfilePage } from "../components/ui/Skeleton";
 
 export function ProfilePage() {
@@ -144,13 +145,23 @@ export function ProfilePage() {
     setError("");
     setUploadingPhoto(true);
     try {
+      const prepared = await normalizeImageFileForUpload(file, {
+        fileName: "perfil",
+        maxEdge: 1600,
+      });
       const body = new FormData();
-      body.append("photo", file);
+      body.append("photo", prepared);
       await api.patch<User>("/auth/perfil/", body);
       await refreshUser();
       setPhotoMsg("Foto actualizada.");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Error al subir la foto");
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Error al subir la foto",
+      );
     } finally {
       setUploadingPhoto(false);
     }
@@ -161,13 +172,23 @@ export function ProfilePage() {
     setError("");
     setUploadingCover(true);
     try {
+      const prepared = await normalizeImageFileForUpload(file, {
+        fileName: "portada",
+        maxEdge: 2400,
+      });
       const body = new FormData();
-      body.append("cover_photo", file);
+      body.append("cover_photo", prepared);
       await api.patch<User>("/auth/perfil/", body);
       await refreshUser();
       setPhotoMsg("Portada actualizada.");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Error al subir la portada");
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Error al subir la portada",
+      );
     } finally {
       setUploadingCover(false);
     }

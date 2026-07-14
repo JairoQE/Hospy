@@ -138,6 +138,7 @@ export function ProfileHero({
                     menuAlign="left"
                     onSelect={onPhotoSelect}
                     trigger={<PrimeIcon name="pi-camera" size={14} />}
+                    cameraTitle="Foto de perfil"
                   />
                 )}
               </div>
@@ -195,6 +196,7 @@ export function ProfileHero({
                             cameraFacing="environment"
                             menuAlign="right"
                             onSelect={onCoverSelect}
+                            cameraTitle="Foto de portada"
                             trigger={
                               <>
                                 <PrimeIcon name="pi-camera" size={15} />
