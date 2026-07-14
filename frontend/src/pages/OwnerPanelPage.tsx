@@ -50,6 +50,7 @@ import {
 } from "../utils/ownerBookingHints";
 import { formatCoordinate } from "../utils/coordinates";
 import { formatDate, formatMoney } from "../utils/format";
+import { UserNameWithBadge } from "../components/UserNameWithBadge";
 import "../styles/owner-panel.css";
 import { SkeletonOwnerPanel } from "../components/ui/Skeleton";
 
@@ -450,7 +451,12 @@ export function OwnerPanelPage() {
                         <StatusBadge status={b.status} />
                       </div>
                       <p>
-                        {b.huesped.nombre} ({b.huesped.email})
+                        <UserNameWithBadge
+                          name={b.huesped.nombre}
+                          verified={b.huesped.is_identity_verified}
+                          badgeSize={15}
+                        />{" "}
+                        ({b.huesped.email})
                       </p>
                       <p>
                         {formatDate(b.check_in)} → {formatDate(b.check_out)} ·{" "}

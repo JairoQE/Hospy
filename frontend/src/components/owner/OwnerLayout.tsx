@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { displayName, roleLabel } from "../../utils/format";
 import { PrimeIcon } from "../PrimeIcon";
 import { UserAvatar } from "../UserAvatar";
+import { UserNameWithBadge } from "../UserNameWithBadge";
 import { OwnerSidebar } from "./OwnerSidebar";
 import "../../styles/owner-panel.css";
 import "../../styles/shadcn.css";
@@ -65,7 +66,15 @@ export function OwnerLayout() {
               {user ? <UserAvatar user={user} size="sm" /> : null}
               <span className="owner-user-meta">
                 <span className="owner-user-name">
-                  {user ? displayName(user) : "Propietario"}
+                  {user ? (
+                    <UserNameWithBadge
+                      name={displayName(user)}
+                      verified={user.is_identity_verified}
+                      badgeSize={15}
+                    />
+                  ) : (
+                    "Propietario"
+                  )}
                 </span>
                 {user && (
                   <span className="owner-user-role">{roleLabel(user.role)}</span>

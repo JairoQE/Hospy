@@ -78,6 +78,9 @@ class BookingListSerializer(serializers.ModelSerializer):
             "id": obj.guest_id,
             "email": obj.guest.email,
             "nombre": obj.guest.get_full_name() or obj.guest.username,
+            "is_identity_verified": bool(
+                getattr(obj.guest, "is_identity_verified", False)
+            ),
         }
 
     def get_payment(self, obj):
@@ -153,6 +156,9 @@ class AdminDashboardBookingSerializer(serializers.ModelSerializer):
             "id": obj.guest_id,
             "email": obj.guest.email,
             "nombre": obj.guest.get_full_name() or obj.guest.username,
+            "is_identity_verified": bool(
+                getattr(obj.guest, "is_identity_verified", False)
+            ),
         }
 
 

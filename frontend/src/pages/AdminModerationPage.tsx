@@ -27,6 +27,7 @@ import type {
 import { AdminUsersToastHost, showAdminToast } from "../components/admin/AdminUsersToast";
 import { RejectReasonPanel } from "../components/admin/moderation/RejectReasonPanel";
 import { PrimeIcon } from "../components/PrimeIcon";
+import { UserNameWithBadge } from "../components/UserNameWithBadge";
 import {
   buildRejectMotivo,
   daysPending,
@@ -1004,7 +1005,13 @@ function AccountModCard({
           </div>
         )}
         <div className="admin-mod-card-main">
-          <h3>{name}</h3>
+          <h3>
+            <UserNameWithBadge
+              name={name}
+              verified={user.is_identity_verified}
+              badgeSize={17}
+            />
+          </h3>
           <p className="muted">{user.email}</p>
           {user.phone && <p className="muted">{user.phone}</p>}
           <p className="muted admin-mod-meta">

@@ -9,6 +9,7 @@ import { IconSpinner } from "../icons";
 import { PrimeIcon } from "../PrimeIcon";
 import { showAppToast } from "../ui/AppToast";
 import { UserAvatar } from "../UserAvatar";
+import { UserNameWithBadge } from "../UserNameWithBadge";
 
 export type FollowListTab = "followers" | "following";
 
@@ -192,7 +193,11 @@ export function FollowListModal({
                     >
                       <UserAvatar user={item} size="md" className="follow-list-avatar" />
                       <span className="follow-list-user-text">
-                        <strong className="follow-list-user-name">{item.display_name}</strong>
+                        <UserNameWithBadge
+                          name={<strong className="follow-list-user-name">{item.display_name}</strong>}
+                          verified={item.is_identity_verified}
+                          badgeSize={15}
+                        />
                         <span className="follow-list-user-handle">@{item.username}</span>
                       </span>
                     </Link>

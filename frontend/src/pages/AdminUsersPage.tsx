@@ -28,6 +28,7 @@ import {
 } from "../utils/adminUsersData";
 import { displayName, formatDate, formatMoney, roleLabel } from "../utils/format";
 import { resolveMediaUrl } from "../utils/media";
+import { UserNameWithBadge } from "../components/UserNameWithBadge";
 
 const TAB_PAGE_SIZE = 10;
 
@@ -815,7 +816,11 @@ export function AdminUsersPage() {
                           onChange={() => togglePendingSelect(p.id)}
                         />
                         <span>
-                          <strong>{displayName(p)}</strong>
+                          <UserNameWithBadge
+                            name={<strong>{displayName(p)}</strong>}
+                            verified={p.is_identity_verified}
+                            badgeSize={15}
+                          />
                           <span className="muted"> · {p.email}</span>
                         </span>
                       </label>
@@ -882,7 +887,7 @@ function UserRow({
       <td>
         <div className="admin-users-name-cell">
           <UserAvatar name={name} photoUrl={u.photo_url} />
-          <span>{name}</span>
+          <UserNameWithBadge name={name} verified={u.is_identity_verified} badgeSize={16} />
         </div>
       </td>
       <td>{u.email}</td>

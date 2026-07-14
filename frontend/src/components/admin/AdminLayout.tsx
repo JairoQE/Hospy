@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { displayName } from "../../utils/format";
 import { PrimeIcon } from "../PrimeIcon";
 import { UserAvatar } from "../UserAvatar";
+import { UserNameWithBadge } from "../UserNameWithBadge";
 import { AuditAlertsBanner } from "./AuditAlertsBanner";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminUsersToastHost } from "./AdminUsersToast";
@@ -67,7 +68,17 @@ export function AdminLayout() {
           <div className="admin-topbar-user">
             <Link to="/perfil" className="admin-user-chip">
               {user ? <UserAvatar user={user} size="sm" /> : null}
-              <span className="admin-user-name">{user ? displayName(user) : "Admin"}</span>
+              <span className="admin-user-name">
+                {user ? (
+                  <UserNameWithBadge
+                    name={displayName(user)}
+                    verified={user.is_identity_verified}
+                    badgeSize={15}
+                  />
+                ) : (
+                  "Admin"
+                )}
+              </span>
             </Link>
             <button type="button" className="admin-logout-btn" onClick={handleLogout}>
               Cerrar sesión

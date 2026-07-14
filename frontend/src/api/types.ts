@@ -11,6 +11,7 @@ export interface AdminUserListItem {
   first_name: string;
   last_name: string;
   role: UserRole;
+  is_identity_verified?: boolean;
   owner_status?: OwnerStatus;
   sponsor_status?: SponsorStatus;
   moderation_status: string;
@@ -108,6 +109,7 @@ export interface FollowListUser {
   photo_url: string | null;
   is_following: boolean;
   is_self: boolean;
+  is_identity_verified?: boolean;
 }
 
 export interface PublicProfileBooking {
@@ -159,6 +161,7 @@ export interface OwnerReviewPreview {
   id: number;
   author_name: string;
   author_photo_url: string | null;
+  author_verified?: boolean;
   rating: number;
   comment: string;
   created_at: string;
@@ -274,6 +277,7 @@ export interface AccommodationDetail {
   propietario_bio?: string;
   propietario_telefono: string;
   propietario_foto_url: string | null;
+  propietario_verificado?: boolean;
   propietario_seguidores?: number;
   propietario_calificacion?: number;
   propietario_resenas_total?: number;
@@ -398,7 +402,12 @@ export interface Booking {
   habitacion: string;
   ciudad: string;
   accommodation_id?: number;
-  huesped: { id: number; email: string; nombre: string };
+  huesped: {
+    id: number;
+    email: string;
+    nombre: string;
+    is_identity_verified?: boolean;
+  };
   check_in: string;
   check_out: string;
   total_amount: string | number;

@@ -286,6 +286,7 @@ class AdminUserListSerializer(serializers.ModelSerializer):
             "last_login",
             "bookings_count",
             "hospedajes_count",
+            "is_identity_verified",
         )
 
     def get_photo_url(self, obj):
@@ -319,6 +320,7 @@ class FollowListUserSerializer(serializers.ModelSerializer):
             "photo_url",
             "is_following",
             "is_self",
+            "is_identity_verified",
         )
 
     def get_photo_url(self, obj):
@@ -466,6 +468,9 @@ class OwnerPublicProfileSerializer(PublicUserProfileSerializer):
                     "author_photo_url": media_public_path(author.photo)
                     if author.photo
                     else None,
+                    "author_verified": bool(
+                        getattr(author, "is_identity_verified", False)
+                    ),
                     "rating": r.rating,
                     "comment": r.comment,
                     "created_at": r.created_at,

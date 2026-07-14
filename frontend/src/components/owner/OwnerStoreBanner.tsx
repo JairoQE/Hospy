@@ -4,6 +4,7 @@ import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import type { AccommodationDetail } from "../../api/types";
 import { StarRating } from "../StarRating";
 import { UserAvatar } from "../UserAvatar";
+import { UserNameWithBadge } from "../UserNameWithBadge";
 import { PrimeIcon } from "../PrimeIcon";
 import { roleProfileLabelI18nKey, roleProfileVisitI18nKey } from "../../utils/format";
 
@@ -39,7 +40,13 @@ export function OwnerStoreBanner({ accommodation }: Props) {
           <UserAvatar user={avatarUser} size="lg" className="owner-store-avatar" />
           <div className="owner-store-banner-body">
             <p className="owner-store-label">{t(roleProfileLabelI18nKey("propietario"))}</p>
-            <h3 className="owner-store-name">{ownerName}</h3>
+            <h3 className="owner-store-name">
+              <UserNameWithBadge
+                name={ownerName}
+                verified={accommodation.propietario_verificado}
+                badgeSize={18}
+              />
+            </h3>
             {bio && <p className="owner-store-bio">{bio}</p>}
             <div className="owner-store-meta">
               <StarRating rating={rating} size="sm" />

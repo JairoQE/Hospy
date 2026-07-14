@@ -732,12 +732,20 @@ img {
   min-width: 0;
 }
 
-.verified-badge {
+.user-name-with-badge {
   display: inline-flex;
-  flex-shrink: 0;
-  line-height: 0;
-  color: #1877f2;
-  vertical-align: middle;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.user-name-with-badge-text {
+  min-width: 0;
+}
+
+.admin-users-name-cell .user-name-with-badge {
+  font-weight: 600;
 }
 
 .verified-badge-seal {

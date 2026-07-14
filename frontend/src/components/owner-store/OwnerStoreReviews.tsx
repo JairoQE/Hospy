@@ -3,6 +3,7 @@ import type { OwnerReviewPreview } from "../../api/types";
 import { PrimeIcon } from "../PrimeIcon";
 import { StarRating } from "../StarRating";
 import { UserAvatar } from "../UserAvatar";
+import { UserNameWithBadge } from "../UserNameWithBadge";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { ReviewStayMeta } from "../reviews/ReviewStayMeta";
 import { formatDate } from "../../utils/format";
@@ -45,7 +46,11 @@ export function OwnerStoreReviews({ ownerName, reviews, totalCount }: Props) {
                 />
                 <div className="owner-store-review-body">
                   <div className="owner-store-review-head">
-                    <strong>{r.author_name}</strong>
+                    <UserNameWithBadge
+                      name={<strong>{r.author_name}</strong>}
+                      verified={r.author_verified}
+                      badgeSize={14}
+                    />
                     <StarRating rating={r.rating} size="sm" showValue={false} />
                     <span className="muted">{formatDate(r.created_at)}</span>
                   </div>

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { PublicUserProfile } from "../../api/types";
 import { PrimeIcon } from "../PrimeIcon";
+import { UserNameWithBadge } from "../UserNameWithBadge";
 import { formatDate } from "../../utils/format";
 import { PublicProfileActivity } from "./PublicProfileActivity";
 
@@ -16,6 +17,7 @@ function formatCount(n: number): string {
 export function PublicProfileSection({ profile, isLoggedIn }: Props) {
   const bio = profile.bio?.trim();
   const memberSince = profile.date_joined ? formatDate(profile.date_joined) : "—";
+  const who = profile.first_name?.trim() || profile.username;
 
   return (
     <div className="profile-public-layout">
@@ -23,7 +25,12 @@ export function PublicProfileSection({ profile, isLoggedIn }: Props) {
       <section className="card profile-public-bio-card">
         <h2 className="profile-public-heading">
           <PrimeIcon name="pi-user" size={18} />
-          Sobre {profile.first_name?.trim() || profile.username}
+          Sobre{" "}
+          <UserNameWithBadge
+            name={who}
+            verified={profile.is_identity_verified}
+            badgeSize={18}
+          />
         </h2>
         {bio ? (
           <p className="profile-public-bio">{bio}</p>

@@ -58,6 +58,7 @@ import {
 import { AdminDateRangeField } from "./AdminDateRangeField";
 import { PrimeIcon } from "../PrimeIcon";
 import { StatusBadge } from "../StatusBadge";
+import { UserNameWithBadge } from "../UserNameWithBadge";
 
 const PERIODS: { id: AdminPeriod; label: string }[] = [
   { id: "7d", label: "7 días" },
@@ -567,7 +568,13 @@ export function AdminDashboard({
                 {data.recentBookings.map((b) => (
                   <tr key={b.id}>
                     <td>{formatDate(b.created_at)}</td>
-                    <td>{b.huesped.nombre}</td>
+                    <td>
+                      <UserNameWithBadge
+                        name={b.huesped.nombre}
+                        verified={b.huesped.is_identity_verified}
+                        badgeSize={14}
+                      />
+                    </td>
                     <td>{b.hospedaje}</td>
                     <td>{formatMoney(b.total_amount)}</td>
                     <td>
@@ -592,7 +599,13 @@ export function AdminDashboard({
                     <strong>★ {r.rating}</strong>
                     <span>{formatDate(r.created_at)}</span>
                   </div>
-                  <p className="admin-review-author">{r.autor_nombre}</p>
+                  <p className="admin-review-author">
+                    <UserNameWithBadge
+                      name={r.autor_nombre}
+                      verified={r.autor_verificado}
+                      badgeSize={14}
+                    />
+                  </p>
                   <p>
                     {r.comment.length > 100 ? `${r.comment.slice(0, 100)}…` : r.comment}
                   </p>

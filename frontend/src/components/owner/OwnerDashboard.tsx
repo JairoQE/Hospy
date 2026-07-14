@@ -39,6 +39,7 @@ import {
 } from "../../utils/ownerDashboardData";
 import { PrimeIcon } from "../PrimeIcon";
 import { StatusBadge } from "../StatusBadge";
+import { UserNameWithBadge } from "../UserNameWithBadge";
 import { OwnerBookingOriginsCard } from "../geo/OwnerBookingOriginsCard";
 import "../../styles/owner-dashboard.css";
 
@@ -336,7 +337,13 @@ export function OwnerDashboard({
               {data.upcomingBookings.map((b) => (
                 <li key={b.id} className="owner-upcoming-item">
                   <div>
-                    <strong>{b.huesped.nombre}</strong>
+                    <strong>
+                      <UserNameWithBadge
+                        name={b.huesped.nombre}
+                        verified={b.huesped.is_identity_verified}
+                        badgeSize={15}
+                      />
+                    </strong>
                     <span className="owner-upcoming-meta">
                       {formatDate(b.check_in)} · {b.hospedaje}
                     </span>
@@ -362,7 +369,13 @@ export function OwnerDashboard({
                     <StarRow rating={r.rating} />
                     <span className="owner-review-date">{formatDate(r.created_at)}</span>
                   </div>
-                  <p className="owner-review-author">{r.autor_nombre}</p>
+                  <p className="owner-review-author">
+                    <UserNameWithBadge
+                      name={r.autor_nombre}
+                      verified={r.autor_verificado}
+                      badgeSize={14}
+                    />
+                  </p>
                   <p className="owner-review-text">
                     {r.comment.length > 120 ? `${r.comment.slice(0, 120)}…` : r.comment}
                   </p>

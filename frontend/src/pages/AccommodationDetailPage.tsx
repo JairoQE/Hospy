@@ -46,6 +46,7 @@ import { IconCheck, IconEye, IconMapPin, IconUser } from "../components/icons";
 import { PrimeIcon } from "../components/PrimeIcon";
 import { PropertyReviewsSection } from "../components/reviews/PropertyReviewsSection";
 import { StarRating } from "../components/StarRating";
+import { UserNameWithBadge } from "../components/UserNameWithBadge";
 import { SkeletonPropertyDetail } from "../components/ui/Skeleton";
 import { ratingLabel, ratingStars, toTenPointScore } from "../utils/rating";
 
@@ -950,7 +951,14 @@ export function AccommodationDetailPage() {
                   «{topReview.comment.slice(0, 120)}
                   {topReview.comment.length > 120 ? "…" : ""}»
                 </p>
-                <cite>— {topReview.autor_nombre}</cite>
+                <cite>
+                  —{" "}
+                  <UserNameWithBadge
+                    name={topReview.autor_nombre}
+                    verified={topReview.autor_verificado}
+                    badgeSize={14}
+                  />
+                </cite>
               </blockquote>
             )}
           </div>

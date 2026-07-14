@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { displayName } from "../../utils/format";
 import { PrimeIcon } from "../PrimeIcon";
 import { UserAvatar } from "../UserAvatar";
+import { UserNameWithBadge } from "../UserNameWithBadge";
 import { SponsorSidebar } from "./SponsorSidebar";
 import "../../styles/sponsor-panel.css";
 
@@ -60,7 +61,15 @@ export function SponsorLayout() {
             <Link to="/perfil" className="sponsor-user-chip">
               {user ? <UserAvatar user={user} size="sm" /> : null}
               <span className="sponsor-user-name">
-                {user ? displayName(user) : "Patrocinador"}
+                {user ? (
+                  <UserNameWithBadge
+                    name={displayName(user)}
+                    verified={user.is_identity_verified}
+                    badgeSize={15}
+                  />
+                ) : (
+                  "Patrocinador"
+                )}
               </span>
             </Link>
             <button type="button" className="sponsor-logout-btn" onClick={handleLogout}>

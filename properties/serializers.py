@@ -297,6 +297,7 @@ class AccommodationDetailSerializer(serializers.ModelSerializer):
     propietario_nombre = serializers.SerializerMethodField()
     propietario_telefono = serializers.SerializerMethodField()
     propietario_foto_url = serializers.SerializerMethodField()
+    propietario_verificado = serializers.SerializerMethodField()
     propietario_seguidores = serializers.SerializerMethodField()
     propietario_calificacion = serializers.SerializerMethodField()
     propietario_resenas_total = serializers.SerializerMethodField()
@@ -340,6 +341,7 @@ class AccommodationDetailSerializer(serializers.ModelSerializer):
             "propietario_nombre",
             "propietario_telefono",
             "propietario_foto_url",
+            "propietario_verificado",
             "propietario_seguidores",
             "propietario_calificacion",
             "propietario_resenas_total",
@@ -391,6 +393,9 @@ class AccommodationDetailSerializer(serializers.ModelSerializer):
 
     def get_propietario_foto_url(self, obj):
         return media_public_path(obj.owner.photo) if obj.owner.photo else None
+
+    def get_propietario_verificado(self, obj):
+        return bool(getattr(obj.owner, "is_identity_verified", False))
 
     def get_otros_mismo_propietario(self, obj):
         from .services import haversine_km, public_accommodations_queryset
