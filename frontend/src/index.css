@@ -1412,8 +1412,8 @@ img {
 
 .verify-promo-benefits li {
   display: flex;
-  gap: 0.7rem;
-  align-items: flex-start;
+  gap: 0.75rem;
+  align-items: center;
   padding: 0.75rem 0.85rem;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.07);
@@ -1421,24 +1421,32 @@ img {
 }
 
 .verify-promo-benefit-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
   border-radius: 10px;
   flex-shrink: 0;
   color: #e0f2fe;
   background: rgba(14, 165, 233, 0.22);
+  overflow: hidden;
 }
 
 .verify-promo-benefit-icon .pi {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  margin: 0;
+  padding: 0;
   line-height: 1;
   width: 1em;
   height: 1em;
+  text-align: center;
+}
+
+.verify-promo-benefit-icon .pi::before {
+  display: block;
+  line-height: 1;
 }
 
 .verify-promo-benefits strong {
