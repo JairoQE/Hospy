@@ -15,6 +15,7 @@ export function userCapabilities(user: User | null | undefined): CapabilityRole[
     roles.push("huesped");
   }
   if (user.is_developer) roles.push("desarrollador");
+  if (user.is_identity_verified) roles.push("verificado");
   return roles;
 }
 

@@ -105,6 +105,10 @@
 }
 
 .owner-store-hero-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
   margin: 0 0 0.5rem;
   font-size: 1.75rem;
   font-weight: 700;

@@ -118,7 +118,9 @@ export function IntegrationApiSection({ user, onUpdated }: Props) {
     <section className="card profile-become-owner-card profile-integration-card" aria-labelledby="integration-api-title">
       <div className="profile-become-owner-head">
         <PrimeIcon name="pi-code" size={22} />
-        <h2 id="integration-api-title">Convertirme en desarrollador</h2>
+        <h2 id="integration-api-title">
+          {isDeveloper ? "Acceso de desarrollador" : "Convertirme en desarrollador"}
+        </h2>
       </div>
 
       {!isDeveloper ? (

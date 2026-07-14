@@ -4,6 +4,7 @@ import type { User } from "../../api/types";
 import { displayName } from "../../utils/format";
 import { IconChevronDown } from "../icons";
 import { UserAvatar } from "../UserAvatar";
+import { VerifiedBadge } from "../VerifiedBadge";
 
 type Props = {
   user: User;
@@ -44,6 +45,7 @@ export function HeaderUserMenu({ user, onLogout, className = "" }: Props) {
   };
 
   const name = displayName(user);
+  const verified = Boolean(user.is_identity_verified);
 
   return (
     <div
@@ -60,7 +62,10 @@ export function HeaderUserMenu({ user, onLogout, className = "" }: Props) {
         aria-controls={menuId}
       >
         <UserAvatar user={user} size="sm" />
-        <span className="header-user-name">{name}</span>
+        <span className="header-user-name">
+          {name}
+          {verified ? <VerifiedBadge size={14} className="header-user-verified" /> : null}
+        </span>
         <IconChevronDown
           size={18}
           className={`header-user-chevron${open ? " is-open" : ""}`}
@@ -76,7 +81,10 @@ export function HeaderUserMenu({ user, onLogout, className = "" }: Props) {
           <div className="header-user-dropdown-head">
             <UserAvatar user={user} size="md" />
             <div>
-              <strong>{name}</strong>
+              <strong className="header-user-dropdown-name">
+                {name}
+                {verified ? <VerifiedBadge size={16} /> : null}
+              </strong>
               <span className="muted">{user.email}</span>
             </div>
           </div>

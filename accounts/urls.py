@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from bookings.admin_refund_views import PropietarioAmonestarView
 
 from . import views
+from . import identity_views
 
 app_name = "accounts"
 
@@ -29,6 +30,16 @@ urlpatterns = [
         "solicitar-propietario/",
         views.SolicitarPropietarioView.as_view(),
         name="solicitar-propietario",
+    ),
+    path(
+        "identidad/consultar/",
+        identity_views.IdentityLookupView.as_view(),
+        name="identidad-consultar",
+    ),
+    path(
+        "identidad/verificar/",
+        identity_views.IdentityVerifyView.as_view(),
+        name="identidad-verificar",
     ),
     path(
         "perfil/cambiar-email/",

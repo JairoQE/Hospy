@@ -9,6 +9,8 @@ import { PhoneInput, formatPhoneDisplay } from "../components/profile/PhoneInput
 import { ProfileSecuritySection } from "../components/profile/ProfileSecuritySection";
 import { OwnerPayoutSection } from "../components/profile/OwnerPayoutSection";
 import { BecomeOwnerSection } from "../components/profile/BecomeOwnerSection";
+import { IdentityVerificationSection } from "../components/profile/IdentityVerificationSection";
+import { VerifyIdentityPromoBanner } from "../components/profile/VerifyIdentityPromoBanner";
 import { IntegrationApiSection } from "../components/profile/IntegrationApiSection";
 import { useAuth } from "../context/AuthContext";
 import { formatDate, profileHeading, rolesLabel } from "../utils/format";
@@ -254,6 +256,9 @@ export function ProfilePage() {
       />
 
       <div className="container profile-content">
+        {isOwn && me && !me.is_identity_verified && (
+          <VerifyIdentityPromoBanner variant="full" className="profile-verify-promo" />
+        )}
         {isOwn ? (
           <div className="profile-grid">
             <aside className="profile-aside">
@@ -319,6 +324,8 @@ export function ProfilePage() {
             </aside>
 
             <div className="profile-main-stack">
+              <IdentityVerificationSection user={me!} onUpdated={refreshUser} />
+
               <BecomeOwnerSection user={me!} onUpdated={refreshUser} />
 
               {me && (

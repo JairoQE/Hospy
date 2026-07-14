@@ -45,6 +45,27 @@ class User(AbstractUser):
         default=False,
         help_text="Capacidad aditiva: puede usar la API de integración sin cambiar su rol principal.",
     )
+    is_identity_verified = models.BooleanField(
+        "identidad verificada (RENIEC)",
+        default=False,
+        help_text="Verificación opcional vía DNI/Factiliza. Da beneficios, no bloquea funciones.",
+    )
+    identity_verified_at = models.DateTimeField(
+        "fecha de verificación de identidad",
+        null=True,
+        blank=True,
+    )
+    identity_document_number = models.CharField(
+        "DNI verificado",
+        max_length=12,
+        blank=True,
+        help_text="Documento usado en la verificación de identidad.",
+    )
+    identity_full_name = models.CharField(
+        "nombre según RENIEC",
+        max_length=200,
+        blank=True,
+    )
     owner_status = models.CharField(
         max_length=20,
         choices=OwnerStatus.choices,
@@ -153,6 +174,8 @@ class User(AbstractUser):
             roles.append(self.Role.HUESPED)
         if self.is_developer:
             roles.append("desarrollador")
+        if self.is_identity_verified:
+            roles.append("verificado")
         return roles
 
     @property

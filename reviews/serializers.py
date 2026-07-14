@@ -15,6 +15,7 @@ from .services import (
 
 class ReviewListSerializer(serializers.ModelSerializer):
     autor_nombre = serializers.SerializerMethodField()
+    autor_verificado = serializers.SerializerMethodField()
     habitacion = serializers.SerializerMethodField()
     check_in = serializers.SerializerMethodField()
     check_out = serializers.SerializerMethodField()
@@ -26,6 +27,7 @@ class ReviewListSerializer(serializers.ModelSerializer):
             "id",
             "accommodation",
             "autor_nombre",
+            "autor_verificado",
             "habitacion",
             "check_in",
             "check_out",
@@ -38,6 +40,9 @@ class ReviewListSerializer(serializers.ModelSerializer):
 
     def get_autor_nombre(self, obj):
         return obj.author.get_full_name() or obj.author.username
+
+    def get_autor_verificado(self, obj):
+        return bool(getattr(obj.author, "is_identity_verified", False))
 
     def _stay(self, obj) -> Booking | None:
         cached = getattr(obj, "_review_booking", None)

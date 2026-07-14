@@ -84,6 +84,10 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
             "roles",
             "is_developer",
+            "is_identity_verified",
+            "identity_verified_at",
+            "identity_document_number",
+            "identity_full_name",
             "owner_status",
             "owner_rejection_reason",
             "sponsor_status",
@@ -121,6 +125,10 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
             "roles",
             "is_developer",
+            "is_identity_verified",
+            "identity_verified_at",
+            "identity_document_number",
+            "identity_full_name",
             "owner_status",
             "owner_rejection_reason",
             "sponsor_status",
@@ -348,6 +356,7 @@ class PublicUserProfileSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "role",
+            "is_identity_verified",
             "bio",
             "photo_url",
             "cover_photo_url",
@@ -470,7 +479,7 @@ class OwnerPublicProfileSerializer(PublicUserProfileSerializer):
         return rows
 
     def get_identity_verified(self, obj):
-        return obj.owner_status == User.OwnerStatus.APROBADO
+        return bool(getattr(obj, "is_identity_verified", False))
 
     def get_is_superhost(self, obj):
         stats = self._owner_stats_cached(obj)

@@ -7,6 +7,7 @@ import { SiteHeader } from "./header/SiteHeader";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { SiteFooter } from "./footer/SiteFooter";
 import { AppToastHost } from "./ui/AppToast";
+import { VerifyIdentityPromoBanner } from "./profile/VerifyIdentityPromoBanner";
 
 export function Layout() {
   const { pathname } = useLocation();
@@ -30,6 +31,7 @@ export function Layout() {
       {!isPanelShellRoute && !isAuthMinimal && (
         <SponsorAdsProvider>
           <SiteHeader />
+          <VerifyIdentityPromoBanner variant="compact" />
           <SponsorAdSlot variant="mobile-banner" />
           <div className="site-content-grid">
             <SponsorAdSlot variant="sidebar" side="left" />

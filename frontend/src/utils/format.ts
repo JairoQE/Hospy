@@ -120,6 +120,7 @@ export function roleLabel(role: string): string {
     patrocinador: "Patrocinador",
     administrador: "Administrador",
     desarrollador: "Desarrollador",
+    verificado: "Verificado",
   };
   return map[role] ?? role;
 }

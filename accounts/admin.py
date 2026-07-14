@@ -11,6 +11,7 @@ class UserAdmin(BaseUserAdmin):
         "username",
         "role",
         "is_developer",
+        "is_identity_verified",
         "owner_status",
         "sponsor_status",
         "is_staff",
@@ -19,6 +20,7 @@ class UserAdmin(BaseUserAdmin):
     list_filter = (
         "role",
         "is_developer",
+        "is_identity_verified",
         "owner_status",
         "sponsor_status",
         "is_staff",
@@ -33,6 +35,10 @@ class UserAdmin(BaseUserAdmin):
                 "fields": (
                     "role",
                     "is_developer",
+                    "is_identity_verified",
+                    "identity_verified_at",
+                    "identity_document_number",
+                    "identity_full_name",
                     "owner_status",
                     "owner_rejection_reason",
                     "sponsor_status",

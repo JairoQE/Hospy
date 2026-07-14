@@ -11,6 +11,7 @@ import {
 import { formatDate } from "../../utils/format";
 import { PrimeIcon } from "../PrimeIcon";
 import { StarRating } from "../StarRating";
+import { VerifiedBadge } from "../VerifiedBadge";
 import { ReviewStayMeta } from "./ReviewStayMeta";
 import "../../styles/reviews-detail.css";
 
@@ -65,7 +66,13 @@ export function PropertyReviewsSection({ reviews, insights, city }: Props) {
         list.sort((a, b) => Number(a.rating) - Number(b.rating));
         break;
       default:
-        list.sort((a, b) => b.created_at.localeCompare(a.created_at));
+        // Relevantes: verificados primero, luego más recientes
+        list.sort((a, b) => {
+          const av = a.autor_verificado ? 1 : 0;
+          const bv = b.autor_verificado ? 1 : 0;
+          if (bv !== av) return bv - av;
+          return b.created_at.localeCompare(a.created_at);
+        });
     }
     return list;
   }, [reviews, sort, ratingFilter]);
@@ -200,7 +207,10 @@ export function PropertyReviewsSection({ reviews, insights, city }: Props) {
               {filteredReviews.map((r) => (
                 <article key={r.id} className="review-card review-card--detailed">
                   <div className="review-card-head">
-                    <p className="review-author">{r.autor_nombre}</p>
+                    <p className="review-author">
+                      <span>{r.autor_nombre}</span>
+                      {r.autor_verificado ? <VerifiedBadge size={16} /> : null}
+                    </p>
                     <StarRating rating={Number(r.rating)} size="sm" showValue={false} />
                   </div>
                   <ReviewStayMeta

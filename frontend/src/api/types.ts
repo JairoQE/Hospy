@@ -1,6 +1,6 @@
 export type UserRole = "huesped" | "propietario" | "patrocinador" | "administrador";
 /** Capacidades aditivas / roles efectivos (p. ej. propietario + huesped + desarrollador). */
-export type CapabilityRole = UserRole | "desarrollador";
+export type CapabilityRole = UserRole | "desarrollador" | "verificado";
 
 export type OwnerStatus = "pendiente" | "aprobado" | "rechazado" | "";
 export type SponsorStatus = "pendiente" | "aprobado" | "rechazado" | "";
@@ -33,6 +33,10 @@ export interface User {
   /** Roles/capacidades efectivos (multirol). */
   roles?: CapabilityRole[];
   is_developer?: boolean;
+  is_identity_verified?: boolean;
+  identity_verified_at?: string | null;
+  identity_document_number?: string;
+  identity_full_name?: string;
   owner_status?: OwnerStatus;
   owner_rejection_reason?: string;
   sponsor_status?: SponsorStatus;
@@ -71,6 +75,7 @@ export interface PublicUserProfile {
   first_name: string;
   last_name: string;
   role: UserRole;
+  is_identity_verified?: boolean;
   bio: string;
   photo_url: string | null;
   cover_photo_url: string | null;
@@ -441,6 +446,7 @@ export interface Review {
   id: number;
   accommodation: number;
   autor_nombre: string;
+  autor_verificado?: boolean;
   habitacion?: string | null;
   check_in?: string | null;
   check_out?: string | null;

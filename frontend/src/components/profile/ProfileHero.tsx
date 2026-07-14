@@ -6,6 +6,7 @@ import { IconSpinner } from "../icons";
 import { PrimeIcon } from "../PrimeIcon";
 import { ImageLightbox } from "../ui/ImageLightbox";
 import { UserAvatar } from "../UserAvatar";
+import { VerifiedBadge } from "../VerifiedBadge";
 
 type ProfileUser = User | PublicUserProfile;
 
@@ -72,6 +73,7 @@ export function ProfileHero({
     "role_category" in user && user.role_category
       ? user.role_category
       : null;
+  const isVerified = Boolean(user.is_identity_verified);
 
   return (
     <div className="profile-hero">
@@ -154,7 +156,10 @@ export function ProfileHero({
               <div className="profile-identity-col">
                 <div className="profile-identity-row">
                   <div className="profile-identity-main">
-                    <h1 className="profile-name">{title}</h1>
+                    <h1 className="profile-name">
+                      <span className="profile-name-text">{title}</span>
+                      {isVerified ? <VerifiedBadge size={22} /> : null}
+                    </h1>
                     <div className="profile-stats-row" aria-label="Seguidores">
                       <button
                         type="button"

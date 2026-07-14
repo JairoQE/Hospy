@@ -3,6 +3,7 @@ import type { OwnerStoreProfile } from "../../api/types";
 import { PrimeIcon } from "../PrimeIcon";
 import { StarRating } from "../StarRating";
 import { UserAvatar } from "../UserAvatar";
+import { VerifiedBadge } from "../VerifiedBadge";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { resolveMediaUrl } from "../../utils/media";
 
@@ -50,11 +51,14 @@ export function OwnerStoreHero({
         <div className="owner-store-hero-main">
           <UserAvatar user={store} size="xl" className="owner-store-hero-avatar" />
           <div className="owner-store-hero-info">
-            <h1 className="owner-store-hero-name">{ownerName}</h1>
+            <h1 className="owner-store-hero-name">
+              <span>{ownerName}</span>
+              {store.identity_verified ? <VerifiedBadge size={22} /> : null}
+            </h1>
             <div className="owner-store-badges">
               {store.identity_verified && (
                 <span className="owner-store-badge-pill owner-store-badge-pill--verified">
-                  <PrimeIcon name="pi-check-circle" size={14} />
+                  <VerifiedBadge size={14} />
                   {t("ownerStorePage.badgeVerified")}
                 </span>
               )}

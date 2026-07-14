@@ -121,5 +121,5 @@ class AccommodationReviewListView(generics.ListAPIView):
                 status=Review.Status.APROBADA,
             )
             .select_related("author", "booking", "booking__room")
-            .order_by("-created_at")
+            .order_by("-author__is_identity_verified", "-created_at")
         )
