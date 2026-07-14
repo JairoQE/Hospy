@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiError } from "../../api/client";
 import { lookupIdentityDni, verifyIdentity, type DniPersona } from "../../api/identity";
 import type { User } from "../../api/types";
@@ -12,11 +12,49 @@ interface Props {
 }
 
 export function IdentityVerificationSection({ user, onUpdated }: Props) {
-  const [dni, setDni] = useState(user.identity_document_number || "");
+  const [dni, setDni] = useState("");
   const [persona, setPersona] = useState<DniPersona | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [loadingLookup, setLoadingLookup] = useState(false);
+  const [loadingVerify, setLoadingVerify] = useState(false);
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
+  const lookupSeq = useRef(0);
+
+  useEffect(() => {
+    setMsg("");
+    setError("");
+
+    if (dni.length !== 8) {
+      setPersona(null);
+      setPanelOpen(false);
+      setLoadingLookup(false);
+      return;
+    }
+
+    const seq = ++lookupSeq.current;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        setLoadingLookup(true);
+        setError("");
+        try {
+          const res = await lookupIdentityDni(dni);
+          if (lookupSeq.current !== seq) return;
+          setPersona(res.persona);
+          setPanelOpen(true);
+        } catch (err) {
+          if (lookupSeq.current !== seq) return;
+          setPersona(null);
+          setPanelOpen(false);
+          setError(err instanceof ApiError ? err.message : "No se pudo consultar el DNI");
+        } finally {
+          if (lookupSeq.current === seq) setLoadingLookup(false);
+        }
+      })();
+    }, 450);
+
+    return () => window.clearTimeout(timer);
+  }, [dni]);
 
   if (user.is_identity_verified) {
     return (
@@ -56,36 +94,32 @@ export function IdentityVerificationSection({ user, onUpdated }: Props) {
     );
   }
 
-  const consultar = async (e: FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const cancelar = () => {
+    lookupSeq.current += 1;
+    setDni("");
+    setPersona(null);
+    setPanelOpen(false);
+    setLoadingLookup(false);
     setMsg("");
     setError("");
-    setPersona(null);
-    try {
-      const res = await lookupIdentityDni(dni.trim());
-      setPersona(res.persona);
-      setMsg(res.detail);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo consultar el DNI");
-    } finally {
-      setLoading(false);
-    }
   };
 
   const confirmar = async () => {
-    setLoading(true);
+    if (!persona) return;
+    setLoadingVerify(true);
     setMsg("");
     setError("");
     try {
-      const res = await verifyIdentity(dni.trim(), true);
+      const res = await verifyIdentity(persona.numero, true);
       setMsg(res.detail);
       setPersona(null);
+      setPanelOpen(false);
+      setDni("");
       await onUpdated();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo verificar la identidad");
     } finally {
-      setLoading(false);
+      setLoadingVerify(false);
     }
   };
 
@@ -100,51 +134,93 @@ export function IdentityVerificationSection({ user, onUpdated }: Props) {
         <h2 id="identity-verify-title">Verificar identidad</h2>
       </div>
       <p className="muted profile-become-owner-hint">
-        Opcional. Valida tu DNI con RENIEC (vía Factiliza) y obtén beneficios: badge de
-        verificado, reseñas con prioridad y más confianza. No bloquea reservas ni
-        publicación.
+        Opcional. Escribe tu DNI y autocompletamos tus datos desde RENIEC (vía Factiliza).
+        Confirma para guardar el nombre real en tu perfil y activar el badge. No bloquea
+        reservas ni publicación.
       </p>
       <ul className="profile-become-owner-steps">
         <li>Ingresa tu DNI de 8 dígitos</li>
-        <li>Revisa que los nombres coincidan contigo</li>
-        <li>Confirma para activar el badge de verificado</li>
+        <li>Se despliega el formulario con tus datos reales</li>
+        <li>Confirma para guardarlos en tu cuenta, o cancela</li>
       </ul>
 
-      <form className="profile-form" onSubmit={consultar}>
+      <div className="profile-form">
         <label>
           DNI
           <input
             inputMode="numeric"
             pattern="\d{8}"
             maxLength={8}
-            required
             value={dni}
             onChange={(e) => setDni(e.target.value.replace(/\D/g, "").slice(0, 8))}
             placeholder="12345678"
             autoComplete="off"
+            disabled={loadingVerify}
+            aria-describedby="identity-dni-hint"
           />
         </label>
-        <button type="submit" className="btn btn-primary" disabled={loading || dni.length !== 8}>
-          {loading && !persona ? "Consultando…" : "Consultar DNI"}
-        </button>
-      </form>
+        <p id="identity-dni-hint" className="muted profile-identity-dni-hint">
+          {loadingLookup
+            ? "Consultando RENIEC…"
+            : dni.length === 8
+              ? "Datos listos para revisar abajo."
+              : `Escribe los 8 dígitos (${dni.length}/8).`}
+        </p>
+      </div>
 
-      {persona && (
-        <div className="profile-identity-preview" role="status">
-          <p>
-            <strong>{persona.nombre_completo || `${persona.nombres} ${persona.apellido_paterno}`}</strong>
+      {panelOpen && persona && (
+        <div className="profile-identity-autocomplete" role="region" aria-label="Datos RENIEC">
+          <div className="profile-identity-autocomplete-head">
+            <PrimeIcon name="pi-check-circle" size={18} />
+            <strong>Datos encontrados · revisa y confirma</strong>
+          </div>
+
+          <div className="profile-identity-autocomplete-form">
+            <label>
+              DNI
+              <input readOnly value={persona.numero} />
+            </label>
+            <label>
+              Nombres
+              <input readOnly value={persona.nombres} />
+            </label>
+            <label>
+              Apellido paterno
+              <input readOnly value={persona.apellido_paterno} />
+            </label>
+            <label>
+              Apellido materno
+              <input readOnly value={persona.apellido_materno} />
+            </label>
+            <label className="profile-identity-autocomplete-full">
+              Nombre completo
+              <input readOnly value={persona.nombre_completo} />
+            </label>
+          </div>
+
+          <p className="muted profile-identity-autocomplete-note">
+            Al confirmar, estos datos se guardan en tu perfil (nombre y apellidos) y se activa
+            tu insignia de verificado.
           </p>
-          <p className="muted" style={{ margin: "0.35rem 0 0.75rem", fontSize: "0.9rem" }}>
-            DNI {persona.numero}
-          </p>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={loading}
-            onClick={() => void confirmar()}
-          >
-            {loading ? "Verificando…" : "Confirmar y verificar identidad"}
-          </button>
+
+          <div className="profile-become-owner-actions">
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={loadingVerify}
+              onClick={() => void confirmar()}
+            >
+              {loadingVerify ? "Guardando…" : "Confirmar y verificar"}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              disabled={loadingVerify}
+              onClick={cancelar}
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
       )}
 

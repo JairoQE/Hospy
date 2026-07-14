@@ -46,7 +46,7 @@ class IdentityLookupView(APIView):
 
         return Response(
             {
-                "detail": "Datos encontrados. Confirma para verificar tu identidad.",
+                "detail": "Datos listos. Revisa el formulario y confirma para verificar tu identidad.",
                 "persona": result.as_public_dict(),
             }
         )

@@ -1068,6 +1068,80 @@ img {
   border: 1px dashed #99f6e4;
 }
 
+.profile-identity-dni-hint {
+  margin: -0.35rem 0 0;
+  font-size: 0.85rem;
+}
+
+.profile-identity-autocomplete {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f0f9ff 0%, #f8fafc 100%);
+  border: 1px solid #bae6fd;
+  animation: profile-identity-slide 0.22s ease-out;
+}
+
+@keyframes profile-identity-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-identity-autocomplete-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+  color: #0369a1;
+}
+
+.profile-identity-autocomplete-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  .profile-identity-autocomplete-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .profile-identity-autocomplete-full {
+    grid-column: 1 / -1;
+  }
+}
+
+.profile-identity-autocomplete-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.profile-identity-autocomplete-form input {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: normal;
+  background: #fff;
+}
+
+.profile-identity-autocomplete-note {
+  margin: 0.85rem 0;
+  font-size: 0.88rem;
+}
+
 .profile-verify-promo {
   margin-bottom: 1.25rem;
 }
@@ -1163,14 +1237,24 @@ img {
 }
 
 .verify-promo-benefit-icon {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 34px;
   height: 34px;
   border-radius: 10px;
   flex-shrink: 0;
   color: #e0f2fe;
   background: rgba(14, 165, 233, 0.22);
+}
+
+.verify-promo-benefit-icon .pi {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  width: 1em;
+  height: 1em;
 }
 
 .verify-promo-benefits strong {
