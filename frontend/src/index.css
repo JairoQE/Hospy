@@ -756,6 +756,17 @@ img {
   fill: #fff;
 }
 
+.verified-badge {
+  display: inline-flex;
+  color: #1d9bf0;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.verified-badge--business {
+  color: #0d9488;
+}
+
 .profile-stats-row {
   display: flex;
   flex-wrap: wrap;

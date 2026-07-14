@@ -48,6 +48,7 @@ INSTALLED_APPS.extend(
         "audit",
         "payments",
         "integrations",
+        "organizations",
     ]
 )
 
@@ -59,10 +60,14 @@ MP_ACCESS_TOKEN = os.environ.get("MP_ACCESS_TOKEN", "").strip()
 MP_PUBLIC_KEY = os.environ.get("MP_PUBLIC_KEY", "").strip()
 PAYMENT_EXPIRY_MINUTES = int(os.environ.get("PAYMENT_EXPIRY_MINUTES", "30"))
 
-# Verificación de identidad (Factiliza → RENIEC)
+# Verificación de identidad (Factiliza → ApiInti / RENIEC)
 FACTILIZA_API_TOKEN = os.environ.get("FACTILIZA_API_TOKEN", "").strip()
 FACTILIZA_BASE_URL = os.environ.get(
     "FACTILIZA_BASE_URL", "https://api.factiliza.com/v1"
+).rstrip("/")
+APIINTI_API_TOKEN = os.environ.get("APIINTI_API_TOKEN", "").strip()
+APIINTI_BASE_URL = os.environ.get(
+    "APIINTI_BASE_URL", "https://app.apiinti.dev/api/v1"
 ).rstrip("/")
 _factiliza_mock_env = os.environ.get("FACTILIZA_MOCK", "").strip().lower()
 if _factiliza_mock_env in ("true", "1", "yes"):
@@ -70,8 +75,8 @@ if _factiliza_mock_env in ("true", "1", "yes"):
 elif _factiliza_mock_env in ("false", "0", "no"):
     FACTILIZA_MOCK = False
 else:
-    # Sin token en desarrollo: mock automático para no romper el flujo local
-    FACTILIZA_MOCK = DEBUG and not FACTILIZA_API_TOKEN
+    # Sin ningún token en desarrollo: mock automático
+    FACTILIZA_MOCK = DEBUG and not FACTILIZA_API_TOKEN and not APIINTI_API_TOKEN
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

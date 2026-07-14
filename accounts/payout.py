@@ -5,7 +5,9 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 DNI_RE = re.compile(r"^\d{8}$")
+RUC_RE = re.compile(r"^\d{11}$")
 CCI_RE = re.compile(r"^\d{20}$")
+_RUC_WEIGHTS = (5, 4, 3, 2, 7, 6, 5, 4, 3, 2)
 
 PAYOUT_INCOMPLETE_MESSAGE = (
     "El anfitrión aún no completó sus datos de cobro en línea. "
@@ -29,6 +31,33 @@ def validate_dni(value: str) -> str:
     normalized = normalize_dni(value)
     if not DNI_RE.match(normalized):
         raise ValueError("Ingresa un DNI válido de 8 dígitos.")
+    return normalized
+
+
+def normalize_ruc(value: str) -> str:
+    return (value or "").strip().replace(" ", "").replace("-", "")
+
+
+def ruc_check_digit(body10: str) -> int:
+    """Dígito verificador SUNAT para los primeros 10 dígitos del RUC."""
+    total = sum(int(d) * w for d, w in zip(body10, _RUC_WEIGHTS))
+    remainder = 11 - (total % 11)
+    if remainder == 10:
+        return 0
+    if remainder == 11:
+        return 1
+    return remainder
+
+
+def validate_ruc(value: str) -> str:
+    normalized = normalize_ruc(value)
+    if not RUC_RE.match(normalized):
+        raise ValueError("Ingresa un RUC válido de 11 dígitos.")
+    if normalized[0] not in ("1", "2"):
+        raise ValueError("El RUC debe empezar con 10 o 20.")
+    expected = ruc_check_digit(normalized[:10])
+    if int(normalized[10]) != expected:
+        raise ValueError("El RUC no es válido (dígito verificador incorrecto).")
     return normalized
 
 

@@ -30,4 +30,5 @@ urlpatterns = [
     path("", include("site_ui.urls")),
     path("", include("audit.urls")),
     path("", include("integrations.urls")),
+    path("", include("organizations.urls")),
 ]

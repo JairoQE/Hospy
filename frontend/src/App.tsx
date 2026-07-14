@@ -40,6 +40,7 @@ import { OwnerEditAccommodationPage } from "./pages/OwnerEditAccommodationPage";
 import { OwnerLayout } from "./components/owner/OwnerLayout";
 import { OwnerPanelPage } from "./pages/OwnerPanelPage";
 import { InboxPage } from "./pages/InboxPage";
+import { CompanyPage } from "./pages/CompanyPage";
 import { OwnerStorePage } from "./pages/OwnerStorePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -76,6 +77,7 @@ function AppTree() {
               }
             />
             <Route path="anfitrion/:ownerId" element={<OwnerStorePage />} />
+            <Route path="empresa/:slug" element={<CompanyPage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="recuperar-contraseña" element={<ForgotPasswordPage />} />
             <Route path="registro" element={<RegisterPage />} />

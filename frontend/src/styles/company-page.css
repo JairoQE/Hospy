@@ -1,0 +1,54 @@
+.company-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: 2rem;
+}
+
+.company-hero-logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 18px;
+  object-fit: cover;
+  background: #f1f5f9;
+  flex-shrink: 0;
+}
+
+.company-hero-logo--placeholder {
+  display: grid;
+  place-items: center;
+  color: #0d9488;
+  border: 1px solid color-mix(in srgb, #0d9488 30%, transparent);
+}
+
+.company-legal-name {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+}
+
+.company-about h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+.company-about p {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+
+.owner-store-badge-pill--business {
+  color: #0f766e;
+  background: color-mix(in srgb, #0d9488 14%, transparent);
+}
+
+.verified-badge {
+  display: inline-flex;
+  color: #1d9bf0;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.verified-badge--business {
+  color: #0d9488;
+}

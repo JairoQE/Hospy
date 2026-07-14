@@ -1,0 +1,100 @@
+.owner-company {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 52rem;
+}
+
+.owner-company-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.owner-company-header h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+}
+
+.owner-company-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.owner-company-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.owner-company-form-grid input,
+.owner-company-form-grid textarea {
+  font-weight: 400;
+}
+
+.owner-company-span-2 {
+  grid-column: 1 / -1;
+}
+
+.owner-company-check {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem !important;
+  font-weight: 500 !important;
+}
+
+.owner-company-thumb {
+  margin-top: 0.5rem;
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.owner-company-thumb--wide {
+  width: 100%;
+  max-width: 280px;
+  height: 88px;
+}
+
+.owner-company-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.owner-company-verify-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.5rem;
+}
+
+.owner-company-verify-head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.owner-company-ruc-panel {
+  margin-top: 0.85rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-surface, #fff) 88%, #0d9488 12%);
+  border: 1px solid color-mix(in srgb, #0d9488 25%, transparent);
+}
+
+.verified-badge--business {
+  color: #0d9488;
+}
+
+@media (max-width: 640px) {
+  .owner-company-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

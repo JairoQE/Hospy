@@ -21,6 +21,7 @@ import {
   emptyAccommodationForm,
   type AccommodationFormData,
 } from "../components/AccommodationForm";
+import { OwnerCompanyPanel } from "../components/owner/OwnerCompanyPanel";
 import { OwnerCheckInAlerts } from "../components/owner/OwnerCheckInAlerts";
 import { OwnerOccupancyCalendar } from "../components/owner/OwnerOccupancyCalendar";
 import { OwnerInquiriesPanel } from "../components/OwnerInquiriesPanel";
@@ -401,6 +402,8 @@ export function OwnerPanelPage() {
             )}
 
             {tab === "pagos" && !loading && <OwnerPaymentsPanel />}
+
+            {tab === "empresa" && !loading && <OwnerCompanyPanel />}
 
             {tab === "reservas" && !loading && (
               <section className="owner-bookings-section" aria-label="Reservas">

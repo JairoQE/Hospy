@@ -21,6 +21,7 @@ const NAV: { id: OwnerPanelTab; label: string; icon: string }[] = [
   { id: "reservas", label: "Reservas", icon: "pi-calendar" },
   { id: "pagos", label: "Pagos", icon: "pi-wallet" },
   { id: "consultas", label: "Consultas", icon: "pi-comments" },
+  { id: "empresa", label: "Mi empresa", icon: "pi-building" },
 ];
 
 export function OwnerSidebar({

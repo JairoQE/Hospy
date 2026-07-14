@@ -5,3 +5,4 @@ C-03,Base de datos PostgreSQL,Supabase,Parcial,Sí,Pooler aws-0-sa-east-1; backu
 C-04,Caché aplicación,Django LocMem (Cloud Run),No,No,Sin REDIS_URL en variables de Cloud Run; caché en memoria por instancia
 C-05,Almacenamiento multimedia,Cloudinary,Sí,Sí,USE_CLOUDINARY=true; CDN y réplicas del proveedor
 C-06,Monitoreo uptime,GCP Monitoring,Sí,Sí,Check monitoreo-de-hospy-pages; periodo 60s; STATIC_IP_CHECKERS multi-región
+C-07,Consulta DNI / RENIEC,Factiliza → ApiInti,Sí,Sí,Primario Factiliza; fallback ApiInti si falla o sin créditos
