@@ -8,11 +8,16 @@ from django.utils.text import slugify
 
 from .media_urls import media_public_path
 from .models import Accommodation, AccommodationPhoto, BrowseTile
-from .services import apply_accommodation_search_params, public_accommodations_queryset
+from .services import (
+    apply_accommodation_search_params,
+    filter_accommodations_nearby,
+    public_accommodations_queryset,
+)
 from .ubigeo_loader import resolve_departamento, resolve_provincia
 
 CLICK_BOOST = 10
 DEFAULT_LIMIT = 12
+NEARBY_RADIUS_KM = 25.0
 
 
 def _approved_accommodations():
@@ -79,6 +84,27 @@ def _photos_for_cities(cities: list[str]) -> dict[str, str]:
     return photos
 
 
+def _nearby_stats(lat: float, lng: float, radio_km: float = NEARBY_RADIUS_KM) -> dict:
+    qs = public_accommodations_queryset()
+    nearby = filter_accommodations_nearby(qs, lat, lng, radio_km)
+    if not nearby:
+        return {"hotels_count": 0, "price_from": None, "rating_avg": None}
+    prices = []
+    ratings = []
+    for acc in nearby:
+        precio = getattr(acc, "precio_desde", None)
+        if precio is not None:
+            prices.append(float(precio))
+        rating = getattr(acc, "average_rating", None)
+        if rating is not None:
+            ratings.append(float(rating))
+    return {
+        "hotels_count": len(nearby),
+        "price_from": min(prices) if prices else None,
+        "rating_avg": (sum(ratings) / len(ratings)) if ratings else None,
+    }
+
+
 def build_featured_cities(limit: int = DEFAULT_LIMIT) -> list[dict]:
     since = timezone.now() - timedelta(days=30)
     click_scores = _department_click_scores(since)
@@ -138,6 +164,7 @@ def _destination_stats(search: dict) -> dict | None:
 
 
 def build_featured_destinations(limit: int = DEFAULT_LIMIT) -> list[dict]:
+    """Regiones/deptos (legacy). Se mantiene por compatibilidad."""
     since = timezone.now() - timedelta(days=30)
     tiles = (
         BrowseTile.objects.filter(
@@ -192,8 +219,171 @@ def build_featured_destinations(limit: int = DEFAULT_LIMIT) -> list[dict]:
     return results
 
 
+def build_featured_events(limit: int = DEFAULT_LIMIT) -> list[dict]:
+    """Eventos Actify publicados + stats de hospedajes cercanos."""
+    try:
+        from integrations.actify import ActifyError, list_events
+    except Exception:
+        return []
+
+    try:
+        payload = list_events(params={"per_page": limit})
+    except ActifyError:
+        return []
+    except Exception:
+        return []
+
+    results: list[dict] = []
+    for event in payload.get("events") or []:
+        loc = event.get("location") or {}
+        try:
+            lat = float(loc.get("latitude"))
+            lng = float(loc.get("longitude"))
+        except (TypeError, ValueError):
+            continue
+
+        stats = _nearby_stats(lat, lng)
+        capacity = event.get("capacity") or {}
+        category = event.get("category") or {}
+        results.append(
+            {
+                "kind": "event",
+                "name": event.get("name") or f"Evento {event.get('id')}",
+                "slug": f"evento-{event.get('id')}",
+                "subtitle": category.get("name") or loc.get("city") or "",
+                "hotels_count": stats["hotels_count"],
+                "price_from": stats["price_from"],
+                "rating_avg": stats["rating_avg"],
+                "image_url": None,
+                "gradient_css": "linear-gradient(135deg, #0f766e 0%, #14b8a6 55%, #f59e0b 100%)",
+                "badge": "Evento",
+                "event_id": event.get("id"),
+                "start_date": event.get("start_date") or "",
+                "capacity_label": (
+                    "Agotado"
+                    if capacity.get("is_sold_out")
+                    else f"{capacity.get('available_spots') or '—'} cupos"
+                ),
+                "search": {
+                    "lat": lat,
+                    "lng": lng,
+                    "radio_km": NEARBY_RADIUS_KM,
+                    "event_id": event.get("id"),
+                    "label": event.get("name") or "",
+                },
+            }
+        )
+        if len(results) >= limit:
+            break
+    return results
+
+
+def _build_places_from_conecta_tingo(limit: int) -> list[dict]:
+    """Hotspots Conecta Tingo (demanda) + hospedajes cercanos."""
+    try:
+        from integrations.conecta_tingo import ConectaTingoError, list_hotspots
+    except Exception:
+        return []
+
+    try:
+        hotspots = list_hotspots(limit=limit)
+    except ConectaTingoError:
+        return []
+    except Exception:
+        return []
+
+    results: list[dict] = []
+    for spot in hotspots:
+        lat = spot.get("latitude")
+        lng = spot.get("longitude")
+        if lat is None or lng is None:
+            continue
+        lat_f = float(lat)
+        lng_f = float(lng)
+        stats = _nearby_stats(lat_f, lng_f)
+        zone = spot.get("zone") or ""
+        interes = spot.get("interest_level") or 0
+        entry = spot.get("entry_price") or ""
+        subtitle_parts = [p for p in (zone, f"Interés {interes}/10" if interes else "") if p]
+        results.append(
+            {
+                "kind": "place",
+                "name": spot.get("name") or "Lugar",
+                "slug": spot.get("slug") or "lugar",
+                "subtitle": " · ".join(subtitle_parts),
+                "hotels_count": stats["hotels_count"],
+                "price_from": stats["price_from"],
+                "rating_avg": stats["rating_avg"],
+                "image_url": None,
+                "gradient_css": "linear-gradient(135deg, #166534 0%, #22c55e 55%, #84cc16 100%)",
+                "badge": "Conecta Tingo",
+                "capacity_label": entry or None,
+                "search": {
+                    "lat": lat_f,
+                    "lng": lng_f,
+                    "radio_km": NEARBY_RADIUS_KM,
+                    "label": spot.get("name") or "",
+                    "zona": zone,
+                },
+            }
+        )
+        if len(results) >= limit:
+            break
+    return results
+
+
+def _build_places_from_tiles(limit: int) -> list[dict]:
+    """Fallback: lugares curados en BrowseTile."""
+    tiles = BrowseTile.objects.filter(
+        is_active=True,
+        group=BrowseTile.Group.TOURIST_PLACE,
+        latitude__isnull=False,
+        longitude__isnull=False,
+    ).order_by("order", "title")[:limit]
+
+    results: list[dict] = []
+    for tile in tiles:
+        lat = float(tile.latitude)
+        lng = float(tile.longitude)
+        stats = _nearby_stats(lat, lng)
+        results.append(
+            {
+                "kind": "place",
+                "name": tile.title,
+                "slug": tile.slug,
+                "subtitle": tile.subtitle or "",
+                "hotels_count": stats["hotels_count"],
+                "price_from": stats["price_from"],
+                "rating_avg": stats["rating_avg"],
+                "image_url": media_public_path(tile.image) if tile.image else None,
+                "gradient_css": tile.gradient_css
+                or "linear-gradient(135deg, #1e3a5f 0%, #0d9488 100%)",
+                "badge": "Lugar",
+                "tile_id": tile.id,
+                "search": {
+                    "lat": lat,
+                    "lng": lng,
+                    "radio_km": NEARBY_RADIUS_KM,
+                    "label": tile.title,
+                },
+            }
+        )
+    return results
+
+
+def build_featured_places(limit: int = DEFAULT_LIMIT) -> list[dict]:
+    """Prioriza Conecta Tingo; si no hay datos, usa tiles locales."""
+    from_api = _build_places_from_conecta_tingo(limit)
+    if from_api:
+        return from_api
+    return _build_places_from_tiles(limit)
+
+
 def build_featured_searches() -> dict:
     return {
         "ciudades": build_featured_cities(),
+        "eventos": build_featured_events(),
+        "lugares": build_featured_places(),
+        # Compat: antiguas regiones/deptos (ya no se usan en la UI principal)
         "destinos": build_featured_destinations(),
     }

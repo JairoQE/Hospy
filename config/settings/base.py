@@ -78,6 +78,22 @@ else:
     # Sin ningún token en desarrollo: mock automático
     FACTILIZA_MOCK = DEBUG and not FACTILIZA_API_TOKEN and not APIINTI_API_TOKEN
 
+# Actify — catálogo externo de eventos (integración REST)
+ACTIFY_API_KEY = os.environ.get("ACTIFY_API_KEY", "").strip()
+ACTIFY_BASE_URL = os.environ.get(
+    "ACTIFY_BASE_URL", "https://actify.qd.je/api/v1"
+).rstrip("/")
+ACTIFY_TIMEOUT_SECONDS = float(os.environ.get("ACTIFY_TIMEOUT_SECONDS", "12"))
+
+# Conecta Tingo — demanda / hotspots turísticos (api_key query param)
+CONECTA_TINGO_API_KEY = os.environ.get("CONECTA_TINGO_API_KEY", "").strip()
+CONECTA_TINGO_BASE_URL = os.environ.get(
+    "CONECTA_TINGO_BASE_URL", "https://conectatingo.com/api/integracion"
+).rstrip("/")
+CONECTA_TINGO_TIMEOUT_SECONDS = float(
+    os.environ.get("CONECTA_TINGO_TIMEOUT_SECONDS", "12")
+)
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",

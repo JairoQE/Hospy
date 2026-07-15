@@ -238,6 +238,22 @@ INTERFACES_SPEC: list[dict[str, Any]] = [
         "verification": "TURNSTILE_SITE_KEY y TURNSTILE_SECRET_KEY",
         "reference_endpoints": ["/api/v1/auth/login/"],
     },
+    {
+        "id": "IF-10",
+        "name": "Catálogo de eventos",
+        "external_system": "Actify",
+        "usage": "Listado y detalle de eventos públicos (proxy Hospy)",
+        "verification": "ACTIFY_API_KEY; GET /api/v1/eventos/",
+        "reference_endpoints": ["/api/v1/eventos/", "/api/v1/eventos/{id}/"],
+    },
+    {
+        "id": "IF-11",
+        "name": "Demanda turística / hotspots",
+        "external_system": "Conecta Tingo",
+        "usage": "Mapa de calor, hotspots y perfiles turísticos (proxy Hospy)",
+        "verification": "CONECTA_TINGO_API_KEY; GET /api/v1/lugares-turisticos/",
+        "reference_endpoints": ["/api/v1/lugares-turisticos/"],
+    },
 ]
 
 
@@ -285,6 +301,10 @@ def _interface_functional(interface_id: str) -> bool:
             getattr(settings, "TURNSTILE_SITE_KEY", "").strip()
             and getattr(settings, "TURNSTILE_SECRET_KEY", "").strip()
         )
+    if interface_id == "IF-10":
+        return bool(getattr(settings, "ACTIFY_API_KEY", "").strip())
+    if interface_id == "IF-11":
+        return bool(getattr(settings, "CONECTA_TINGO_API_KEY", "").strip())
     return False
 
 

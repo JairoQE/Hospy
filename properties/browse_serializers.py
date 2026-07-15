@@ -19,6 +19,8 @@ class BrowseTilePublicSerializer(serializers.ModelSerializer):
             "filter_value",
             "image_url",
             "gradient_css",
+            "latitude",
+            "longitude",
             "order",
         )
 
@@ -42,6 +44,8 @@ class BrowseTileAdminSerializer(serializers.ModelSerializer):
             "image",
             "image_url",
             "gradient_css",
+            "latitude",
+            "longitude",
             "order",
             "is_active",
             "clicks_30d",

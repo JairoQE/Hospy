@@ -288,13 +288,15 @@ export interface AccommodationDetail {
 
 export interface BrowseTile {
   id: number;
-  group: "tipo" | "region" | "departamento";
+  group: "tipo" | "region" | "departamento" | "lugar_turistico";
   title: string;
   subtitle?: string;
   slug: string;
   filter_value: string;
   image_url: string | null;
   gradient_css: string;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
   order: number;
   is_active?: boolean;
   /** Clics en los últimos 30 días (solo en listado admin). */
@@ -305,7 +307,7 @@ export interface BrowseTile {
 }
 
 export interface FeaturedSearchItem {
-  kind: "city" | "destination";
+  kind: "city" | "destination" | "event" | "place";
   name: string;
   slug: string;
   subtitle?: string;
@@ -314,19 +316,31 @@ export interface FeaturedSearchItem {
   rating_avg?: number | null;
   image_url: string | null;
   gradient_css?: string;
+  badge?: string;
+  event_id?: number;
+  start_date?: string;
+  capacity_label?: string;
   search: {
     ciudad?: string;
     departamento?: string;
     provincia?: string;
     distrito?: string;
     zona?: string;
+    lat?: number;
+    lng?: number;
+    radio_km?: number;
+    event_id?: number;
+    label?: string;
   };
   tile_id?: number;
 }
 
 export interface FeaturedSearchesPayload {
   ciudades: FeaturedSearchItem[];
-  destinos: FeaturedSearchItem[];
+  eventos: FeaturedSearchItem[];
+  lugares: FeaturedSearchItem[];
+  /** @deprecated regiones/deptos; se mantiene por compatibilidad */
+  destinos?: FeaturedSearchItem[];
 }
 
 export interface PriceTrendPoint {

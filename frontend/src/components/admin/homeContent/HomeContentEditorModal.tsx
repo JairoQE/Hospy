@@ -13,6 +13,8 @@ export type TileFormState = {
   gradient_css: string;
   order: string;
   is_active: boolean;
+  latitude: string;
+  longitude: string;
 };
 
 export const emptyTileForm = (group: string): TileFormState => ({
@@ -24,6 +26,8 @@ export const emptyTileForm = (group: string): TileFormState => ({
   gradient_css: "linear-gradient(135deg, #0d6e6e 0%, #4db6ac 100%)",
   order: "0",
   is_active: true,
+  latitude: "",
+  longitude: "",
 });
 
 export const tileToForm = (tile: BrowseTile): TileFormState => ({
@@ -35,6 +39,8 @@ export const tileToForm = (tile: BrowseTile): TileFormState => ({
   gradient_css: tile.gradient_css,
   order: String(tile.order ?? 0),
   is_active: tile.is_active !== false,
+  latitude: tile.latitude != null ? String(tile.latitude) : "",
+  longitude: tile.longitude != null ? String(tile.longitude) : "",
 });
 
 type Props = {
@@ -173,6 +179,28 @@ export function HomeContentEditorModal({
                   <span className="field-error">{fieldErrors.filter_value}</span>
                 )}
               </label>
+              {activeGroup === "lugar_turistico" ? (
+                <>
+                  <label>
+                    Latitud
+                    <input
+                      value={form.latitude}
+                      onChange={(e) => setForm({ ...form, latitude: e.target.value })}
+                      placeholder="-12.046400"
+                      required
+                    />
+                  </label>
+                  <label>
+                    Longitud
+                    <input
+                      value={form.longitude}
+                      onChange={(e) => setForm({ ...form, longitude: e.target.value })}
+                      placeholder="-77.042800"
+                      required
+                    />
+                  </label>
+                </>
+              ) : null}
               <label className="full">
                 Imagen
                 <input

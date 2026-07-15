@@ -119,7 +119,7 @@ export function AdminHomeContentPage() {
     setError("");
     setFieldErrors({});
 
-    const payload = {
+    const payload: Record<string, string | number | boolean | null> = {
       group: contentGroup,
       title: form.title.trim(),
       subtitle: form.subtitle.trim(),
@@ -129,11 +129,17 @@ export function AdminHomeContentPage() {
       order: Number(form.order) || 0,
       is_active: form.is_active,
     };
+    if (contentGroup === "lugar_turistico") {
+      payload.latitude = form.latitude.trim() || null;
+      payload.longitude = form.longitude.trim() || null;
+    }
 
     try {
       if (imageFile) {
         const body = new FormData();
-        Object.entries(payload).forEach(([k, v]) => body.append(k, String(v)));
+        Object.entries(payload).forEach(([k, v]) => {
+          if (v !== null && v !== undefined) body.append(k, String(v));
+        });
         body.append("is_active", payload.is_active ? "true" : "false");
         body.append("image", imageFile);
         if (editing) {

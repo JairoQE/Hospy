@@ -8,3 +8,5 @@ IF-06,Base de datos,Supabase PostgreSQL,Sí,Sí,POSTGRES_HOST pooler Supabase,Pe
 IF-07,Geolocalización IP,ip.guide,Sí,Sí,IP_GUIDE_ENABLED; GET /api/v1/geo/sugerencias/ → 200,Auditoría y sugerencias locale
 IF-08,LLM asistente Hospix,Google Gemini,Sí,Sí,GEMINI_API_KEY + HOSPIX_LLM_PROVIDER=gemini,POST /api/v1/hospix/chat/
 IF-09,Captcha login,Cloudflare Turnstile,Sí,Sí,TURNSTILE_SITE_KEY/SECRET en Cloud Run,Verificación en auth
+IF-10,Catálogo de eventos,Actify,Sí,Sí,ACTIFY_API_KEY; GET /api/v1/eventos/,Proxy REST Bearer hacia Actify
+IF-11,Demanda turística / hotspots,Conecta Tingo,Sí,Sí,CONECTA_TINGO_API_KEY; GET /api/v1/lugares-turisticos/,Proxy REST api_key hacia Conecta Tingo

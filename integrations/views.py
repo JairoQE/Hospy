@@ -304,3 +304,86 @@ class AdminIntegrationClientRevokeView(APIView):
                 "client": IntegrationClientSerializer(client).data,
             }
         )
+
+
+class ActifyEventsListView(APIView):
+    """GET /api/v1/eventos/ — proxy al catálogo público de Actify."""
+
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request):
+        from .actify import ActifyError, list_events
+
+        allowed = (
+            "category_id",
+            "location",
+            "radius",
+            "city",
+            "page",
+            "per_page",
+        )
+        params = {
+            key: request.query_params.get(key)
+            for key in allowed
+            if request.query_params.get(key) not in (None, "")
+        }
+        try:
+            payload = list_events(params=params)
+        except ActifyError as exc:
+            code = exc.status_code or 502
+            http = (
+                status.HTTP_503_SERVICE_UNAVAILABLE
+                if code >= 500
+                else status.HTTP_400_BAD_REQUEST
+            )
+            if code == 404:
+                http = status.HTTP_404_NOT_FOUND
+            return Response({"detail": str(exc)}, status=http)
+        return Response(payload)
+
+
+class ActifyEventDetailView(APIView):
+    """GET /api/v1/eventos/<id>/ — detalle + aforo en vivo (Actify)."""
+
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request, pk: int):
+        from .actify import ActifyError, get_event
+
+        try:
+            event = get_event(pk)
+        except ActifyError as exc:
+            code = exc.status_code or 502
+            http = (
+                status.HTTP_503_SERVICE_UNAVAILABLE
+                if code >= 500
+                else status.HTTP_400_BAD_REQUEST
+            )
+            if code == 404:
+                http = status.HTTP_404_NOT_FOUND
+            return Response({"detail": str(exc)}, status=http)
+        return Response(event)
+
+
+class ConectaTingoDatosView(APIView):
+    """GET /api/v1/lugares-turisticos/ — demanda y hotspots (Conecta Tingo)."""
+
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request):
+        from .conecta_tingo import ConectaTingoError, catalog_payload
+
+        try:
+            return Response(catalog_payload())
+        except ConectaTingoError as exc:
+            code = exc.status_code or 502
+            http = (
+                status.HTTP_503_SERVICE_UNAVAILABLE
+                if code >= 500
+                else status.HTTP_400_BAD_REQUEST
+            )
+            if code == 404:
+                http = status.HTTP_404_NOT_FOUND
+            if code == 429:
+                http = status.HTTP_429_TOO_MANY_REQUESTS
+            return Response({"detail": str(exc)}, status=http)

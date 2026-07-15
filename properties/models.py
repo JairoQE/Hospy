@@ -215,12 +215,13 @@ class AccommodationOffer(TimeStampedModel):
 
 
 class BrowseTile(TimeStampedModel):
-    """Bloques del home: tipos, regiones y departamentos (administrables)."""
+    """Bloques del home: tipos, regiones, departamentos y lugares turísticos."""
 
     class Group(models.TextChoices):
         ACCOMMODATION_TYPE = "tipo", "Tipo de alojamiento"
         NATURAL_REGION = "region", "Región natural"
         DEPARTMENT = "departamento", "Departamento"
+        TOURIST_PLACE = "lugar_turistico", "Lugar turístico"
 
     group = models.CharField(max_length=20, choices=Group.choices, db_index=True)
     title = models.CharField(max_length=100)
@@ -229,7 +230,8 @@ class BrowseTile(TimeStampedModel):
     filter_value = models.CharField(
         max_length=80,
         help_text=(
-            "Filtro API: tipo (hotel…), zona (costa…) o departamento (nombre, ej. Lima)."
+            "Filtro API: tipo (hotel…), zona (costa…), departamento (Lima) "
+            "o slug del lugar turístico."
         ),
     )
     image = models.ImageField(upload_to="inicio/", blank=True, null=True)
@@ -237,6 +239,19 @@ class BrowseTile(TimeStampedModel):
         max_length=255,
         blank=True,
         default="linear-gradient(135deg, #0d6e6e 0%, #4db6ac 100%)",
+    )
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        help_text="Coordenada para relacionar hospedajes cercanos (lugares turísticos).",
+    )
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
     )
     order = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)

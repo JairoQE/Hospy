@@ -7,11 +7,12 @@ import { resolveMediaUrl } from "../../utils/media";
 import { StarRating } from "../StarRating";
 import { HorizontalCarousel } from "../ui/HorizontalCarousel";
 
-type Tab = "cities" | "destinations";
+type Tab = "cities" | "events" | "places";
 
 interface Props {
   cities: FeaturedSearchItem[];
-  destinations: FeaturedSearchItem[];
+  events: FeaturedSearchItem[];
+  places: FeaturedSearchItem[];
   loading?: boolean;
   onSelect: (item: FeaturedSearchItem) => void;
 }
@@ -28,6 +29,7 @@ function FeaturedSearchCard({
   const { t } = useLocaleCurrency();
   const imageUrl = resolveMediaUrl(item.image_url);
   const rating = Number(item.rating_avg) || 0;
+  const isGeo = item.kind === "event" || item.kind === "place";
 
   return (
     <button
@@ -48,21 +50,31 @@ function FeaturedSearchCard({
         {!imageUrl && !item.gradient_css && (
           <span className="featured-search-card-placeholder">{noPhotoLabel}</span>
         )}
+        {item.badge ? (
+          <span className="featured-search-card-badge">{item.badge}</span>
+        ) : null}
       </div>
       <div className="featured-search-card-body">
         <h3>{item.name}</h3>
+        {item.subtitle ? (
+          <p className="featured-search-card-sub">{item.subtitle}</p>
+        ) : null}
         {rating > 0 ? (
           <div className="featured-search-card-rating">
             <StarRating rating={rating} size="sm" />
           </div>
         ) : (
           <p className="featured-search-card-rating featured-search-card-rating--new">
-            ★ {t("price.new")}
+            {item.capacity_label
+              ? item.capacity_label
+              : `★ ${t("price.new")}`}
           </p>
         )}
         <p className="featured-search-card-meta">
           <strong>{item.hotels_count.toLocaleString()}</strong>{" "}
-          {t("home.tileLocalsSuffix")}
+          {isGeo
+            ? t("home.tileNearbyLocalsSuffix")
+            : t("home.tileLocalsSuffix")}
         </p>
         {item.price_from != null && (
           <p className="featured-search-card-price">
@@ -89,7 +101,8 @@ function FeaturedSearchSkeleton() {
 
 export function FeaturedSearchesSection({
   cities,
-  destinations,
+  events,
+  places,
   loading = false,
   onSelect,
 }: Props) {
@@ -97,24 +110,38 @@ export function FeaturedSearchesSection({
   const [tab, setTab] = useState<Tab>("cities");
 
   const hasCities = cities.length > 0;
-  const hasDestinations = destinations.length > 0;
+  const hasEvents = events.length > 0;
+  const hasPlaces = places.length > 0;
 
   const defaultTab = useMemo<Tab>(() => {
     if (hasCities) return "cities";
-    if (hasDestinations) return "destinations";
+    if (hasEvents) return "events";
+    if (hasPlaces) return "places";
     return "cities";
-  }, [hasCities, hasDestinations]);
+  }, [hasCities, hasEvents, hasPlaces]);
 
-  const activeTab = tab === "cities" && !hasCities ? defaultTab : tab;
-  const visibleItems = activeTab === "cities" ? cities : destinations;
+  const activeTab =
+    (tab === "cities" && !hasCities) ||
+    (tab === "events" && !hasEvents) ||
+    (tab === "places" && !hasPlaces)
+      ? defaultTab
+      : tab;
 
-  if (!loading && !hasCities && !hasDestinations) {
+  const visibleItems =
+    activeTab === "cities" ? cities : activeTab === "events" ? events : places;
+
+  if (!loading && !hasCities && !hasEvents && !hasPlaces) {
     return null;
   }
 
   return (
-    <section className="home-block fade-in featured-searches-section" id="destacados" data-tour="home-featured">
+    <section
+      className="home-block fade-in featured-searches-section"
+      id="destacados"
+      data-tour="home-featured"
+    >
       <h2 className="home-block-title">{t("home.featuredTitle")}</h2>
+      <p className="home-block-sub muted">{t("home.featuredLead")}</p>
 
       <div className="featured-searches-tabs" role="tablist" aria-label={t("home.featuredTitle")}>
         <button
@@ -130,12 +157,22 @@ export function FeaturedSearchesSection({
         <button
           type="button"
           role="tab"
-          className={`featured-searches-tab${activeTab === "destinations" ? " is-active" : ""}`}
-          aria-selected={activeTab === "destinations"}
-          disabled={!hasDestinations && !loading}
-          onClick={() => setTab("destinations")}
+          className={`featured-searches-tab${activeTab === "events" ? " is-active" : ""}`}
+          aria-selected={activeTab === "events"}
+          disabled={!hasEvents && !loading}
+          onClick={() => setTab("events")}
         >
-          {t("home.featuredTabDestinations")}
+          {t("home.featuredTabEvents")}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          className={`featured-searches-tab${activeTab === "places" ? " is-active" : ""}`}
+          aria-selected={activeTab === "places"}
+          disabled={!hasPlaces && !loading}
+          onClick={() => setTab("places")}
+        >
+          {t("home.featuredTabPlaces")}
         </button>
       </div>
 

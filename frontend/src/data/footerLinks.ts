@@ -11,6 +11,7 @@ export const FOOTER_CONTACT = {
 
 export const FOOTER_COMPANY_LINKS = [
   { label: "Sobre nosotros", to: "/sobre-nosotros" },
+  { label: "Eventos", to: "/eventos" },
   { label: "Blog", to: "/centro-ayuda" },
   { label: "Trabaja con nosotros", to: "/contacto" },
   { label: "Preguntas frecuentes", to: "/centro-ayuda#faq" },

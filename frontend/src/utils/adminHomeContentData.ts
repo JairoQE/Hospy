@@ -1,6 +1,6 @@
 import type { BrowseTile } from "../api/types";
 
-export type HomeContentGroup = "tipo" | "region" | "departamento";
+export type HomeContentGroup = "tipo" | "region" | "departamento" | "lugar_turistico";
 
 export type AdminConfigTab = HomeContentGroup | "diseno";
 
@@ -10,6 +10,7 @@ export const HOME_CONTENT_GROUPS: { value: HomeContentGroup; label: string }[] =
   { value: "tipo", label: "Tipos de alojamiento" },
   { value: "region", label: "Regiones naturales" },
   { value: "departamento", label: "Departamentos" },
+  { value: "lugar_turistico", label: "Lugares turísticos" },
 ];
 
 export const ADMIN_CONFIG_TABS: { value: AdminConfigTab; label: string; icon?: string }[] = [
@@ -21,6 +22,7 @@ export const FILTER_HINT: Record<HomeContentGroup, string> = {
   tipo: "hotel, hostal, hospedaje, casa_departamento",
   region: "costa, sierra, selva",
   departamento: "Lima, Cusco, Arequipa…",
+  lugar_turistico: "slug del lugar (ej. machu-picchu). Usa lat/lng en el formulario.",
 };
 
 export const GROUP_SECTION_COPY: Record<
@@ -35,6 +37,10 @@ export const GROUP_SECTION_COPY: Record<
   departamento: {
     previewTitle: "Explora por departamento",
     previewSubtitle: "Departamentos con alojamientos en Hospy",
+  },
+  lugar_turistico: {
+    previewTitle: "Lugares turísticos",
+    previewSubtitle: "Relacionados con hospedajes cercanos en el home",
   },
 };
 

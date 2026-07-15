@@ -66,7 +66,8 @@ function initialHomeTilesState(): {
   regionTiles: BrowseTile[];
   departmentTiles: BrowseTile[];
   featuredCities: FeaturedSearchItem[];
-  featuredDestinations: FeaturedSearchItem[];
+  featuredEvents: FeaturedSearchItem[];
+  featuredPlaces: FeaturedSearchItem[];
   tileStats: TileStatsMap;
   tilesLoading: boolean;
 } {
@@ -77,7 +78,8 @@ function initialHomeTilesState(): {
       regionTiles: [],
       departmentTiles: [],
       featuredCities: [],
-      featuredDestinations: [],
+      featuredEvents: [],
+      featuredPlaces: [],
       tileStats: {},
       tilesLoading: true,
     };
@@ -91,7 +93,8 @@ function initialHomeTilesState(): {
       tileStats,
     ),
     featuredCities: cached.busquedas_destacadas?.ciudades ?? [],
-    featuredDestinations: cached.busquedas_destacadas?.destinos ?? [],
+    featuredEvents: cached.busquedas_destacadas?.eventos ?? [],
+    featuredPlaces: cached.busquedas_destacadas?.lugares ?? [],
     tileStats,
     tilesLoading: false,
   };
@@ -165,7 +168,8 @@ export function HomePage() {
     regionTiles,
     departmentTiles,
     featuredCities,
-    featuredDestinations,
+    featuredEvents,
+    featuredPlaces,
     tilesLoading,
   } = tileState;
 
@@ -198,13 +202,42 @@ export function HomePage() {
       setResultsTitle(title);
 
       try {
-        const q = buildQuery(fullQuery);
-        const data = await api.get<Paginated<AccommodationListItem>>(
-          `/hospedajes/${q}`,
-          false,
-        );
-        setItems(data.results);
-        setListMeta({ count: data.count, page, pageSize });
+        const lat = fullQuery.lat;
+        const lng = fullQuery.lng;
+        const isNearby =
+          lat !== undefined &&
+          lat !== null &&
+          lat !== "" &&
+          lng !== undefined &&
+          lng !== null &&
+          lng !== "";
+
+        if (isNearby) {
+          const radio =
+            Number(fullQuery.radio_km) > 0
+              ? Number(fullQuery.radio_km)
+              : NEARBY_RADIUS_KM;
+          const q = buildQuery({
+            lat,
+            lng,
+            radio_km: radio,
+          });
+          const data = await api.get<AccommodationListItem[]>(
+            `/hospedajes/cercanos${q}`,
+            false,
+          );
+          const list = Array.isArray(data) ? data : [];
+          setItems(list);
+          setListMeta({ count: list.length, page: 1, pageSize: list.length || pageSize });
+        } else {
+          const q = buildQuery(fullQuery);
+          const data = await api.get<Paginated<AccommodationListItem>>(
+            `/hospedajes/${q}`,
+            false,
+          );
+          setItems(data.results);
+          setListMeta({ count: data.count, page, pageSize });
+        }
         if (opts?.scroll !== false) {
           resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
         }
@@ -311,7 +344,9 @@ export function HomePage() {
       ubigeo_departamentos: UbigeoItem[];
       busquedas_destacadas?: {
         ciudades: FeaturedSearchItem[];
-        destinos: FeaturedSearchItem[];
+        eventos?: FeaturedSearchItem[];
+        lugares?: FeaturedSearchItem[];
+        destinos?: FeaturedSearchItem[];
       };
       tile_stats?: TileStatsMap;
     }) => {
@@ -327,7 +362,8 @@ export function HomePage() {
           tileStats,
         ),
         featuredCities: payload.busquedas_destacadas?.ciudades ?? [],
-        featuredDestinations: payload.busquedas_destacadas?.destinos ?? [],
+        featuredEvents: payload.busquedas_destacadas?.eventos ?? [],
+        featuredPlaces: payload.busquedas_destacadas?.lugares ?? [],
         tileStats,
         tilesLoading: false,
       });
@@ -494,6 +530,40 @@ export function HomePage() {
   const onFeaturedSearch = (item: FeaturedSearchItem) => {
     if (item.tile_id) {
       void recordBrowseTileClick(item.tile_id).catch(() => {});
+    }
+
+    const lat = item.search.lat;
+    const lng = item.search.lng;
+    if (lat != null && lng != null && Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))) {
+      const radio = Number(item.search.radio_km) > 0 ? Number(item.search.radio_km) : NEARBY_RADIUS_KM;
+      setFilters({
+        ciudad: "",
+        departamento: "",
+        provincia: "",
+        distrito: "",
+        entrada: "",
+        salida: "",
+        tipo: "",
+        precio_min: "",
+        precio_max: "",
+        ordenar: "-rating",
+      });
+      setBrowse({ label: item.name });
+      const title =
+        item.kind === "event"
+          ? tVars("home.staysNearEvent", { place: item.name })
+          : tVars("home.staysNearPlace", { place: item.name });
+      loadList(
+        {
+          lat: Number(lat),
+          lng: Number(lng),
+          radio_km: radio,
+          page: 1,
+          page_size: DEFAULT_RESULTS_PAGE_SIZE,
+        },
+        title,
+      );
+      return;
     }
 
     const query = {
@@ -675,7 +745,8 @@ export function HomePage() {
 
             <FeaturedSearchesSection
               cities={featuredCities}
-              destinations={featuredDestinations}
+              events={featuredEvents}
+              places={featuredPlaces}
               loading={tilesLoading}
               onSelect={onFeaturedSearch}
             />

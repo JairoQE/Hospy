@@ -99,6 +99,7 @@ class BrowseTileViewSet(viewsets.ModelViewSet):
                 BrowseTile.Group.ACCOMMODATION_TYPE,
                 BrowseTile.Group.NATURAL_REGION,
                 BrowseTile.Group.DEPARTMENT,
+                BrowseTile.Group.TOURIST_PLACE,
             )
             if group not in valid_groups:
                 raise ValidationError(
