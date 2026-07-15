@@ -254,6 +254,17 @@ INTERFACES_SPEC: list[dict[str, Any]] = [
         "verification": "CONECTA_TINGO_API_KEY; GET /api/v1/lugares-turisticos/",
         "reference_endpoints": ["/api/v1/lugares-turisticos/"],
     },
+    {
+        "id": "IF-12",
+        "name": "Catálogo de restaurantes",
+        "external_system": "RestoPoint",
+        "usage": "Listado y detalle de restaurantes con lat/lng (proxy Hospy)",
+        "verification": "RESTOPOINT_API_KEY; GET /api/v1/restaurantes/",
+        "reference_endpoints": [
+            "/api/v1/restaurantes/",
+            "/api/v1/restaurantes/{id}/",
+        ],
+    },
 ]
 
 
@@ -305,6 +316,8 @@ def _interface_functional(interface_id: str) -> bool:
         return bool(getattr(settings, "ACTIFY_API_KEY", "").strip())
     if interface_id == "IF-11":
         return bool(getattr(settings, "CONECTA_TINGO_API_KEY", "").strip())
+    if interface_id == "IF-12":
+        return bool(getattr(settings, "RESTOPOINT_API_KEY", "").strip())
     return False
 
 

@@ -12,7 +12,7 @@ export type HomeBootstrapPayload = {
   tile_stats: TileStatsMap;
 };
 
-const CACHE_KEY = "hospy_home_bootstrap_v6";
+const CACHE_KEY = "hospy_home_bootstrap_v7";
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
 type CacheEntry = {
@@ -62,6 +62,9 @@ export async function fetchHomeBootstrap(): Promise<HomeBootstrapPayload> {
       ciudades: Array.isArray(featured?.ciudades) ? featured.ciudades : [],
       eventos: Array.isArray(featured?.eventos) ? featured.eventos : [],
       lugares: Array.isArray(featured?.lugares) ? featured.lugares : [],
+      restaurantes: Array.isArray(featured?.restaurantes)
+        ? featured.restaurantes
+        : [],
       destinos: Array.isArray(featured?.destinos) ? featured.destinos : [],
     },
     tile_stats:

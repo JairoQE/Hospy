@@ -68,6 +68,7 @@ function initialHomeTilesState(): {
   featuredCities: FeaturedSearchItem[];
   featuredEvents: FeaturedSearchItem[];
   featuredPlaces: FeaturedSearchItem[];
+  featuredRestaurants: FeaturedSearchItem[];
   tileStats: TileStatsMap;
   tilesLoading: boolean;
 } {
@@ -80,6 +81,7 @@ function initialHomeTilesState(): {
       featuredCities: [],
       featuredEvents: [],
       featuredPlaces: [],
+      featuredRestaurants: [],
       tileStats: {},
       tilesLoading: true,
     };
@@ -95,6 +97,7 @@ function initialHomeTilesState(): {
     featuredCities: cached.busquedas_destacadas?.ciudades ?? [],
     featuredEvents: cached.busquedas_destacadas?.eventos ?? [],
     featuredPlaces: cached.busquedas_destacadas?.lugares ?? [],
+    featuredRestaurants: cached.busquedas_destacadas?.restaurantes ?? [],
     tileStats,
     tilesLoading: false,
   };
@@ -170,6 +173,7 @@ export function HomePage() {
     featuredCities,
     featuredEvents,
     featuredPlaces,
+    featuredRestaurants,
     tilesLoading,
   } = tileState;
 
@@ -350,6 +354,7 @@ export function HomePage() {
         ciudades: FeaturedSearchItem[];
         eventos?: FeaturedSearchItem[];
         lugares?: FeaturedSearchItem[];
+        restaurantes?: FeaturedSearchItem[];
         destinos?: FeaturedSearchItem[];
       };
       tile_stats?: TileStatsMap;
@@ -368,6 +373,7 @@ export function HomePage() {
         featuredCities: payload.busquedas_destacadas?.ciudades ?? [],
         featuredEvents: payload.busquedas_destacadas?.eventos ?? [],
         featuredPlaces: payload.busquedas_destacadas?.lugares ?? [],
+        featuredRestaurants: payload.busquedas_destacadas?.restaurantes ?? [],
         tileStats,
         tilesLoading: false,
       });
@@ -556,7 +562,9 @@ export function HomePage() {
       const title =
         item.kind === "event"
           ? tVars("home.staysNearEvent", { place: item.name })
-          : tVars("home.staysNearPlace", { place: item.name });
+          : item.kind === "restaurant"
+            ? tVars("home.staysNearRestaurant", { place: item.name })
+            : tVars("home.staysNearPlace", { place: item.name });
       loadList(
         {
           lat: Number(lat),
@@ -638,10 +646,28 @@ export function HomePage() {
       );
       return;
     }
+    const lat = Number(params.get("lat"));
+    const lng = Number(params.get("lng"));
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      const radio = Number(params.get("radio_km")) > 0 ? Number(params.get("radio_km")) : NEARBY_RADIUS_KM;
+      const label = (params.get("label") || "").trim() || t("home.featuredTabRestaurants");
+      setBrowse({ label });
+      loadList(
+        {
+          lat,
+          lng,
+          radio_km: radio,
+          page: 1,
+          page_size: DEFAULT_RESULTS_PAGE_SIZE,
+        },
+        tVars("home.staysNearRestaurant", { place: label }),
+      );
+      return;
+    }
     if (lastQueryRef.current?.query.ofertas === 1) {
       clearResults();
     }
-  }, [location.search, loadList, t]);
+  }, [location.search, loadList, t, tVars]);
 
   const retrySearch = () => {
 
@@ -751,6 +777,7 @@ export function HomePage() {
               cities={featuredCities}
               events={featuredEvents}
               places={featuredPlaces}
+              restaurants={featuredRestaurants}
               loading={tilesLoading}
               onSelect={onFeaturedSearch}
             />

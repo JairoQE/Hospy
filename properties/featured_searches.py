@@ -379,11 +379,70 @@ def build_featured_places(limit: int = DEFAULT_LIMIT) -> list[dict]:
     return _build_places_from_tiles(limit)
 
 
+def build_featured_restaurants(limit: int = DEFAULT_LIMIT) -> list[dict]:
+    """Restaurantes RestoPoint + stats de hospedajes cercanos."""
+    try:
+        from integrations.restopoint import RestoPointError, list_restaurants
+    except Exception:
+        return []
+
+    try:
+        payload = list_restaurants(page=0, size=max(limit, 20))
+    except RestoPointError:
+        return []
+    except Exception:
+        return []
+
+    results: list[dict] = []
+    for row in payload.get("restaurants") or []:
+        try:
+            lat = float(row.get("latitude"))
+            lng = float(row.get("longitude"))
+        except (TypeError, ValueError):
+            continue
+
+        stats = _nearby_stats(lat, lng)
+        city = row.get("city") or ""
+        district = row.get("district") or ""
+        subtitle = " · ".join(p for p in (district, city) if p)
+        rating = row.get("avg_rating")
+        capacity = row.get("total_capacity")
+        results.append(
+            {
+                "kind": "restaurant",
+                "name": row.get("name") or f"Restaurante {row.get('id')}",
+                "slug": f"resto-{row.get('id')}",
+                "subtitle": subtitle,
+                "hotels_count": stats["hotels_count"],
+                "price_from": stats["price_from"],
+                "rating_avg": float(rating) if rating is not None else stats["rating_avg"],
+                "image_url": None,
+                "gradient_css": "linear-gradient(135deg, #9a3412 0%, #ea580c 55%, #fbbf24 100%)",
+                "badge": "Restaurante",
+                "restaurant_id": row.get("id"),
+                "capacity_label": (
+                    f"{capacity} mesas" if capacity is not None else None
+                ),
+                "search": {
+                    "lat": lat,
+                    "lng": lng,
+                    "radio_km": NEARBY_RADIUS_KM,
+                    "restaurant_id": row.get("id"),
+                    "label": row.get("name") or "",
+                },
+            }
+        )
+        if len(results) >= limit:
+            break
+    return results
+
+
 def build_featured_searches() -> dict:
     return {
         "ciudades": build_featured_cities(),
         "eventos": build_featured_events(),
         "lugares": build_featured_places(),
+        "restaurantes": build_featured_restaurants(),
         # Compat: antiguas regiones/deptos (ya no se usan en la UI principal)
         "destinos": build_featured_destinations(),
     }

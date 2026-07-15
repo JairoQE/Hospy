@@ -7,12 +7,13 @@ import { resolveMediaUrl } from "../../utils/media";
 import { StarRating } from "../StarRating";
 import { HorizontalCarousel } from "../ui/HorizontalCarousel";
 
-type Tab = "cities" | "events" | "places";
+type Tab = "cities" | "events" | "places" | "restaurants";
 
 interface Props {
   cities: FeaturedSearchItem[];
   events: FeaturedSearchItem[];
   places: FeaturedSearchItem[];
+  restaurants: FeaturedSearchItem[];
   loading?: boolean;
   onSelect: (item: FeaturedSearchItem) => void;
 }
@@ -29,7 +30,10 @@ function FeaturedSearchCard({
   const { t } = useLocaleCurrency();
   const imageUrl = resolveMediaUrl(item.image_url);
   const rating = Number(item.rating_avg) || 0;
-  const isGeo = item.kind === "event" || item.kind === "place";
+  const isGeo =
+    item.kind === "event" ||
+    item.kind === "place" ||
+    item.kind === "restaurant";
 
   return (
     <button
@@ -103,6 +107,7 @@ export function FeaturedSearchesSection({
   cities,
   events,
   places,
+  restaurants,
   loading = false,
   onSelect,
 }: Props) {
@@ -112,25 +117,34 @@ export function FeaturedSearchesSection({
   const hasCities = cities.length > 0;
   const hasEvents = events.length > 0;
   const hasPlaces = places.length > 0;
+  const hasRestaurants = restaurants.length > 0;
 
   const defaultTab = useMemo<Tab>(() => {
     if (hasCities) return "cities";
     if (hasEvents) return "events";
     if (hasPlaces) return "places";
+    if (hasRestaurants) return "restaurants";
     return "cities";
-  }, [hasCities, hasEvents, hasPlaces]);
+  }, [hasCities, hasEvents, hasPlaces, hasRestaurants]);
 
   const activeTab =
     (tab === "cities" && !hasCities) ||
     (tab === "events" && !hasEvents) ||
-    (tab === "places" && !hasPlaces)
+    (tab === "places" && !hasPlaces) ||
+    (tab === "restaurants" && !hasRestaurants)
       ? defaultTab
       : tab;
 
   const visibleItems =
-    activeTab === "cities" ? cities : activeTab === "events" ? events : places;
+    activeTab === "cities"
+      ? cities
+      : activeTab === "events"
+        ? events
+        : activeTab === "places"
+          ? places
+          : restaurants;
 
-  if (!loading && !hasCities && !hasEvents && !hasPlaces) {
+  if (!loading && !hasCities && !hasEvents && !hasPlaces && !hasRestaurants) {
     return null;
   }
 
@@ -173,6 +187,16 @@ export function FeaturedSearchesSection({
           onClick={() => setTab("places")}
         >
           {t("home.featuredTabPlaces")}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          className={`featured-searches-tab${activeTab === "restaurants" ? " is-active" : ""}`}
+          aria-selected={activeTab === "restaurants"}
+          disabled={!hasRestaurants && !loading}
+          onClick={() => setTab("restaurants")}
+        >
+          {t("home.featuredTabRestaurants")}
         </button>
       </div>
 

@@ -34,13 +34,13 @@ def test_protocol_p06_supported_when_key_configured(api_client):
 
 
 @pytest.mark.django_db
-def test_interfaces_lists_eleven_entries(api_client):
+def test_interfaces_lists_twelve_entries(api_client):
     response = api_client.get("/api/v1/sistema/interfaces/")
     assert response.status_code == 200
     data = response.json()
     assert data["metric"] == "CIn-3-S"
-    assert data["B"] == 11
-    assert len(data["interfaces"]) == 11
+    assert data["B"] == 12
+    assert len(data["interfaces"]) == 12
     assert data["A"] == sum(1 for i in data["interfaces"] if i["functional"])
     assert data["X"] == round(data["A"] / data["B"], 4)
 
@@ -62,8 +62,9 @@ def test_interface_if02_functional_with_key(api_client, monkeypatch):
         IP_GUIDE_ENABLED=True,
         ACTIFY_API_KEY="actify-test",
         CONECTA_TINGO_API_KEY="ct-test",
+        RESTOPOINT_API_KEY="rp-test",
     ):
         response = api_client.get("/api/v1/sistema/interfaces/")
     data = response.json()
-    assert data["A"] == 11
+    assert data["A"] == 12
     assert data["X"] == 1.0

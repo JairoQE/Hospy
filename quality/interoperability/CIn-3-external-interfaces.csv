@@ -10,3 +10,4 @@ IF-08,LLM asistente Hospix,Google Gemini,Sí,Sí,GEMINI_API_KEY + HOSPIX_LLM_PRO
 IF-09,Captcha login,Cloudflare Turnstile,Sí,Sí,TURNSTILE_SITE_KEY/SECRET en Cloud Run,Verificación en auth
 IF-10,Catálogo de eventos,Actify,Sí,Sí,ACTIFY_API_KEY; GET /api/v1/eventos/,Proxy REST Bearer hacia Actify
 IF-11,Demanda turística / hotspots,Conecta Tingo,Sí,Sí,CONECTA_TINGO_API_KEY; GET /api/v1/lugares-turisticos/,Proxy REST api_key hacia Conecta Tingo
+IF-12,Catálogo de restaurantes,RestoPoint,Sí,Sí,RESTOPOINT_API_KEY; GET /api/v1/restaurantes/,Proxy REST X-API-Key hacia RestoPoint

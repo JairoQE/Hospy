@@ -307,7 +307,7 @@ export interface BrowseTile {
 }
 
 export interface FeaturedSearchItem {
-  kind: "city" | "destination" | "event" | "place";
+  kind: "city" | "destination" | "event" | "place" | "restaurant";
   name: string;
   slug: string;
   subtitle?: string;
@@ -318,6 +318,7 @@ export interface FeaturedSearchItem {
   gradient_css?: string;
   badge?: string;
   event_id?: number;
+  restaurant_id?: string;
   start_date?: string;
   capacity_label?: string;
   search: {
@@ -330,6 +331,7 @@ export interface FeaturedSearchItem {
     lng?: number;
     radio_km?: number;
     event_id?: number;
+    restaurant_id?: string;
     label?: string;
   };
   tile_id?: number;
@@ -339,6 +341,7 @@ export interface FeaturedSearchesPayload {
   ciudades: FeaturedSearchItem[];
   eventos: FeaturedSearchItem[];
   lugares: FeaturedSearchItem[];
+  restaurantes?: FeaturedSearchItem[];
   /** @deprecated regiones/deptos; se mantiene por compatibilidad */
   destinos?: FeaturedSearchItem[];
 }

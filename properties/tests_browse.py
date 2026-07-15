@@ -30,6 +30,7 @@ def test_inicio_bootstrap_agrupa_bloques(api_client):
     assert isinstance(featured["destinos"], list)
     assert isinstance(featured.get("eventos"), list)
     assert isinstance(featured.get("lugares"), list)
+    assert isinstance(featured.get("restaurantes"), list)
     assert isinstance(r.data["tile_stats"], dict)
     assert "tipo|hotel" in r.data["tile_stats"] or len(r.data["tile_stats"]) >= 0
 

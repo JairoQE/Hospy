@@ -387,3 +387,55 @@ class ConectaTingoDatosView(APIView):
             if code == 429:
                 http = status.HTTP_429_TOO_MANY_REQUESTS
             return Response({"detail": str(exc)}, status=http)
+
+
+class RestoPointListView(APIView):
+    """GET /api/v1/restaurantes/ — proxy al catálogo RestoPoint."""
+
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request):
+        from .restopoint import RestoPointError, list_restaurants
+
+        page_raw = (request.query_params.get("page") or "0").strip()
+        size_raw = (request.query_params.get("size") or "50").strip()
+        page = int(page_raw) if page_raw.isdigit() else 0
+        size = int(size_raw) if size_raw.isdigit() else 50
+        try:
+            return Response(list_restaurants(page=page, size=size))
+        except RestoPointError as exc:
+            code = exc.status_code or 502
+            http = (
+                status.HTTP_503_SERVICE_UNAVAILABLE
+                if code >= 500
+                else status.HTTP_400_BAD_REQUEST
+            )
+            if code == 404:
+                http = status.HTTP_404_NOT_FOUND
+            if code == 429:
+                http = status.HTTP_429_TOO_MANY_REQUESTS
+            return Response({"detail": str(exc)}, status=http)
+
+
+class RestoPointDetailView(APIView):
+    """GET /api/v1/restaurantes/<id>/ — detalle RestoPoint."""
+
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request, pk: str):
+        from .restopoint import RestoPointError, get_restaurant
+
+        try:
+            return Response(get_restaurant(pk))
+        except RestoPointError as exc:
+            code = exc.status_code or 502
+            http = (
+                status.HTTP_503_SERVICE_UNAVAILABLE
+                if code >= 500
+                else status.HTTP_400_BAD_REQUEST
+            )
+            if code == 404:
+                http = status.HTTP_404_NOT_FOUND
+            if code == 429:
+                http = status.HTTP_429_TOO_MANY_REQUESTS
+            return Response({"detail": str(exc)}, status=http)

@@ -56,6 +56,11 @@ export function SiteHeader() {
       isActive: (loc: typeof location) => loc.pathname.startsWith("/eventos"),
     },
     {
+      to: "/restaurantes",
+      label: "Restaurantes",
+      isActive: (loc: typeof location) => loc.pathname.startsWith("/restaurantes"),
+    },
+    {
       to: { pathname: "/", search: "?ofertas=1" },
       label: t("nav.offers"),
       isActive: isOfertasNavActive,

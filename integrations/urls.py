@@ -37,4 +37,14 @@ urlpatterns = [
         views.ConectaTingoDatosView.as_view(),
         name="conecta-tingo-datos",
     ),
+    path(
+        "restaurantes/",
+        views.RestoPointListView.as_view(),
+        name="restopoint-list",
+    ),
+    path(
+        "restaurantes/<str:pk>/",
+        views.RestoPointDetailView.as_view(),
+        name="restopoint-detail",
+    ),
 ]

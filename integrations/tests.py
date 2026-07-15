@@ -267,3 +267,54 @@ def test_conecta_tingo_proxy_mocked(monkeypatch, settings):
     assert listed.data["hotspots"][0]["name"] == "Cueva las Lechuzas"
     assert listed.data["hotspots"][0]["entry_price"] == "10 soles"
     assert listed.data["hotspots"][0]["latitude"] is not None
+
+
+@pytest.mark.django_db
+def test_restopoint_proxy_mocked(monkeypatch, settings):
+    settings.RESTOPOINT_API_KEY = "rp_test_key"
+    settings.RESTOPOINT_BASE_URL = (
+        "https://restopoint.example/api/v1/developer-api"
+    )
+
+    sample_list = {
+        "restaurants": [
+            {
+                "id": "a1b2",
+                "name": "El Fogón de la Selva",
+                "address": "Jr. Raymondi 123",
+                "district": "Rupa Rupa",
+                "city": "Tingo María",
+                "region": "Huánuco",
+                "latitude": -9.2953,
+                "longitude": -75.9975,
+                "avg_rating": 4.6,
+                "total_capacity": 40,
+                "maps_url": "https://www.google.com/maps?q=-9.2953,-75.9975",
+                "source": "restopoint",
+            }
+        ],
+        "count": 1,
+        "page": 0,
+        "size": 50,
+        "provider": "restopoint",
+        "success": True,
+    }
+
+    monkeypatch.setattr(
+        "integrations.restopoint.list_restaurants",
+        lambda *, page=0, size=50: sample_list,
+    )
+    monkeypatch.setattr(
+        "integrations.restopoint.get_restaurant",
+        lambda pk: sample_list["restaurants"][0],
+    )
+
+    client = APIClient()
+    listed = client.get("/api/v1/restaurantes/")
+    assert listed.status_code == 200
+    assert listed.data["count"] == 1
+    assert listed.data["restaurants"][0]["name"] == "El Fogón de la Selva"
+
+    detail = client.get("/api/v1/restaurantes/a1b2/")
+    assert detail.status_code == 200
+    assert detail.data["id"] == "a1b2"

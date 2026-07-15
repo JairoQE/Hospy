@@ -43,6 +43,8 @@ import { InboxPage } from "./pages/InboxPage";
 import { CompanyPage } from "./pages/CompanyPage";
 import { EventDetailPage } from "./pages/EventDetailPage";
 import { EventsPage } from "./pages/EventsPage";
+import { RestaurantsPage } from "./pages/RestaurantsPage";
+import { RestaurantDetailPage } from "./pages/RestaurantDetailPage";
 import { OwnerStorePage } from "./pages/OwnerStorePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -82,6 +84,8 @@ function AppTree() {
             <Route path="empresa/:slug" element={<CompanyPage />} />
             <Route path="eventos" element={<EventsPage />} />
             <Route path="eventos/:id" element={<EventDetailPage />} />
+            <Route path="restaurantes" element={<RestaurantsPage />} />
+            <Route path="restaurantes/:id" element={<RestaurantDetailPage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="recuperar-contraseña" element={<ForgotPasswordPage />} />
             <Route path="registro" element={<RegisterPage />} />

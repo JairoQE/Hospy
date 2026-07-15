@@ -94,6 +94,16 @@ CONECTA_TINGO_TIMEOUT_SECONDS = float(
     os.environ.get("CONECTA_TINGO_TIMEOUT_SECONDS", "12")
 )
 
+# RestoPoint — catálogo de restaurantes (header X-API-Key)
+RESTOPOINT_API_KEY = os.environ.get("RESTOPOINT_API_KEY", "").strip()
+RESTOPOINT_BASE_URL = os.environ.get(
+    "RESTOPOINT_BASE_URL",
+    "https://restaurants-backend-ni6d.onrender.com/api/v1/developer-api",
+).rstrip("/")
+RESTOPOINT_TIMEOUT_SECONDS = float(
+    os.environ.get("RESTOPOINT_TIMEOUT_SECONDS", "15")
+)
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
