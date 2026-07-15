@@ -83,6 +83,31 @@ def _normalize_event(raw: dict) -> dict[str, Any]:
     organizer = raw.get("organizer") if isinstance(raw.get("organizer"), dict) else {}
     tickets = raw.get("ticket_types") if isinstance(raw.get("ticket_types"), list) else []
 
+    image_url = (
+        raw.get("image_url")
+        or raw.get("image")
+        or raw.get("cover_image")
+        or raw.get("cover_url")
+        or raw.get("banner_url")
+        or raw.get("poster_url")
+        or raw.get("thumbnail")
+        or raw.get("thumbnail_url")
+        or ""
+    )
+    if isinstance(image_url, dict):
+        image_url = (
+            image_url.get("url")
+            or image_url.get("src")
+            or image_url.get("image_url")
+            or ""
+        )
+    if not image_url and isinstance(raw.get("images"), list) and raw["images"]:
+        first = raw["images"][0]
+        if isinstance(first, str):
+            image_url = first
+        elif isinstance(first, dict):
+            image_url = first.get("url") or first.get("src") or ""
+
     return {
         "id": raw.get("id"),
         "name": raw.get("name") or "",
@@ -90,6 +115,7 @@ def _normalize_event(raw: dict) -> dict[str, Any]:
         "start_date": raw.get("start_date") or "",
         "end_date": raw.get("end_date") or "",
         "status": raw.get("status") or "",
+        "image_url": str(image_url).strip() or None,
         "capacity": {
             "max_capacity": capacity.get("max_capacity"),
             "sold_tickets": capacity.get("sold_tickets"),

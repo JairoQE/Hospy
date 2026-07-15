@@ -11,6 +11,9 @@ export type RestoPointRestaurant = {
   longitude: number | null;
   avg_rating?: number | null;
   total_capacity?: number | null;
+  cover_image_url?: string | null;
+  logo_url?: string | null;
+  image_url?: string | null;
   maps_url?: string | null;
   source?: string;
 };

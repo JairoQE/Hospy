@@ -194,6 +194,7 @@ def test_actify_events_proxy_mocked(monkeypatch, settings):
                     "category": sample[0]["category"],
                     "organizer": sample[0]["organizer"],
                     "ticket_types": sample[0]["ticket_types"],
+                    "image_url": None,
                     "source": "actify",
                 }
             ],
@@ -289,6 +290,9 @@ def test_restopoint_proxy_mocked(monkeypatch, settings):
                 "longitude": -75.9975,
                 "avg_rating": 4.6,
                 "total_capacity": 40,
+                "cover_image_url": "https://example.com/cover.jpg",
+                "logo_url": "https://example.com/logo.jpg",
+                "image_url": "https://example.com/cover.jpg",
                 "maps_url": "https://www.google.com/maps?q=-9.2953,-75.9975",
                 "source": "restopoint",
             }

@@ -65,6 +65,14 @@ export function RestaurantsPage() {
           {items.map((r) => (
             <li key={r.id}>
               <Link to={`/restaurantes/${r.id}`} className="events-page-card">
+                {r.cover_image_url || r.image_url ? (
+                  <div
+                    className="events-page-card-cover"
+                    style={{
+                      backgroundImage: `url(${r.cover_image_url || r.image_url})`,
+                    }}
+                  />
+                ) : null}
                 <h2>{r.name}</h2>
                 <p className="muted">
                   {[r.district, r.city, r.region].filter(Boolean).join(" · ")}

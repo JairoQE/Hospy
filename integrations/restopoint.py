@@ -95,9 +95,20 @@ def _normalize_restaurant(raw: dict) -> dict[str, Any]:
     except (TypeError, ValueError):
         lng = None
 
+    cover = (
+        raw.get("coverImageUrl")
+        or raw.get("cover_image_url")
+        or raw.get("image_url")
+        or raw.get("image")
+        or ""
+    )
+    logo = raw.get("logoUrl") or raw.get("logo_url") or ""
+
     return {
         "id": raw.get("id"),
         "name": raw.get("name") or "",
+        "slug": raw.get("slug") or "",
+        "description": raw.get("description") or "",
         "address": raw.get("address") or "",
         "district": raw.get("district") or "",
         "city": raw.get("city") or "",
@@ -108,6 +119,9 @@ def _normalize_restaurant(raw: dict) -> dict[str, Any]:
         "total_capacity": raw.get("totalCapacity")
         if raw.get("totalCapacity") is not None
         else raw.get("total_capacity"),
+        "cover_image_url": str(cover).strip() or None,
+        "logo_url": str(logo).strip() or None,
+        "image_url": str(cover).strip() or str(logo).strip() or None,
         "maps_url": (
             f"https://www.google.com/maps?q={lat},{lng}"
             if lat is not None and lng is not None

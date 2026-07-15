@@ -219,6 +219,36 @@ def build_featured_destinations(limit: int = DEFAULT_LIMIT) -> list[dict]:
     return results
 
 
+def _accent_gradient(kind: str, seed: str = "") -> str:
+    """Gradientes decorativos (no fotos): variedad visual sin fingir imagen del lugar."""
+    palettes = {
+        "event": [
+            "linear-gradient(145deg, #0f766e 0%, #134e4a 45%, #f59e0b 100%)",
+            "linear-gradient(145deg, #1e3a8a 0%, #312e81 50%, #06b6d4 100%)",
+            "linear-gradient(145deg, #7c2d12 0%, #9a3412 40%, #fbbf24 100%)",
+            "linear-gradient(145deg, #4c1d95 0%, #6d28d9 55%, #ec4899 100%)",
+            "linear-gradient(145deg, #0e7490 0%, #155e75 50%, #a3e635 100%)",
+        ],
+        "place": [
+            "linear-gradient(145deg, #14532d 0%, #166534 40%, #65a30d 100%)",
+            "linear-gradient(145deg, #064e3b 0%, #0f766e 50%, #5eead4 100%)",
+            "linear-gradient(145deg, #1e3a5f 0%, #0d9488 55%, #bbf7d0 100%)",
+            "linear-gradient(145deg, #365314 0%, #3f6212 45%, #fde047 100%)",
+            "linear-gradient(145deg, #134e4a 0%, #115e59 50%, #99f6e4 100%)",
+        ],
+        "restaurant": [
+            "linear-gradient(145deg, #9a3412 0%, #c2410c 50%, #fbbf24 100%)",
+            "linear-gradient(145deg, #7f1d1d 0%, #b91c1c 45%, #fb923c 100%)",
+            "linear-gradient(145deg, #78350f 0%, #a16207 50%, #fcd34d 100%)",
+            "linear-gradient(145deg, #9f1239 0%, #e11d48 50%, #fdba74 100%)",
+            "linear-gradient(145deg, #7c2d12 0%, #ea580c 55%, #fef3c7 100%)",
+        ],
+    }
+    options = palettes.get(kind) or palettes["place"]
+    idx = sum(ord(ch) for ch in (seed or "x")) % len(options)
+    return options[idx]
+
+
 def build_featured_events(limit: int = DEFAULT_LIMIT) -> list[dict]:
     """Eventos Actify publicados + stats de hospedajes cercanos."""
     try:
@@ -245,18 +275,24 @@ def build_featured_events(limit: int = DEFAULT_LIMIT) -> list[dict]:
         stats = _nearby_stats(lat, lng)
         capacity = event.get("capacity") or {}
         category = event.get("category") or {}
+        name = event.get("name") or f"Evento {event.get('id')}"
+        # Solo imagen real de Actify si existe; si no, visual decorativo (sin fotos inventadas).
+        image_url = event.get("image_url") or None
         results.append(
             {
                 "kind": "event",
-                "name": event.get("name") or f"Evento {event.get('id')}",
+                "name": name,
                 "slug": f"evento-{event.get('id')}",
                 "subtitle": category.get("name") or loc.get("city") or "",
                 "hotels_count": stats["hotels_count"],
                 "price_from": stats["price_from"],
                 "rating_avg": stats["rating_avg"],
-                "image_url": None,
-                "gradient_css": "linear-gradient(135deg, #0f766e 0%, #14b8a6 55%, #f59e0b 100%)",
-                "badge": "Evento",
+                "image_url": image_url,
+                "gradient_css": _accent_gradient(
+                    "event",
+                    f"{name}-{category.get('slug') or ''}",
+                ),
+                "badge": "Actify",
                 "event_id": event.get("id"),
                 "start_date": event.get("start_date") or "",
                 "capacity_label": (
@@ -269,7 +305,7 @@ def build_featured_events(limit: int = DEFAULT_LIMIT) -> list[dict]:
                     "lng": lng,
                     "radio_km": NEARBY_RADIUS_KM,
                     "event_id": event.get("id"),
-                    "label": event.get("name") or "",
+                    "label": name,
                 },
             }
         )
@@ -315,7 +351,10 @@ def _build_places_from_conecta_tingo(limit: int) -> list[dict]:
                 "price_from": stats["price_from"],
                 "rating_avg": stats["rating_avg"],
                 "image_url": None,
-                "gradient_css": "linear-gradient(135deg, #166534 0%, #22c55e 55%, #84cc16 100%)",
+                "gradient_css": _accent_gradient(
+                    "place",
+                    f"{spot.get('name') or ''}-{interes}",
+                ),
                 "badge": "Conecta Tingo",
                 "capacity_label": entry or None,
                 "search": {
@@ -416,9 +455,12 @@ def build_featured_restaurants(limit: int = DEFAULT_LIMIT) -> list[dict]:
                 "hotels_count": stats["hotels_count"],
                 "price_from": stats["price_from"],
                 "rating_avg": float(rating) if rating is not None else stats["rating_avg"],
-                "image_url": None,
-                "gradient_css": "linear-gradient(135deg, #9a3412 0%, #ea580c 55%, #fbbf24 100%)",
-                "badge": "Restaurante",
+                "image_url": row.get("image_url") or row.get("cover_image_url") or None,
+                "gradient_css": _accent_gradient(
+                    "restaurant",
+                    str(row.get("name") or row.get("id") or ""),
+                ),
+                "badge": "RestoPoint",
                 "restaurant_id": row.get("id"),
                 "capacity_label": (
                     f"{capacity} mesas" if capacity is not None else None

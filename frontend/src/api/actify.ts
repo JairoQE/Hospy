@@ -14,6 +14,7 @@ export type ActifyEvent = {
   start_date: string;
   end_date: string;
   status: string;
+  image_url?: string | null;
   capacity: ActifyCapacity;
   location: {
     city: string;

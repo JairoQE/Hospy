@@ -34,6 +34,15 @@ function FeaturedSearchCard({
     item.kind === "event" ||
     item.kind === "place" ||
     item.kind === "restaurant";
+  const useAtmosphere = !imageUrl && Boolean(item.gradient_css);
+  const motif =
+    item.kind === "event"
+      ? "event"
+      : item.kind === "place"
+        ? "place"
+        : item.kind === "restaurant"
+          ? "restaurant"
+          : "city";
 
   return (
     <button
@@ -42,15 +51,24 @@ function FeaturedSearchCard({
       onClick={() => onSelect(item)}
     >
       <div
-        className="featured-search-card-image"
+        className={`featured-search-card-image${
+          useAtmosphere
+            ? ` featured-search-card-image--atmosphere featured-search-card-image--${motif}`
+            : ""
+        }`}
         style={
           imageUrl
             ? { backgroundImage: `url(${imageUrl})` }
             : item.gradient_css
-              ? { background: item.gradient_css }
+              ? { backgroundImage: item.gradient_css }
               : undefined
         }
       >
+        {useAtmosphere ? (
+          <span className="featured-search-card-motif" aria-hidden>
+            {motif === "event" ? "✦" : motif === "place" ? "◈" : motif === "restaurant" ? "◎" : "○"}
+          </span>
+        ) : null}
         {!imageUrl && !item.gradient_css && (
           <span className="featured-search-card-placeholder">{noPhotoLabel}</span>
         )}
