@@ -193,7 +193,11 @@ export function HomePage() {
         1,
         Number(query.page_size) || DEFAULT_RESULTS_PAGE_SIZE,
       );
-      const fullQuery = { ...query, page, page_size: pageSize };
+      const fullQuery: Record<string, string | number | undefined | null> = {
+        ...query,
+        page,
+        page_size: pageSize,
+      };
 
       lastQueryRef.current = { query: fullQuery, title };
       setActiveQuery(fullQuery);
