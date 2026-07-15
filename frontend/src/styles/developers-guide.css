@@ -1,26 +1,124 @@
 .developers-guide {
-  max-width: 52rem;
-  padding-bottom: 3rem;
+  padding-bottom: 3.5rem;
+}
+
+.developers-guide-shell {
+  display: grid;
+  gap: 1.75rem;
+  align-items: start;
+}
+
+@media (min-width: 980px) {
+  .developers-guide-shell {
+    grid-template-columns: 15.5rem minmax(0, 1fr);
+    gap: 2.25rem;
+  }
+}
+
+.developers-guide-aside {
+  position: sticky;
+  top: 5.5rem;
+  padding: 1rem;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface, #fff) 92%, #0d9488 8%);
+  border: 1px solid color-mix(in srgb, #0d9488 22%, transparent);
+}
+
+.developers-guide-aside-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.developers-guide-toc {
+  margin: 0;
+}
+
+.developers-guide-toc ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.developers-guide-toc a {
+  display: block;
+  padding: 0.35rem 0.45rem;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.developers-guide-toc a:hover {
+  background: rgba(13, 148, 136, 0.12);
+  color: #0f766e;
+}
+
+.developers-guide-aside-cta {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(13, 148, 136, 0.2);
+}
+
+.developers-guide-main {
+  min-width: 0;
+  max-width: 48rem;
 }
 
 .developers-guide-hero {
   margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(15, 39, 68, 0.1);
 }
 
 .developers-guide-kicker {
   margin: 0 0 0.5rem;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--accent, #0d9488);
+  color: #0d9488;
+}
+
+.developers-guide-hero h1 {
+  margin: 0;
+  font-size: clamp(1.65rem, 2.5vw, 2.15rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .developers-guide-lead {
   font-size: 1.05rem;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--muted, #5a6a7a);
-  margin: 0.75rem 0 1.25rem;
+  margin: 0.85rem 0 1rem;
+}
+
+.developers-guide-hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.15rem;
+}
+
+.dev-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: rgba(13, 148, 136, 0.1);
+  color: #0f766e;
+  border: 1px solid rgba(13, 148, 136, 0.18);
 }
 
 .developers-guide-actions {
@@ -29,134 +127,431 @@
   gap: 0.65rem;
 }
 
-.developers-guide-toc {
-  padding: 1rem 1.15rem;
-  border-radius: 12px;
-  background: rgba(13, 148, 136, 0.06);
-  border: 1px solid rgba(13, 148, 136, 0.18);
-  margin-bottom: 2rem;
-}
-
-.developers-guide-toc h2 {
-  margin: 0 0 0.65rem;
-  font-size: 1rem;
-}
-
-.developers-guide-toc ol {
-  margin: 0;
-  padding-left: 1.25rem;
-  display: grid;
-  gap: 0.35rem;
-}
-
-.developers-guide-toc a {
-  color: inherit;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
 .developers-guide-section {
-  margin-bottom: 2rem;
+  margin-bottom: 2.35rem;
+  scroll-margin-top: 5.5rem;
 }
 
 .developers-guide-section h2 {
-  font-size: 1.25rem;
-  margin: 0 0 0.75rem;
+  font-size: 1.3rem;
+  margin: 0 0 0.85rem;
+  letter-spacing: -0.015em;
 }
 
 .developers-guide-section h3 {
-  font-size: 1.05rem;
-  margin: 1.1rem 0 0.5rem;
+  font-size: 1.02rem;
+  margin: 1.25rem 0 0.55rem;
 }
 
 .developers-guide-section p,
-.developers-guide-section li,
-.developers-guide-faq dd {
-  line-height: 1.55;
+.developers-guide-section li {
+  line-height: 1.6;
 }
 
 .developers-guide-callout {
   display: flex;
   gap: 0.75rem;
   align-items: flex-start;
-  padding: 0.85rem 1rem;
-  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
   background: rgba(59, 130, 246, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.22);
   margin: 1rem 0;
+}
+
+.developers-guide-callout--warn {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.35);
 }
 
 .developers-guide-callout p {
   margin: 0;
 }
 
-.developers-guide-steps {
+.dev-spec-grid {
   display: grid;
-  gap: 0.65rem;
-  padding-left: 1.25rem;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .dev-spec-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.dev-spec-card {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.95rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 39, 68, 0.1);
+  background: color-mix(in srgb, var(--surface, #fff) 96%, #0f172a 4%);
+}
+
+.dev-spec-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  flex-shrink: 0;
+  color: #0f766e;
+  background: rgba(13, 148, 136, 0.14);
+}
+
+.dev-spec-card h3 {
+  margin: 0 0 0.3rem;
+  font-size: 0.95rem;
+}
+
+.dev-spec-body p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted, #5a6a7a);
+}
+
+.dev-arch-steps {
+  margin: 0.5rem 0 0.85rem;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.dev-steps-cards {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.dev-steps-cards li {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 0.95rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 39, 68, 0.1);
+  background: rgba(15, 39, 68, 0.02);
+}
+
+.dev-step-num {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #fff;
+  background: #0d9488;
+}
+
+.dev-steps-cards strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.dev-steps-cards p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--muted, #5a6a7a);
+}
+
+.dev-endpoint {
+  margin: 1rem 0 1.35rem;
+  padding: 1rem 1.05rem;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 39, 68, 0.12);
+  background: color-mix(in srgb, var(--surface, #fff) 97%, #0d9488 3%);
+}
+
+.dev-endpoint-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.55rem;
+}
+
+.dev-method {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #065f46;
+  background: rgba(16, 185, 129, 0.18);
+}
+
+.dev-path {
+  font-size: 0.86rem;
+  word-break: break-all;
+}
+
+.dev-endpoint h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.02rem;
+}
+
+.dev-endpoint > p {
+  margin: 0 0 0.65rem;
+  color: var(--muted, #5a6a7a);
+  font-size: 0.94rem;
+}
+
+.dev-params {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.dev-params li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.55rem;
+  font-size: 0.88rem;
+}
+
+.dev-badge-req,
+.dev-badge-opt {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+}
+
+.dev-badge-req {
+  color: #9a3412;
+  background: rgba(234, 88, 12, 0.14);
+}
+
+.dev-badge-opt {
+  color: #475569;
+  background: rgba(100, 116, 139, 0.14);
 }
 
 .developers-guide-table-wrap {
   overflow-x: auto;
-  margin: 1rem 0;
+  margin: 0.75rem 0 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 39, 68, 0.1);
 }
 
 .developers-guide-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
 }
 
 .developers-guide-table th,
 .developers-guide-table td {
   text-align: left;
-  padding: 0.55rem 0.65rem;
-  border-bottom: 1px solid rgba(15, 39, 68, 0.1);
+  padding: 0.65rem 0.8rem;
+  border-bottom: 1px solid rgba(15, 39, 68, 0.08);
   vertical-align: top;
 }
 
 .developers-guide-table th {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   color: var(--muted, #5a6a7a);
+  background: rgba(15, 39, 68, 0.03);
 }
 
-.developers-guide-code {
-  margin: 0.85rem 0;
+.developers-guide-table tr:last-child td {
+  border-bottom: none;
+}
+
+.dev-code {
+  margin: 0.75rem 0 1rem;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 39, 68, 0.14);
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.dev-code-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.7rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dev-code-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 0.78rem;
+}
+
+.dev-code-meta strong {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.dev-code-lang {
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.68rem;
+}
+
+.dev-code-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 0;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dev-code-copy:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.dev-code pre {
+  margin: 0;
   padding: 0.9rem 1rem;
-  border-radius: 10px;
-  background: rgba(15, 39, 68, 0.06);
   overflow-x: auto;
-  font-size: 0.82rem;
-  line-height: 1.45;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-.developers-guide-faq dt {
+.dev-code code {
+  font-family: inherit;
+  white-space: pre;
+}
+
+.dev-out-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.dev-faq {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.dev-faq details {
+  border-radius: 12px;
+  border: 1px solid rgba(15, 39, 68, 0.1);
+  padding: 0.15rem 0.95rem 0.35rem;
+  background: rgba(15, 39, 68, 0.02);
+}
+
+.dev-faq summary {
+  cursor: pointer;
   font-weight: 700;
-  margin-top: 0.85rem;
+  padding: 0.7rem 0;
+  list-style: none;
 }
 
-.developers-guide-faq dd {
-  margin: 0.25rem 0 0;
+.dev-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.dev-faq summary::before {
+  content: "+";
+  display: inline-block;
+  width: 1.1rem;
+  color: #0d9488;
+  font-weight: 800;
+}
+
+.dev-faq details[open] summary::before {
+  content: "–";
+}
+
+.dev-faq details p {
+  margin: 0 0 0.85rem;
   color: var(--muted, #5a6a7a);
+  font-size: 0.94rem;
 }
 
 .developers-guide-footer {
-  margin-top: 2.5rem;
+  margin-top: 2rem;
   padding-top: 1.25rem;
   border-top: 1px solid rgba(15, 39, 68, 0.1);
 }
 
-:root[data-theme="dark"] .developers-guide-toc {
-  background: rgba(13, 148, 136, 0.12);
+@media (max-width: 979px) {
+  .developers-guide-aside {
+    position: static;
+  }
+
+  .developers-guide-toc ol {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.15rem 0.75rem;
+  }
 }
 
-:root[data-theme="dark"] .developers-guide-code {
-  background: rgba(255, 255, 255, 0.06);
+@media (max-width: 560px) {
+  .developers-guide-toc ol {
+    grid-template-columns: 1fr;
+  }
+}
+
+:root[data-theme="dark"] .developers-guide-aside {
+  background: rgba(13, 148, 136, 0.12);
+  border-color: rgba(45, 212, 191, 0.25);
+}
+
+:root[data-theme="dark"] .developers-guide-hero {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .dev-spec-card,
+:root[data-theme="dark"] .dev-steps-cards li,
+:root[data-theme="dark"] .dev-endpoint,
+:root[data-theme="dark"] .dev-faq details {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .developers-guide-table-wrap {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .developers-guide-table th {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 :root[data-theme="dark"] .developers-guide-table th,
 :root[data-theme="dark"] .developers-guide-table td {
   border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="dark"] .dev-chip {
+  background: rgba(45, 212, 191, 0.12);
+  color: #5eead4;
+  border-color: rgba(45, 212, 191, 0.25);
+}
+
+:root[data-theme="dark"] .developers-guide-footer {
+  border-top-color: rgba(255, 255, 255, 0.1);
 }
