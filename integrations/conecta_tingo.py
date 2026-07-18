@@ -15,7 +15,7 @@ from django.utils.text import slugify
 logger = logging.getLogger(__name__)
 
 CACHE_TTL = 120  # 2 min — rate limit 60/min; datos de demanda cambiantes
-CACHE_KEY = "conecta_tingo:datos:v1"
+CACHE_KEY = "conecta_tingo:datos:v2"
 
 # Centro urbano (fallback por zona cuando el POI no tiene coordenada propia).
 _ZONE_COORDS: dict[str, tuple[float, float]] = {
@@ -143,18 +143,33 @@ def _entry_prices(data: dict[str, Any]) -> dict[str, str]:
     return prices
 
 
+def _entry_photos(data: dict[str, Any]) -> dict[str, str]:
+    photos: dict[str, str] = {}
+    eventos = (data.get("eventos") or {}) if isinstance(data, dict) else {}
+    for row in eventos.get("metricas") or []:
+        if not isinstance(row, dict):
+            continue
+        lugar = _norm(str(row.get("lugar") or ""))
+        foto = str(
+            row.get("foto") or row.get("image") or row.get("image_url") or ""
+        ).strip()
+        if lugar and foto:
+            photos[lugar] = foto
+    return photos
+
+
 def list_hotspots(limit: int | None = None) -> list[dict[str, Any]]:
     """
     Normaliza hotspots de demanda hotelera (data.hoteles.metricas).
 
-    Cada ítem incluye coords cuando se pueden resolver y precio de entrada
-    si aparece en data.eventos.metricas.
+    Incluye coords, precio de entrada e imagen (`foto`) cuando existen.
     """
     payload = fetch_datos()
     data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
     hoteles = data.get("hoteles") if isinstance(data.get("hoteles"), dict) else {}
     metricas = hoteles.get("metricas") or []
     prices = _entry_prices(data)
+    photos = _entry_photos(data)
 
     results: list[dict[str, Any]] = []
     for row in metricas:
@@ -169,6 +184,13 @@ def list_hotspots(limit: int | None = None) -> list[dict[str, Any]]:
         except ValueError:
             interes = 0
         coords = resolve_coords(destino, zona)
+        foto = str(
+            row.get("foto")
+            or row.get("image")
+            or row.get("image_url")
+            or photos.get(_norm(destino))
+            or ""
+        ).strip()
         results.append(
             {
                 "name": destino,
@@ -176,6 +198,7 @@ def list_hotspots(limit: int | None = None) -> list[dict[str, Any]]:
                 "zone": zona,
                 "interest_level": interes,
                 "entry_price": prices.get(_norm(destino)) or "",
+                "image_url": foto or None,
                 "latitude": coords[0] if coords else None,
                 "longitude": coords[1] if coords else None,
                 "source": "conecta_tingo",

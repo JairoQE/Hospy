@@ -236,11 +236,13 @@ def test_conecta_tingo_proxy_mocked(monkeypatch, settings):
                     {
                         "destino": "Cueva las Lechuzas",
                         "zona": "Tingo María",
+                        "foto": "https://conectatingo.com/uploads/cueva.jpg",
                         "nivel_interes": "9",
                     },
                     {
                         "destino": "Laguna de los Milagros",
                         "zona": "Tingo María",
+                        "foto": "https://conectatingo.com/uploads/laguna.jpg",
                         "nivel_interes": "8",
                     },
                 ],
@@ -250,7 +252,11 @@ def test_conecta_tingo_proxy_mocked(monkeypatch, settings):
             "eventos": {
                 "descripcion": "",
                 "metricas": [
-                    {"lugar": "Cueva las Lechuzas", "precio_entrada": "10 soles"},
+                    {
+                        "lugar": "Cueva las Lechuzas",
+                        "precio_entrada": "10 soles",
+                        "foto": "https://conectatingo.com/uploads/cueva.jpg",
+                    },
                 ],
             },
         },
@@ -268,6 +274,9 @@ def test_conecta_tingo_proxy_mocked(monkeypatch, settings):
     assert listed.data["hotspots"][0]["name"] == "Cueva las Lechuzas"
     assert listed.data["hotspots"][0]["entry_price"] == "10 soles"
     assert listed.data["hotspots"][0]["latitude"] is not None
+    assert listed.data["hotspots"][0]["image_url"] == (
+        "https://conectatingo.com/uploads/cueva.jpg"
+    )
 
 
 @pytest.mark.django_db

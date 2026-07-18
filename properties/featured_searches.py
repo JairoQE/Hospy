@@ -350,7 +350,7 @@ def _build_places_from_conecta_tingo(limit: int) -> list[dict]:
                 "hotels_count": stats["hotels_count"],
                 "price_from": stats["price_from"],
                 "rating_avg": stats["rating_avg"],
-                "image_url": None,
+                "image_url": spot.get("image_url") or None,
                 "gradient_css": _accent_gradient(
                     "place",
                     f"{spot.get('name') or ''}-{interes}",
