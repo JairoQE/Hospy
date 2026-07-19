@@ -25,6 +25,7 @@ export type ActifyEvent = {
   category: { name: string; slug: string };
   organizer: { name: string };
   ticket_types: { name: string; price?: string | number | null; currency?: string }[];
+  external_url?: string | null;
   source?: string;
 };
 

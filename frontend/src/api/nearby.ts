@@ -15,6 +15,7 @@ export type NearbyExploreItem = {
   latitude?: number | string | null;
   longitude?: number | string | null;
   href: string;
+  external_url?: string | null;
   provider_label?: string;
   source?: string;
 };
@@ -32,12 +33,14 @@ export type NearbyExploreResponse = {
 export type ConectaTingoPlace = {
   name: string;
   slug: string;
+  public_id?: number | null;
   zone?: string;
   interest_level?: number;
   entry_price?: string;
   image_url?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  external_url?: string | null;
   source?: string;
 };
 

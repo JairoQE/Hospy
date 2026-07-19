@@ -12,14 +12,31 @@ from django.conf import settings
 from django.core.cache import cache
 from django.utils.text import slugify
 
+from integrations.partner_frontends import conecta_tingo_place_url
+
 logger = logging.getLogger(__name__)
 
 CACHE_TTL = 120  # 2 min — rate limit 60/min; datos de demanda cambiantes
-CACHE_KEY = "conecta_tingo:datos:v2"
+CACHE_KEY = "conecta_tingo:datos:v3"
 
 # Centro urbano (fallback por zona cuando el POI no tiene coordenada propia).
 _ZONE_COORDS: dict[str, tuple[float, float]] = {
     "tingo maria": (-9.295600, -75.997800),
+}
+
+# IDs públicos del frontend Conecta Tingo (/lugares/{id}).
+_POI_PUBLIC_IDS: dict[str, int] = {
+    "cueva las lechuzas": 1,
+    "cueva de las lechuzas": 1,
+    "cueva de las pavas": 2,
+    "la roca flotante": 3,
+    "laguna de los milagros": 4,
+    "catarata del rio derrepente": 5,
+    "catarata de velo de la novia": 8,
+    "museo de tingo maria": 9,
+    "catarata santa carmen": 10,
+    "balneario la alcantarilla": 11,
+    "velo de las ninfas": 16,
 }
 
 # Coordenadas aproximadas de atractivos conocidos (la API no envía lat/lng).
@@ -191,16 +208,19 @@ def list_hotspots(limit: int | None = None) -> list[dict[str, Any]]:
             or photos.get(_norm(destino))
             or ""
         ).strip()
+        public_id = _POI_PUBLIC_IDS.get(_norm(destino))
         results.append(
             {
                 "name": destino,
                 "slug": slugify(destino) or "lugar",
+                "public_id": public_id,
                 "zone": zona,
                 "interest_level": interes,
                 "entry_price": prices.get(_norm(destino)) or "",
                 "image_url": foto or None,
                 "latitude": coords[0] if coords else None,
                 "longitude": coords[1] if coords else None,
+                "external_url": conecta_tingo_place_url(public_id),
                 "source": "conecta_tingo",
             }
         )

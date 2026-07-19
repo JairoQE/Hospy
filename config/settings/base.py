@@ -83,12 +83,18 @@ ACTIFY_API_KEY = os.environ.get("ACTIFY_API_KEY", "").strip()
 ACTIFY_BASE_URL = os.environ.get(
     "ACTIFY_BASE_URL", "https://actify.qd.je/api/v1"
 ).rstrip("/")
+ACTIFY_FRONTEND_URL = os.environ.get(
+    "ACTIFY_FRONTEND_URL", "https://actify.qd.je"
+).rstrip("/")
 ACTIFY_TIMEOUT_SECONDS = float(os.environ.get("ACTIFY_TIMEOUT_SECONDS", "12"))
 
 # Conecta Tingo — demanda / hotspots turísticos (api_key query param)
 CONECTA_TINGO_API_KEY = os.environ.get("CONECTA_TINGO_API_KEY", "").strip()
 CONECTA_TINGO_BASE_URL = os.environ.get(
     "CONECTA_TINGO_BASE_URL", "https://conectatingo.com/api/integracion"
+).rstrip("/")
+CONECTA_TINGO_FRONTEND_URL = os.environ.get(
+    "CONECTA_TINGO_FRONTEND_URL", "https://conectatingo.com"
 ).rstrip("/")
 CONECTA_TINGO_TIMEOUT_SECONDS = float(
     os.environ.get("CONECTA_TINGO_TIMEOUT_SECONDS", "12")
@@ -99,6 +105,10 @@ RESTOPOINT_API_KEY = os.environ.get("RESTOPOINT_API_KEY", "").strip()
 RESTOPOINT_BASE_URL = os.environ.get(
     "RESTOPOINT_BASE_URL",
     "https://restaurants-backend-ni6d.onrender.com/api/v1/developer-api",
+).rstrip("/")
+RESTOPOINT_FRONTEND_URL = os.environ.get(
+    "RESTOPOINT_FRONTEND_URL",
+    "https://restaurants-seven-tan.vercel.app",
 ).rstrip("/")
 RESTOPOINT_TIMEOUT_SECONDS = float(
     os.environ.get("RESTOPOINT_TIMEOUT_SECONDS", "15")

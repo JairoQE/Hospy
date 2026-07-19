@@ -2,6 +2,7 @@ import { api } from "./client";
 
 export type RestoPointRestaurant = {
   id: string;
+  slug?: string;
   name: string;
   address: string;
   district: string;
@@ -15,6 +16,7 @@ export type RestoPointRestaurant = {
   logo_url?: string | null;
   image_url?: string | null;
   maps_url?: string | null;
+  external_url?: string | null;
   source?: string;
 };
 

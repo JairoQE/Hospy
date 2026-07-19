@@ -99,6 +99,16 @@ export function TouristPlaceDetailPage() {
                 Cómo llegar
               </a>
             ) : null}
+            {item.external_url ? (
+              <a
+                className="btn btn-outline"
+                href={item.external_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ver en Conecta Tingo
+              </a>
+            ) : null}
             <Link to={nearbyHotelsHref} className="btn btn-primary">
               Ver hospedajes cercanos
             </Link>

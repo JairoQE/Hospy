@@ -8,6 +8,11 @@ from urllib.parse import quote
 
 from django.core.cache import cache
 
+from integrations.partner_frontends import (
+    actify_event_url,
+    conecta_tingo_place_url,
+    restopoint_restaurant_url,
+)
 from properties.services import haversine_km
 
 logger = logging.getLogger(__name__)
@@ -74,6 +79,10 @@ def _nearby_restaurants(lat: float, lng: float, radio_km: float, city: str) -> l
                 "rating": row.get("avg_rating"),
                 "image_url": row.get("image_url") or row.get("cover_image_url"),
                 "href": f"/restaurantes/{row.get('id')}" if row.get("id") else "/restaurantes",
+                "external_url": restopoint_restaurant_url(
+                    row.get("slug") or "",
+                    restaurant_id=row.get("id"),
+                ),
                 "provider_label": "RestoPoint",
                 "source": "restopoint",
             }
@@ -106,6 +115,7 @@ def _nearby_places(lat: float, lng: float, radio_km: float) -> list[dict]:
         if dist is None:
             continue
         slug = spot.get("slug") or "lugar"
+        public_id = spot.get("public_id")
         results.append(
             {
                 "kind": "place",
@@ -121,6 +131,7 @@ def _nearby_places(lat: float, lng: float, radio_km: float) -> list[dict]:
                 "latitude": spot.get("latitude"),
                 "longitude": spot.get("longitude"),
                 "href": f"/lugares/{quote(str(slug), safe='')}",
+                "external_url": conecta_tingo_place_url(public_id),
                 "provider_label": "Conecta Tingo",
                 "source": "conecta_tingo",
             }
@@ -181,6 +192,7 @@ def _nearby_events(lat: float, lng: float, radio_km: float, city: str) -> list[d
                 "latitude": loc.get("latitude"),
                 "longitude": loc.get("longitude"),
                 "href": f"/eventos/{event.get('id')}" if event.get("id") else "/eventos",
+                "external_url": actify_event_url(event.get("id")),
                 "provider_label": "Actify",
                 "source": "actify",
             }

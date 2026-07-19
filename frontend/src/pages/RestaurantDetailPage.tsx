@@ -99,6 +99,16 @@ export function RestaurantDetailPage() {
                 Cómo llegar
               </a>
             ) : null}
+            {item.external_url ? (
+              <a
+                className="btn btn-outline"
+                href={item.external_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ver en RestoPoint
+              </a>
+            ) : null}
             {item.latitude != null && item.longitude != null ? (
               <button type="button" className="btn btn-primary" onClick={goNearbyHotels}>
                 Ver hospedajes cercanos

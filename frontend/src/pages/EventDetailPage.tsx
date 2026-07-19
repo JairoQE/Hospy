@@ -140,6 +140,19 @@ export function EventDetailPage() {
         )}
       </section>
 
+      {event.external_url ? (
+        <p className="events-page-actions">
+          <a
+            className="btn btn-primary"
+            href={event.external_url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Ver en Actify
+          </a>
+        </p>
+      ) : null}
+
       <p className="muted events-source">Fuente: Actify · estado {event.status || "publicado"}</p>
     </div>
   );

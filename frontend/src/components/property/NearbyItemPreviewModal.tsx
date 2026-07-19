@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
 import type { NearbyExploreItem } from "../../api/nearby";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { resolveMediaUrl } from "../../utils/media";
@@ -22,7 +21,6 @@ function providerName(item: NearbyExploreItem): string {
 
 export function NearbyItemPreviewModal({ item, open, onClose }: Props) {
   const { t, tVars } = useLocaleCurrency();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!open) return;
@@ -42,6 +40,7 @@ export function NearbyItemPreviewModal({ item, open, onClose }: Props) {
 
   const imageUrl = resolveMediaUrl(item.image_url);
   const provider = providerName(item);
+  const externalUrl = (item.external_url || "").trim();
 
   return createPortal(
     <div
@@ -108,16 +107,17 @@ export function NearbyItemPreviewModal({ item, open, onClose }: Props) {
             <button type="button" className="btn btn-outline" onClick={onClose}>
               {t("common.close")}
             </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => {
-                onClose();
-                navigate(item.href);
-              }}
-            >
-              {tVars("detail.nearbyViewOn", { provider })}
-            </button>
+            {externalUrl ? (
+              <a
+                className="btn btn-primary"
+                href={externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onClose}
+              >
+                {tVars("detail.nearbyViewOn", { provider })}
+              </a>
+            ) : null}
           </div>
         </div>
       </div>

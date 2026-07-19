@@ -11,6 +11,8 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 
+from integrations.partner_frontends import restopoint_restaurant_url
+
 logger = logging.getLogger(__name__)
 
 CACHE_TTL = 60  # 1 min — rate limit 60/min
@@ -126,6 +128,10 @@ def _normalize_restaurant(raw: dict) -> dict[str, Any]:
             f"https://www.google.com/maps?q={lat},{lng}"
             if lat is not None and lng is not None
             else None
+        ),
+        "external_url": restopoint_restaurant_url(
+            raw.get("slug") or "",
+            restaurant_id=raw.get("id"),
         ),
         "source": "restopoint",
     }

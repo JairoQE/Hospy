@@ -11,6 +11,8 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 
+from integrations.partner_frontends import actify_event_url
+
 logger = logging.getLogger(__name__)
 
 CACHE_TTL = 60  # 1 min — respeta rate limit (~100/min) y frescura de aforo
@@ -144,6 +146,7 @@ def _normalize_event(raw: dict) -> dict[str, Any]:
             for t in tickets
             if isinstance(t, dict)
         ],
+        "external_url": actify_event_url(raw.get("id")),
         "source": "actify",
     }
 
