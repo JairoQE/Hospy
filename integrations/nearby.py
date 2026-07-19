@@ -63,15 +63,18 @@ def _nearby_restaurants(lat: float, lng: float, radio_km: float, city: str) -> l
                 continue
         results.append(
             {
+                "kind": "restaurant",
                 "id": row.get("id"),
                 "name": row.get("name") or "Restaurante",
                 "subtitle": " · ".join(
                     p for p in (row.get("district"), row.get("city")) if p
                 ),
+                "address": row.get("address") or "",
                 "distance_km": dist,
                 "rating": row.get("avg_rating"),
                 "image_url": row.get("image_url") or row.get("cover_image_url"),
                 "href": f"/restaurantes/{row.get('id')}" if row.get("id") else "/restaurantes",
+                "provider_label": "RestoPoint",
                 "source": "restopoint",
             }
         )
@@ -103,20 +106,22 @@ def _nearby_places(lat: float, lng: float, radio_km: float) -> list[dict]:
         if dist is None:
             continue
         slug = spot.get("slug") or "lugar"
-        label = quote(str(spot.get("name") or ""), safe="")
         results.append(
             {
+                "kind": "place",
                 "id": slug,
                 "name": spot.get("name") or "Lugar",
                 "subtitle": spot.get("zone") or "",
+                "address": spot.get("zone") or "",
                 "distance_km": dist,
                 "rating": None,
                 "image_url": spot.get("image_url"),
                 "entry_price": spot.get("entry_price") or "",
-                "href": (
-                    f"/?lat={spot.get('latitude')}&lng={spot.get('longitude')}"
-                    f"&radio_km={int(radio_km)}&label={label}"
-                ),
+                "interest_level": spot.get("interest_level"),
+                "latitude": spot.get("latitude"),
+                "longitude": spot.get("longitude"),
+                "href": f"/lugares/{quote(str(slug), safe='')}",
+                "provider_label": "Conecta Tingo",
                 "source": "conecta_tingo",
             }
         )
@@ -162,16 +167,21 @@ def _nearby_events(lat: float, lng: float, radio_km: float, city: str) -> list[d
                 continue
         results.append(
             {
+                "kind": "event",
                 "id": event.get("id"),
                 "name": event.get("name") or "Evento",
                 "subtitle": (event.get("category") or {}).get("name")
                 or loc.get("city")
                 or "",
+                "address": loc.get("address") or loc.get("city") or "",
                 "distance_km": dist,
                 "rating": None,
                 "image_url": event.get("image_url"),
                 "start_date": event.get("start_date") or "",
+                "latitude": loc.get("latitude"),
+                "longitude": loc.get("longitude"),
                 "href": f"/eventos/{event.get('id')}" if event.get("id") else "/eventos",
+                "provider_label": "Actify",
                 "source": "actify",
             }
         )

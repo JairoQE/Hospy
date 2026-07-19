@@ -211,6 +211,17 @@ def list_hotspots(limit: int | None = None) -> list[dict[str, Any]]:
     return results
 
 
+def get_hotspot(slug: str) -> dict[str, Any]:
+    """Detalle de un hotspot por slug."""
+    wanted = (slug or "").strip().lower()
+    if not wanted:
+        raise ConectaTingoError("Slug de lugar requerido.", status_code=400)
+    for spot in list_hotspots():
+        if str(spot.get("slug") or "").lower() == wanted:
+            return spot
+    raise ConectaTingoError("Lugar turístico no encontrado.", status_code=404)
+
+
 def catalog_payload() -> dict[str, Any]:
     """Payload público para el proxy Hospy."""
     raw = fetch_datos()

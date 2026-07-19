@@ -45,6 +45,7 @@ import { EventDetailPage } from "./pages/EventDetailPage";
 import { EventsPage } from "./pages/EventsPage";
 import { RestaurantsPage } from "./pages/RestaurantsPage";
 import { RestaurantDetailPage } from "./pages/RestaurantDetailPage";
+import { TouristPlaceDetailPage } from "./pages/TouristPlaceDetailPage";
 import { OwnerStorePage } from "./pages/OwnerStorePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -86,6 +87,7 @@ function AppTree() {
             <Route path="eventos/:id" element={<EventDetailPage />} />
             <Route path="restaurantes" element={<RestaurantsPage />} />
             <Route path="restaurantes/:id" element={<RestaurantDetailPage />} />
+            <Route path="lugares/:slug" element={<TouristPlaceDetailPage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="recuperar-contraseña" element={<ForgotPasswordPage />} />
             <Route path="registro" element={<RegisterPage />} />

@@ -468,3 +468,25 @@ class NearbyExploreView(APIView):
         return Response(
             build_nearby_explore(lat=lat, lng=lng, radio_km=radio, city=city)
         )
+
+
+class ConectaTingoPlaceDetailView(APIView):
+    """GET /api/v1/lugares-turisticos/<slug>/ — detalle hotspot Conecta Tingo."""
+
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request, slug: str):
+        from .conecta_tingo import ConectaTingoError, get_hotspot
+
+        try:
+            return Response(get_hotspot(slug))
+        except ConectaTingoError as exc:
+            code = exc.status_code or 502
+            http = (
+                status.HTTP_503_SERVICE_UNAVAILABLE
+                if code >= 500
+                else status.HTTP_400_BAD_REQUEST
+            )
+            if code == 404:
+                http = status.HTTP_404_NOT_FOUND
+            return Response({"detail": str(exc)}, status=http)

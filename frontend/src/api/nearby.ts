@@ -1,15 +1,21 @@
 import { api } from "./client";
 
 export type NearbyExploreItem = {
+  kind?: "restaurant" | "place" | "event";
   id?: string | number | null;
   name: string;
   subtitle?: string;
+  address?: string;
   distance_km?: number | null;
   rating?: number | null;
   image_url?: string | null;
   entry_price?: string;
+  interest_level?: number | null;
   start_date?: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
   href: string;
+  provider_label?: string;
   source?: string;
 };
 
@@ -21,6 +27,18 @@ export type NearbyExploreResponse = {
   restaurantes: NearbyExploreItem[];
   lugares: NearbyExploreItem[];
   eventos: NearbyExploreItem[];
+};
+
+export type ConectaTingoPlace = {
+  name: string;
+  slug: string;
+  zone?: string;
+  interest_level?: number;
+  entry_price?: string;
+  image_url?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  source?: string;
 };
 
 export function fetchNearbyExplore(params: {
@@ -35,4 +53,8 @@ export function fetchNearbyExplore(params: {
   if (params.radio_km != null) q.set("radio_km", String(params.radio_km));
   if (params.ciudad) q.set("ciudad", params.ciudad);
   return api.get(`/alrededores/?${q.toString()}`, false);
+}
+
+export function fetchTouristPlace(slug: string): Promise<ConectaTingoPlace> {
+  return api.get(`/lugares-turisticos/${encodeURIComponent(slug)}/`, false);
 }

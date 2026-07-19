@@ -8,6 +8,7 @@ import {
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { resolveMediaUrl } from "../../utils/media";
 import { formatDate } from "../../utils/format";
+import { NearbyItemPreviewModal } from "./NearbyItemPreviewModal";
 import "./NearbyExploreSection.css";
 
 type Props = {
@@ -17,10 +18,20 @@ type Props = {
   radioKm?: number;
 };
 
-function NearbyCard({ item }: { item: NearbyExploreItem }) {
+function NearbyCard({
+  item,
+  onOpen,
+}: {
+  item: NearbyExploreItem;
+  onOpen: (item: NearbyExploreItem) => void;
+}) {
   const imageUrl = resolveMediaUrl(item.image_url);
   return (
-    <Link to={item.href} className="nearby-explore-card">
+    <button
+      type="button"
+      className="nearby-explore-card"
+      onClick={() => onOpen(item)}
+    >
       <div
         className="nearby-explore-card-media"
         style={
@@ -40,7 +51,7 @@ function NearbyCard({ item }: { item: NearbyExploreItem }) {
           {item.start_date ? ` · ${formatDate(item.start_date)}` : null}
         </p>
       </div>
-    </Link>
+    </button>
   );
 }
 
@@ -50,12 +61,14 @@ function NearbyGroup({
   empty,
   seeAllHref,
   seeAllLabel,
+  onOpen,
 }: {
   title: string;
   items: NearbyExploreItem[];
   empty: string;
   seeAllHref: string;
   seeAllLabel: string;
+  onOpen: (item: NearbyExploreItem) => void;
 }) {
   return (
     <div className="nearby-explore-group">
@@ -70,7 +83,11 @@ function NearbyGroup({
       ) : (
         <div className="nearby-explore-grid">
           {items.map((item) => (
-            <NearbyCard key={`${item.source}-${item.id}-${item.name}`} item={item} />
+            <NearbyCard
+              key={`${item.source}-${item.id}-${item.name}`}
+              item={item}
+              onOpen={onOpen}
+            />
           ))}
         </div>
       )}
@@ -88,6 +105,7 @@ export function NearbyExploreSection({
   const [data, setData] = useState<NearbyExploreResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selected, setSelected] = useState<NearbyExploreItem | null>(null);
 
   useEffect(() => {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
@@ -146,6 +164,7 @@ export function NearbyExploreSection({
             empty={t("detail.nearbyRestaurantsEmpty")}
             seeAllHref="/restaurantes"
             seeAllLabel={t("detail.nearbySeeAll")}
+            onOpen={setSelected}
           />
           <NearbyGroup
             title={t("detail.nearbyPlaces")}
@@ -153,6 +172,7 @@ export function NearbyExploreSection({
             empty={t("detail.nearbyPlacesEmpty")}
             seeAllHref="/#destacados"
             seeAllLabel={t("detail.nearbySeeAll")}
+            onOpen={setSelected}
           />
           <NearbyGroup
             title={t("detail.nearbyEvents")}
@@ -160,9 +180,16 @@ export function NearbyExploreSection({
             empty={t("detail.nearbyEventsEmpty")}
             seeAllHref="/eventos"
             seeAllLabel={t("detail.nearbySeeAll")}
+            onOpen={setSelected}
           />
         </>
       ) : null}
+
+      <NearbyItemPreviewModal
+        item={selected}
+        open={Boolean(selected)}
+        onClose={() => setSelected(null)}
+      />
     </section>
   );
 }

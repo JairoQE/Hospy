@@ -38,6 +38,11 @@ urlpatterns = [
         name="conecta-tingo-datos",
     ),
     path(
+        "lugares-turisticos/<str:slug>/",
+        views.ConectaTingoPlaceDetailView.as_view(),
+        name="conecta-tingo-place-detail",
+    ),
+    path(
         "restaurantes/",
         views.RestoPointListView.as_view(),
         name="restopoint-list",

@@ -49,12 +49,17 @@
 .nearby-explore-card {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  padding: 0;
   border: 1px solid var(--border, #e2e8f0);
   border-radius: 14px;
   overflow: hidden;
   text-decoration: none;
+  text-align: left;
   color: inherit;
   background: var(--surface, #fff);
+  cursor: pointer;
+  font: inherit;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
@@ -91,4 +96,96 @@
   margin: 0;
   font-size: 0.78rem;
   color: var(--muted, #64748b);
+}
+
+.nearby-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.nearby-preview-sheet {
+  position: relative;
+  width: min(440px, 100%);
+  max-height: min(88vh, 640px);
+  overflow: auto;
+  border-radius: 18px;
+  background: var(--surface, #fff);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+}
+
+.nearby-preview-close {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 2;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.55);
+  color: #fff;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.nearby-preview-media {
+  position: relative;
+  height: 180px;
+  background:
+    linear-gradient(145deg, rgba(13, 148, 136, 0.8), rgba(30, 58, 95, 0.9)),
+    #0f766e;
+  background-size: cover;
+  background-position: center;
+}
+
+.nearby-preview-badge {
+  position: absolute;
+  top: 0.7rem;
+  left: 0.7rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.nearby-preview-body {
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.nearby-preview-body h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.nearby-preview-body p {
+  margin: 0 0 0.35rem;
+}
+
+.nearby-preview-facts {
+  list-style: none;
+  margin: 0.85rem 0 1.1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.nearby-preview-facts li {
+  font-size: 0.9rem;
+}
+
+.nearby-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
 }
