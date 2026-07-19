@@ -331,3 +331,49 @@ def test_restopoint_proxy_mocked(monkeypatch, settings):
     detail = client.get("/api/v1/restaurantes/a1b2/")
     assert detail.status_code == 200
     assert detail.data["id"] == "a1b2"
+
+
+@pytest.mark.django_db
+def test_nearby_explore_aggregates_mocked(monkeypatch):
+    monkeypatch.setattr(
+        "integrations.nearby._nearby_restaurants",
+        lambda *a, **k: [
+            {
+                "id": "r1",
+                "name": "Fogón",
+                "subtitle": "Tingo María",
+                "distance_km": 1.2,
+                "rating": 4.5,
+                "image_url": None,
+                "href": "/restaurantes/r1",
+                "source": "restopoint",
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        "integrations.nearby._nearby_places",
+        lambda *a, **k: [
+            {
+                "id": "laguna",
+                "name": "Laguna",
+                "subtitle": "Tingo María",
+                "distance_km": 3.0,
+                "rating": None,
+                "image_url": None,
+                "entry_price": "S/ 5",
+                "href": "/?lat=-9.1&lng=-76.0&radio_km=25&label=Laguna",
+                "source": "conecta_tingo",
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        "integrations.nearby._nearby_events",
+        lambda *a, **k: [],
+    )
+
+    client = APIClient()
+    res = client.get("/api/v1/alrededores/?lat=-9.2953&lng=-75.9975&ciudad=Tingo María")
+    assert res.status_code == 200
+    assert res.data["restaurantes"][0]["name"] == "Fogón"
+    assert res.data["lugares"][0]["name"] == "Laguna"
+    assert res.data["eventos"] == []

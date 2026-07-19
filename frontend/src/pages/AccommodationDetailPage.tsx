@@ -17,6 +17,7 @@ import { RefundPolicySection } from "../components/bookings/RefundPolicySection"
 import { PaymentCheckoutModal } from "../components/payments/PaymentCheckoutModal";
 import { AccommodationFaqSection } from "../components/AccommodationFaqSection";
 import { PropertyOffersShowcase } from "../components/property/PropertyOffersShowcase";
+import { NearbyExploreSection } from "../components/property/NearbyExploreSection";
 import { PriceTrendSection } from "../components/property/PriceTrendSection";
 import { PhotoGallery } from "../components/PhotoGallery";
 import { LazyPropertyMap } from "../components/LazyPropertyMap";
@@ -497,6 +498,10 @@ export function AccommodationDetailPage() {
             <h2>{t("detail.about")}</h2>
             <p className="property-description">{acc.description}</p>
           </section>
+
+          {Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0 ? (
+            <NearbyExploreSection lat={lat} lng={lng} city={acc.city} />
+          ) : null}
 
           <OwnerStoreBanner accommodation={acc} />
 

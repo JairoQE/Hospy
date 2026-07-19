@@ -638,6 +638,14 @@ export function HomePage() {
   };
 
   useEffect(() => {
+    const resetAt = (location.state as { resetHome?: number } | null)?.resetHome;
+    if (resetAt) {
+      clearResults();
+      // Limpia el state para no re-disparar en back/forward raros
+      navigate(".", { replace: true, state: null });
+      return;
+    }
+
     const params = new URLSearchParams(location.search);
     if (params.get("ofertas") === "1") {
       loadList(
@@ -646,28 +654,45 @@ export function HomePage() {
       );
       return;
     }
-    const lat = Number(params.get("lat"));
-    const lng = Number(params.get("lng"));
-    if (Number.isFinite(lat) && Number.isFinite(lng)) {
-      const radio = Number(params.get("radio_km")) > 0 ? Number(params.get("radio_km")) : NEARBY_RADIUS_KM;
-      const label = (params.get("label") || "").trim() || t("home.featuredTabRestaurants");
-      setBrowse({ label });
-      loadList(
-        {
-          lat,
-          lng,
-          radio_km: radio,
-          page: 1,
-          page_size: DEFAULT_RESULTS_PAGE_SIZE,
-        },
-        tVars("home.staysNearRestaurant", { place: label }),
-      );
-      return;
+
+    // Importante: Number(null) === 0 → sin esto el home “vacío” abría búsqueda geo falsa
+    const latRaw = (params.get("lat") || "").trim();
+    const lngRaw = (params.get("lng") || "").trim();
+    if (latRaw && lngRaw) {
+      const lat = Number(latRaw);
+      const lng = Number(lngRaw);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        const radio =
+          Number(params.get("radio_km")) > 0
+            ? Number(params.get("radio_km"))
+            : NEARBY_RADIUS_KM;
+        const placeLabel = (params.get("label") || "").trim() || "esta ubicación";
+        setBrowse({ label: placeLabel });
+        const title = params.get("restaurant_id")
+          ? tVars("home.staysNearRestaurant", { place: placeLabel })
+          : params.get("event_id")
+            ? tVars("home.staysNearEvent", { place: placeLabel })
+            : tVars("home.staysNearPlace", { place: placeLabel });
+        loadList(
+          {
+            lat,
+            lng,
+            radio_km: radio,
+            page: 1,
+            page_size: DEFAULT_RESULTS_PAGE_SIZE,
+          },
+          title,
+        );
+        return;
+      }
     }
-    if (lastQueryRef.current?.query.ofertas === 1) {
+
+    // URL limpia: quitar resultados de ofertas/geo previos
+    const last = lastQueryRef.current?.query;
+    if (last && (last.ofertas === 1 || last.lat != null || last.lng != null)) {
       clearResults();
     }
-  }, [location.search, loadList, t, tVars]);
+  }, [location.search, location.state, loadList, navigate, t, tVars]);
 
   const retrySearch = () => {
 

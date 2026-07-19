@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, NavLink, useLocation, type Location } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate, type Location } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -37,6 +37,7 @@ export function SiteHeader() {
   const { t } = useLocaleCurrency();
   const { isDarkMode, toggleTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navPublic = [
     {
@@ -184,6 +185,20 @@ export function SiteHeader() {
                 to={item.to}
                 end={"end" in item ? item.end : undefined}
                 className={() => navLinkClass(item.isActive(location))}
+                onClick={(e) => {
+                  // "Explorar" en `/` con resultados: forzar home limpio
+                  if (
+                    item.to === "/" &&
+                    location.pathname === "/" &&
+                    !location.search.includes("ofertas=1")
+                  ) {
+                    e.preventDefault();
+                    navigate("/", {
+                      replace: true,
+                      state: { resetHome: Date.now() },
+                    });
+                  }
+                }}
               >
                 {item.label}
               </NavLink>
@@ -288,7 +303,20 @@ export function SiteHeader() {
                   to={item.to}
                   end={"end" in item ? item.end : undefined}
                   className={() => navLinkClass(item.isActive(location))}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={(e) => {
+                    setMobileOpen(false);
+                    if (
+                      item.to === "/" &&
+                      location.pathname === "/" &&
+                      !location.search.includes("ofertas=1")
+                    ) {
+                      e.preventDefault();
+                      navigate("/", {
+                        replace: true,
+                        state: { resetHome: Date.now() },
+                      });
+                    }
+                  }}
                 >
                   {item.label}
                 </NavLink>

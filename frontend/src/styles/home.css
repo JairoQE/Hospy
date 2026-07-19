@@ -1679,7 +1679,7 @@ html[data-home-entrance="0"] .tab-panel-fade {
   bottom: 1.5rem;
   left: 1.25rem;
   right: auto;
-  z-index: 150;
+  z-index: 1175; /* debajo del Tour, pero clickeable al quedar separados */
   width: 3rem;
   height: 3rem;
   border: none;
@@ -1814,7 +1814,7 @@ html[data-home-entrance="0"] .tab-panel-fade {
     bottom: var(--floating-above-nav, 5rem);
     left: 1rem;
     right: auto;
-    z-index: 150;
+    z-index: 1175;
     width: 2.75rem;
     height: 2.75rem;
     box-shadow: 0 6px 20px rgba(30, 58, 95, 0.3);

@@ -47,4 +47,9 @@ urlpatterns = [
         views.RestoPointDetailView.as_view(),
         name="restopoint-detail",
     ),
+    path(
+        "alrededores/",
+        views.NearbyExploreView.as_view(),
+        name="nearby-explore",
+    ),
 ]

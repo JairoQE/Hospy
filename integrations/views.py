@@ -439,3 +439,32 @@ class RestoPointDetailView(APIView):
             if code == 429:
                 http = status.HTTP_429_TOO_MANY_REQUESTS
             return Response({"detail": str(exc)}, status=http)
+
+
+class NearbyExploreView(APIView):
+    """GET /api/v1/alrededores/?lat=&lng=&radio_km=&ciudad= — POIs cercanos."""
+
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request):
+        from .nearby import build_nearby_explore
+
+        lat_raw = (request.query_params.get("lat") or "").strip()
+        lng_raw = (request.query_params.get("lng") or "").strip()
+        try:
+            lat = float(lat_raw)
+            lng = float(lng_raw)
+        except (TypeError, ValueError):
+            return Response(
+                {"detail": "Parámetros lat y lng son obligatorios."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        radio_raw = (request.query_params.get("radio_km") or "25").strip()
+        try:
+            radio = float(radio_raw)
+        except ValueError:
+            radio = 25.0
+        city = (request.query_params.get("ciudad") or "").strip()
+        return Response(
+            build_nearby_explore(lat=lat, lng=lng, radio_km=radio, city=city)
+        )

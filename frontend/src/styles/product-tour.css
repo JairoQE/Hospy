@@ -64,7 +64,8 @@ button[data-tour="hospix-assistant"].driver-active-element,
 .product-tour-launcher {
   position: fixed;
   left: 16px;
-  bottom: var(--floating-above-nav, 4.5rem);
+  /* Encima del scroll-to-top (círculo ~3rem) para que no se tapen */
+  bottom: calc(1.5rem + 3rem + 0.75rem);
   z-index: 1180;
   display: inline-flex;
   align-items: center;
@@ -116,8 +117,9 @@ button[data-tour="hospix-assistant"].driver-active-element,
   }
 }
 
-@media (min-width: 769px) {
+@media (max-width: 768px) {
   .product-tour-launcher {
-    bottom: 1.25rem;
+    left: 1rem;
+    bottom: calc(var(--floating-above-nav, 5rem) + 2.75rem + 0.65rem);
   }
 }
