@@ -3,6 +3,8 @@ import { api } from "./client";
 export type NearbyExploreItem = {
   kind?: "restaurant" | "place" | "event";
   id?: string | number | null;
+  slug?: string | null;
+  public_id?: number | null;
   name: string;
   subtitle?: string;
   address?: string;

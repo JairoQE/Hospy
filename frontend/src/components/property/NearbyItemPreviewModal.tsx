@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { NearbyExploreItem } from "../../api/nearby";
+import { resolvePartnerDetailUrl } from "../../config/partnerFrontends";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { resolveMediaUrl } from "../../utils/media";
 import { formatDate } from "../../utils/format";
@@ -40,7 +41,7 @@ export function NearbyItemPreviewModal({ item, open, onClose }: Props) {
 
   const imageUrl = resolveMediaUrl(item.image_url);
   const provider = providerName(item);
-  const externalUrl = (item.external_url || "").trim();
+  const partnerUrl = resolvePartnerDetailUrl(item);
 
   return createPortal(
     <div
@@ -107,10 +108,10 @@ export function NearbyItemPreviewModal({ item, open, onClose }: Props) {
             <button type="button" className="btn btn-outline" onClick={onClose}>
               {t("common.close")}
             </button>
-            {externalUrl ? (
+            {partnerUrl ? (
               <a
                 className="btn btn-primary"
-                href={externalUrl}
+                href={partnerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={onClose}

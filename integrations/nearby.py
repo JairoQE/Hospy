@@ -66,10 +66,12 @@ def _nearby_restaurants(lat: float, lng: float, radio_km: float, city: str) -> l
                 or (city_norm not in row_city and row_city not in city_norm)
             ):
                 continue
+        slug = str(row.get("slug") or "").strip()
         results.append(
             {
                 "kind": "restaurant",
                 "id": row.get("id"),
+                "slug": slug or None,
                 "name": row.get("name") or "Restaurante",
                 "subtitle": " · ".join(
                     p for p in (row.get("district"), row.get("city")) if p
@@ -80,7 +82,7 @@ def _nearby_restaurants(lat: float, lng: float, radio_km: float, city: str) -> l
                 "image_url": row.get("image_url") or row.get("cover_image_url"),
                 "href": f"/restaurantes/{row.get('id')}" if row.get("id") else "/restaurantes",
                 "external_url": restopoint_restaurant_url(
-                    row.get("slug") or "",
+                    slug,
                     restaurant_id=row.get("id"),
                 ),
                 "provider_label": "RestoPoint",
@@ -120,6 +122,8 @@ def _nearby_places(lat: float, lng: float, radio_km: float) -> list[dict]:
             {
                 "kind": "place",
                 "id": slug,
+                "slug": slug,
+                "public_id": public_id,
                 "name": spot.get("name") or "Lugar",
                 "subtitle": spot.get("zone") or "",
                 "address": spot.get("zone") or "",
@@ -217,7 +221,7 @@ def build_nearby_explore(
     import hashlib
 
     city_key = hashlib.md5(city.strip().lower().encode()).hexdigest()[:10]
-    cache_key = f"nearby:explore:{round(lat, 4)}:{round(lng, 4)}:{radio_km}:{city_key}"
+    cache_key = f"nearby:explore:v2:{round(lat, 4)}:{round(lng, 4)}:{radio_km}:{city_key}"
     cached = cache.get(cache_key)
     if isinstance(cached, dict):
         return cached
