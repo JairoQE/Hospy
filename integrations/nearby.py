@@ -80,6 +80,8 @@ def _nearby_restaurants(lat: float, lng: float, radio_km: float, city: str) -> l
                 "distance_km": dist,
                 "rating": row.get("avg_rating"),
                 "image_url": row.get("image_url") or row.get("cover_image_url"),
+                "latitude": row.get("latitude"),
+                "longitude": row.get("longitude"),
                 "href": f"/restaurantes/{row.get('id')}" if row.get("id") else "/restaurantes",
                 "external_url": restopoint_restaurant_url(
                     slug,
@@ -221,7 +223,7 @@ def build_nearby_explore(
     import hashlib
 
     city_key = hashlib.md5(city.strip().lower().encode()).hexdigest()[:10]
-    cache_key = f"nearby:explore:v2:{round(lat, 4)}:{round(lng, 4)}:{radio_km}:{city_key}"
+    cache_key = f"nearby:explore:v3:{round(lat, 4)}:{round(lng, 4)}:{radio_km}:{city_key}"
     cached = cache.get(cache_key)
     if isinstance(cached, dict):
         return cached

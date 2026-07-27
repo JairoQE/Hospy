@@ -269,6 +269,7 @@ export function SearchResultsSection({
       {hasContext && nearbyContext ? (
         <NearbyContextHero
           item={nearbyContext}
+          stays={items}
           staysCount={!loading && !error ? listMeta?.count ?? items.length : null}
           radiusKm={
             Number(nearbyContext.search.radio_km) > 0

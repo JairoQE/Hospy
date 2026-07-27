@@ -144,6 +144,8 @@ export interface AccommodationListItem {
   city: string;
   region?: string;
   country?: string;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
   average_rating: string | number;
   reviews_count?: number;
   precio_desde: string | number | null;

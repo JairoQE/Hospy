@@ -183,6 +183,8 @@ class AccommodationListSerializer(serializers.ModelSerializer):
             "city",
             "region",
             "country",
+            "latitude",
+            "longitude",
             "average_rating",
             "reviews_count",
             "precio_desde",
