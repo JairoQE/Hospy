@@ -346,8 +346,7 @@ export const translations = {
       featuredTabEvents: "Eventos",
       featuredTabPlaces: "Lugares turísticos",
       featuredTabRestaurants: "Restaurantes",
-      featuredLead:
-        "Ciudades, eventos, lugares turísticos y restaurantes con hospedajes cerca.",
+      featuredLead: "Eventos con hospedajes cerca.",
       featuredHotels: "{count} hoteles",
       featuredAvgPrice: "{price} prom.",
       tileLocalsCount: "{count} locales",
@@ -356,6 +355,19 @@ export const translations = {
       staysNearEvent: "Hospedajes cerca de «{place}»",
       staysNearPlace: "Hospedajes cerca de «{place}»",
       staysNearRestaurant: "Hospedajes cerca de «{place}»",
+      nearbyContextKicker: "Destino de tu búsqueda",
+      nearbyContextLeadEvent:
+        "Abajo verás hoteles, hostales y hospedajes cercanos a este evento para que armes tu viaje sin perderte nada.",
+      nearbyContextLeadRestaurant:
+        "Abajo verás hospedajes cercanos a este restaurante para dormir cerca y moverte con facilidad.",
+      nearbyContextLeadPlace:
+        "Abajo verás hospedajes cercanos a este lugar turístico para planear tu visita con comodidad.",
+      nearbyContextStays: "{n} alojamientos cerca",
+      nearbyContextRadius: "radio {km} km",
+      nearbyContextMaps: "Ver en el mapa",
+      nearbyStaysTitle: "Hospedajes cercanos",
+      nearbyStaysLead:
+        "Elige hotel, hostal u hospedaje cerca del punto seleccionado.",
       priceAvgSuffix: "prom.",
       appPromoEyebrow: "Plataforma web en Perú",
       appPromoTitle: "Reserva hospedajes sin salir del navegador",
@@ -1054,8 +1066,7 @@ export const translations = {
       featuredTabEvents: "Events",
       featuredTabPlaces: "Tourist spots",
       featuredTabRestaurants: "Restaurants",
-      featuredLead:
-        "Cities, events, tourist spots, and restaurants with nearby stays.",
+      featuredLead: "Events with nearby stays.",
       featuredHotels: "{count} hotels",
       featuredAvgPrice: "{price} avg.",
       tileLocalsCount: "{count} listings",
@@ -1064,6 +1075,18 @@ export const translations = {
       staysNearEvent: "Stays near “{place}”",
       staysNearPlace: "Stays near “{place}”",
       staysNearRestaurant: "Stays near “{place}”",
+      nearbyContextKicker: "Your search destination",
+      nearbyContextLeadEvent:
+        "Below you’ll find hotels, hostels, and stays near this event so you can plan your trip with ease.",
+      nearbyContextLeadRestaurant:
+        "Below you’ll find stays near this restaurant so you can sleep close by.",
+      nearbyContextLeadPlace:
+        "Below you’ll find stays near this tourist spot to plan your visit comfortably.",
+      nearbyContextStays: "{n} nearby stays",
+      nearbyContextRadius: "{km} km radius",
+      nearbyContextMaps: "View on map",
+      nearbyStaysTitle: "Nearby stays",
+      nearbyStaysLead: "Pick a hotel, hostel, or stay near the selected spot.",
       priceAvgSuffix: "avg.",
       appPromoEyebrow: "Web platform in Peru",
       appPromoTitle: "Book stays right in your browser",

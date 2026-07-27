@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { AccommodationListItem } from "../../api/types";
+import type { AccommodationListItem, FeaturedSearchItem } from "../../api/types";
 import type { SearchFilters } from "../SearchBar";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { PrimeIcon } from "../PrimeIcon";
@@ -13,6 +13,7 @@ import {
   districtSectionDomId,
   type DistrictChip,
 } from "./DistrictJumpChips";
+import { NearbyContextHero } from "./NearbyContextHero";
 import {
   SearchResultsPagination,
   SearchResultsToolbar,
@@ -99,6 +100,7 @@ type Props = {
   error: string;
   filters: SearchFilters | null;
   hasBrowse: boolean;
+  nearbyContext?: FeaturedSearchItem | null;
   groupByDistrito?: boolean;
   districtCatalog?: UbigeoItem[];
   districtCatalogLoading?: boolean;
@@ -120,6 +122,7 @@ export function SearchResultsSection({
   error,
   filters,
   hasBrowse,
+  nearbyContext = null,
   groupByDistrito = false,
   districtCatalog,
   districtCatalogLoading = false,
@@ -134,6 +137,11 @@ export function SearchResultsSection({
   onPageChange,
 }: Props) {
   const { t, tVars, language } = useLocaleCurrency();
+  const hasContext =
+    nearbyContext != null &&
+    (nearbyContext.kind === "event" ||
+      nearbyContext.kind === "place" ||
+      nearbyContext.kind === "restaurant");
   const firstCardRef = useRef<HTMLAnchorElement>(null);
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
   const [activeDistrictKey, setActiveDistrictKey] = useState<string | null>(null);
@@ -253,14 +261,33 @@ export function SearchResultsSection({
 
   return (
     <section
-      className="home-block home-results fade-in"
+      className={`home-block home-results fade-in${hasContext ? " home-results--with-context" : ""}`}
       id="resultados"
       aria-live="polite"
       aria-busy={loading}
     >
+      {hasContext && nearbyContext ? (
+        <NearbyContextHero
+          item={nearbyContext}
+          staysCount={!loading && !error ? listMeta?.count ?? items.length : null}
+          radiusKm={
+            Number(nearbyContext.search.radio_km) > 0
+              ? Number(nearbyContext.search.radio_km)
+              : null
+          }
+        />
+      ) : null}
+
       <div className="home-results-head">
         <div className="home-results-head-main">
-          <h2 className="home-block-title">{title}</h2>
+          {hasContext ? (
+            <>
+              <h2 className="home-results-stays-title">{t("home.nearbyStaysTitle")}</h2>
+              <p className="home-results-stays-lead muted">{t("home.nearbyStaysLead")}</p>
+            </>
+          ) : (
+            <h2 className="home-block-title">{title}</h2>
+          )}
           {resultsCountLabel && !loading && !error && (
             <p className="home-results-total muted">{resultsCountLabel}</p>
           )}

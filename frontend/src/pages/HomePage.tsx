@@ -165,6 +165,8 @@ export function HomePage() {
 
   const [resultsTitle, setResultsTitle] = useState<string | null>(null);
 
+  const [nearbyContext, setNearbyContext] = useState<FeaturedSearchItem | null>(null);
+
   const [tileState, setTileState] = useState(initialHomeTilesState);
   const {
     typeTiles,
@@ -436,6 +438,7 @@ export function HomePage() {
     setFilters(f);
 
     setBrowse(null);
+    setNearbyContext(null);
 
     const placeLabel =
       f.ciudad || f.distrito || f.provincia || f.departamento || "";
@@ -466,6 +469,7 @@ export function HomePage() {
   const onBrowseType = (tipo: string, label: string) => {
     setFilters(null);
     setBrowse({ label, lockedTipo: tipo });
+    setNearbyContext(null);
     loadList(
       { tipo, ordenar: "-rating", page: 1, page_size: DEFAULT_RESULTS_PAGE_SIZE },
       label,
@@ -479,6 +483,7 @@ export function HomePage() {
     setFilters(null);
 
     setBrowse({ label, zona });
+    setNearbyContext(null);
     loadList(
       { zona, ordenar: "-rating", page: 1, page_size: DEFAULT_RESULTS_PAGE_SIZE },
       tVars("home.staysInRegion", { region: label }),
@@ -519,6 +524,7 @@ export function HomePage() {
       distrito: params.distrito,
 
     });
+    setNearbyContext(null);
 
     loadList(
       {
@@ -559,6 +565,11 @@ export function HomePage() {
         ordenar: "-rating",
       });
       setBrowse({ label: item.name });
+      setNearbyContext(
+        item.kind === "event" || item.kind === "place" || item.kind === "restaurant"
+          ? { ...item, search: { ...item.search, radio_km: radio } }
+          : null,
+      );
       const title =
         item.kind === "event"
           ? tVars("home.staysNearEvent", { place: item.name })
@@ -609,6 +620,7 @@ export function HomePage() {
       provincia: item.search.provincia,
       distrito: item.search.distrito,
     });
+    setNearbyContext(null);
 
     loadList(
       query,
@@ -624,6 +636,7 @@ export function HomePage() {
     setFilters(null);
     setBrowse(null);
     setResultsTitle(null);
+    setNearbyContext(null);
     setItems([]);
     setListMeta(null);
     setActiveQuery(null);
@@ -648,6 +661,7 @@ export function HomePage() {
 
     const params = new URLSearchParams(location.search);
     if (params.get("ofertas") === "1") {
+      setNearbyContext(null);
       loadList(
         { ofertas: 1, ordenar: "-rating", page: 1, page_size: DEFAULT_RESULTS_PAGE_SIZE },
         t("home.offersTitle"),
@@ -668,9 +682,58 @@ export function HomePage() {
             : NEARBY_RADIUS_KM;
         const placeLabel = (params.get("label") || "").trim() || "esta ubicación";
         setBrowse({ label: placeLabel });
-        const title = params.get("restaurant_id")
+        const eventIdRaw = (params.get("event_id") || "").trim();
+        const restaurantId = (params.get("restaurant_id") || "").trim();
+        if (eventIdRaw) {
+          const eventId = Number(eventIdRaw);
+          const fromFeatured = featuredEvents.find(
+            (e) => Number(e.event_id ?? e.search.event_id) === eventId,
+          );
+          setNearbyContext(
+            fromFeatured ?? {
+              kind: "event",
+              name: placeLabel,
+              slug: `evento-${eventIdRaw}`,
+              hotels_count: 0,
+              price_from: null,
+              image_url: null,
+              badge: "Actify",
+              event_id: Number.isFinite(eventId) ? eventId : undefined,
+              search: { lat, lng, radio_km: radio, event_id: eventId, label: placeLabel },
+            },
+          );
+        } else if (restaurantId) {
+          setNearbyContext({
+            kind: "restaurant",
+            name: placeLabel,
+            slug: restaurantId,
+            hotels_count: 0,
+            price_from: null,
+            image_url: null,
+            badge: "RestoPoint",
+            restaurant_id: restaurantId,
+            search: {
+              lat,
+              lng,
+              radio_km: radio,
+              restaurant_id: restaurantId,
+              label: placeLabel,
+            },
+          });
+        } else {
+          setNearbyContext({
+            kind: "place",
+            name: placeLabel,
+            slug: "lugar",
+            hotels_count: 0,
+            price_from: null,
+            image_url: null,
+            search: { lat, lng, radio_km: radio, label: placeLabel },
+          });
+        }
+        const title = restaurantId
           ? tVars("home.staysNearRestaurant", { place: placeLabel })
-          : params.get("event_id")
+          : eventIdRaw
             ? tVars("home.staysNearEvent", { place: placeLabel })
             : tVars("home.staysNearPlace", { place: placeLabel });
         loadList(
@@ -876,6 +939,7 @@ export function HomePage() {
             error={error}
             filters={filters}
             hasBrowse={Boolean(browse)}
+            nearbyContext={nearbyContext}
             groupByDistrito={groupResultsByDistrito}
             districtCatalog={districtCatalog}
             districtCatalogLoading={districtCatalogLoading}

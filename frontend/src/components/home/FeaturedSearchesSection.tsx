@@ -1,13 +1,9 @@
-import { useMemo, useState } from "react";
-
 import type { FeaturedSearchItem } from "../../api/types";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { formatMoney } from "../../utils/format";
 import { resolveMediaUrl } from "../../utils/media";
 import { StarRating } from "../StarRating";
 import { HorizontalCarousel } from "../ui/HorizontalCarousel";
-
-type Tab = "cities" | "events" | "places" | "restaurants";
 
 interface Props {
   cities: FeaturedSearchItem[];
@@ -122,47 +118,14 @@ function FeaturedSearchSkeleton() {
 }
 
 export function FeaturedSearchesSection({
-  cities,
   events,
-  places,
-  restaurants,
   loading = false,
   onSelect,
 }: Props) {
   const { t } = useLocaleCurrency();
-  const [tab, setTab] = useState<Tab>("cities");
-
-  const hasCities = cities.length > 0;
   const hasEvents = events.length > 0;
-  const hasPlaces = places.length > 0;
-  const hasRestaurants = restaurants.length > 0;
 
-  const defaultTab = useMemo<Tab>(() => {
-    if (hasCities) return "cities";
-    if (hasEvents) return "events";
-    if (hasPlaces) return "places";
-    if (hasRestaurants) return "restaurants";
-    return "cities";
-  }, [hasCities, hasEvents, hasPlaces, hasRestaurants]);
-
-  const activeTab =
-    (tab === "cities" && !hasCities) ||
-    (tab === "events" && !hasEvents) ||
-    (tab === "places" && !hasPlaces) ||
-    (tab === "restaurants" && !hasRestaurants)
-      ? defaultTab
-      : tab;
-
-  const visibleItems =
-    activeTab === "cities"
-      ? cities
-      : activeTab === "events"
-        ? events
-        : activeTab === "places"
-          ? places
-          : restaurants;
-
-  if (!loading && !hasCities && !hasEvents && !hasPlaces && !hasRestaurants) {
+  if (!loading && !hasEvents) {
     return null;
   }
 
@@ -179,46 +142,14 @@ export function FeaturedSearchesSection({
         <button
           type="button"
           role="tab"
-          className={`featured-searches-tab${activeTab === "cities" ? " is-active" : ""}`}
-          aria-selected={activeTab === "cities"}
-          disabled={!hasCities && !loading}
-          onClick={() => setTab("cities")}
-        >
-          {t("home.featuredTabCities")}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          className={`featured-searches-tab${activeTab === "events" ? " is-active" : ""}`}
-          aria-selected={activeTab === "events"}
-          disabled={!hasEvents && !loading}
-          onClick={() => setTab("events")}
+          className="featured-searches-tab is-active"
+          aria-selected
         >
           {t("home.featuredTabEvents")}
         </button>
-        <button
-          type="button"
-          role="tab"
-          className={`featured-searches-tab${activeTab === "places" ? " is-active" : ""}`}
-          aria-selected={activeTab === "places"}
-          disabled={!hasPlaces && !loading}
-          onClick={() => setTab("places")}
-        >
-          {t("home.featuredTabPlaces")}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          className={`featured-searches-tab${activeTab === "restaurants" ? " is-active" : ""}`}
-          aria-selected={activeTab === "restaurants"}
-          disabled={!hasRestaurants && !loading}
-          onClick={() => setTab("restaurants")}
-        >
-          {t("home.featuredTabRestaurants")}
-        </button>
       </div>
 
-      {loading && visibleItems.length === 0 ? (
+      {loading && !hasEvents ? (
         <HorizontalCarousel itemWidth={200} ariaLabel={t("home.featuredTitle")}>
           {Array.from({ length: 5 }, (_, i) => (
             <FeaturedSearchSkeleton key={i} />
@@ -226,7 +157,7 @@ export function FeaturedSearchesSection({
         </HorizontalCarousel>
       ) : (
         <HorizontalCarousel itemWidth={200} ariaLabel={t("home.featuredTitle")}>
-          {visibleItems.map((item) => (
+          {events.map((item) => (
             <FeaturedSearchCard
               key={`${item.kind}-${item.slug}`}
               item={item}
