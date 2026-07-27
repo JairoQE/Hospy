@@ -593,11 +593,12 @@ export function AdminModerationPage() {
                             ) {
                               return;
                             }
-                            void runModeration(`acc-del-${h.id}`, async () => {
-                              await api.post(`/hospedajes/${h.id}/eliminar-admin/`, {});
-                              setPending((prev) => prev.filter((x) => x.id !== h.id));
-                              showAdminToast("Hospedaje eliminado (soft delete).", "success");
-                            });
+                            void runModeration(
+                              `acc-del-${h.id}`,
+                              () => api.post(`/hospedajes/${h.id}/eliminar-admin/`, {}),
+                              () => setPending((prev) => prev.filter((x) => x.id !== h.id)),
+                              "Hospedaje eliminado (soft delete).",
+                            );
                           }}
                         >
                           Eliminar
