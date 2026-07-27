@@ -78,6 +78,28 @@ def _request(path: str, params: dict[str, Any] | None = None) -> Any:
     return body
 
 
+def _origin() -> str:
+    """Origen del sitio Actify (sin /api/v1) para absolutizar assets."""
+    frontend = (getattr(settings, "ACTIFY_FRONTEND_URL", "") or "").rstrip("/")
+    if frontend:
+        return frontend
+    base = _base_url()
+    if base.endswith("/api/v1"):
+        return base[: -len("/api/v1")]
+    return "https://actify.qd.je"
+
+
+def _absolute_media(url: str) -> str:
+    text = (url or "").strip()
+    if not text:
+        return ""
+    if text.startswith("//"):
+        return f"https:{text}"
+    if text.startswith("/"):
+        return f"{_origin()}{text}"
+    return text
+
+
 def _normalize_event(raw: dict) -> dict[str, Any]:
     capacity = raw.get("capacity") if isinstance(raw.get("capacity"), dict) else {}
     location = raw.get("location") if isinstance(raw.get("location"), dict) else {}
@@ -117,7 +139,7 @@ def _normalize_event(raw: dict) -> dict[str, Any]:
         "start_date": raw.get("start_date") or "",
         "end_date": raw.get("end_date") or "",
         "status": raw.get("status") or "",
-        "image_url": str(image_url).strip() or None,
+        "image_url": _absolute_media(str(image_url)) or None,
         "capacity": {
             "max_capacity": capacity.get("max_capacity"),
             "sold_tickets": capacity.get("sold_tickets"),
@@ -174,16 +196,21 @@ def _extract_events(body: Any) -> tuple[list[dict], dict[str, Any]]:
 def list_events(*, params: dict[str, Any] | None = None) -> dict[str, Any]:
     """
     Lista eventos públicos Actify.
-    Query opcionales: category_id, location, radius, city, page, per_page.
+    Query: category_id, location, radius, page (+ city se mapea a location).
     """
     clean: dict[str, Any] = {}
     for key, value in (params or {}).items():
         if value is None or value == "":
             continue
         clean[key] = value
+    # Docs Actify usan `location`; Hospy a veces envía `city`.
+    if "location" not in clean and clean.get("city"):
+        clean["location"] = clean.pop("city")
+    elif "city" in clean:
+        clean.pop("city", None)
 
     cache_key = (
-        "actify:events:"
+        "actify:events:v2:"
         + hashlib.md5(json.dumps(clean, sort_keys=True, default=str).encode()).hexdigest()
     )
     cached = cache.get(cache_key)

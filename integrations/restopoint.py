@@ -32,7 +32,7 @@ def _base_url() -> str:
     return getattr(
         settings,
         "RESTOPOINT_BASE_URL",
-        "https://restaurants-backend-ni6d.onrender.com/api/v1/developer-api",
+        "https://restaurants-h5ma.onrender.com/api/v1/developer-api",
     ).rstrip("/")
 
 
