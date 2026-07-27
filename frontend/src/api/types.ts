@@ -16,6 +16,8 @@ export interface AdminUserListItem {
   sponsor_status?: SponsorStatus;
   moderation_status: string;
   is_active: boolean;
+  is_deleted?: boolean;
+  deleted_at?: string | null;
   phone: string;
   photo_url?: string | null;
   date_joined: string;

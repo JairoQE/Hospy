@@ -131,6 +131,25 @@ class User(AbstractUser):
         blank=True,
         help_text="Código de cuenta interbancario, alternativa a Mercado Pago.",
     )
+    is_deleted = models.BooleanField(
+        "eliminado (soft delete)",
+        default=False,
+        db_index=True,
+        help_text="Si es True, la cuenta no puede iniciar sesión ni aparecer en listados públicos.",
+    )
+    deleted_at = models.DateTimeField(
+        "fecha de eliminación",
+        null=True,
+        blank=True,
+    )
+    deleted_by = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="users_soft_deleted",
+        verbose_name="eliminado por",
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username", "first_name"]
@@ -141,6 +160,29 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+    def soft_delete(self, *, by=None):
+        """Baja lógica: desactiva login y marca eliminado. Solo para admin vía API."""
+        from django.utils import timezone
+
+        self.is_deleted = True
+        self.is_active = False
+        self.deleted_at = timezone.now()
+        if by is not None:
+            self.deleted_by = by
+        self.save(
+            update_fields=["is_deleted", "is_active", "deleted_at", "deleted_by"]
+        )
+
+    def restore(self):
+        """Revierte soft delete y reactiva la cuenta."""
+        self.is_deleted = False
+        self.is_active = True
+        self.deleted_at = None
+        self.deleted_by = None
+        self.save(
+            update_fields=["is_deleted", "is_active", "deleted_at", "deleted_by"]
+        )
 
     @property
     def is_propietario(self):

@@ -120,6 +120,7 @@ export function AccommodationDetailPage() {
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
   const [mapOpen, setMapOpen] = useState(false);
+  const [adminDeleteLoading, setAdminDeleteLoading] = useState(false);
   const [expandedRoomId, setExpandedRoomId] = useState<number | null>(null);
   const [checkoutBooking, setCheckoutBooking] = useState<{
     id: number;
@@ -412,6 +413,42 @@ export function AccommodationDetailPage() {
           <span>/</span>
           <span>{acc.name}</span>
         </nav>
+
+        {user?.role === "administrador" ? (
+          <div className="property-admin-bar" style={{ marginBottom: "1rem" }}>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              disabled={adminDeleteLoading}
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    `¿Eliminar «${acc.name}» con soft delete?\nDejará de mostrarse en búsquedas y fichas públicas.`,
+                  )
+                ) {
+                  return;
+                }
+                setAdminDeleteLoading(true);
+                void api
+                  .post(`/hospedajes/${acc.id}/eliminar-admin/`, {})
+                  .then(() => {
+                    setMsg("Hospedaje eliminado (soft delete).");
+                    navigate("/");
+                  })
+                  .catch((e) => {
+                    setError(
+                      e instanceof ApiError
+                        ? e.message
+                        : "No se pudo eliminar el hospedaje.",
+                    );
+                  })
+                  .finally(() => setAdminDeleteLoading(false));
+              }}
+            >
+              {adminDeleteLoading ? "Eliminando…" : "Eliminar hospedaje (admin)"}
+            </button>
+          </div>
+        ) : null}
 
         <header className="property-header" data-tour="property-header">
           <div className="property-header-main">

@@ -40,7 +40,13 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             attrs.pop("captcha_token", ""),
             request=self.context.get("request"),
         )
-        return super().validate(attrs)
+        data = super().validate(attrs)
+        user = self.user
+        if getattr(user, "is_deleted", False):
+            raise serializers.ValidationError(
+                {"detail": "Esta cuenta fue eliminada. Contacta a soporte Hospy."}
+            )
+        return data
 
     @classmethod
     def get_token(cls, user):
@@ -280,6 +286,8 @@ class AdminUserListSerializer(serializers.ModelSerializer):
             "sponsor_status",
             "moderation_status",
             "is_active",
+            "is_deleted",
+            "deleted_at",
             "phone",
             "photo_url",
             "date_joined",

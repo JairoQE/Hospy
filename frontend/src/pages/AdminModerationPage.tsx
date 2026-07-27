@@ -581,6 +581,27 @@ export function AdminModerationPage() {
                         >
                           Rechazar
                         </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm admin-mod-btn-reject"
+                          disabled={moderating.has(`acc-del-${h.id}`)}
+                          onClick={() => {
+                            if (
+                              !window.confirm(
+                                `¿Eliminar «${h.name}» con soft delete?\nNo se borra de la base; deja de mostrarse públicamente.`,
+                              )
+                            ) {
+                              return;
+                            }
+                            void runModeration(`acc-del-${h.id}`, async () => {
+                              await api.post(`/hospedajes/${h.id}/eliminar-admin/`, {});
+                              setPending((prev) => prev.filter((x) => x.id !== h.id));
+                              showAdminToast("Hospedaje eliminado (soft delete).", "success");
+                            });
+                          }}
+                        >
+                          Eliminar
+                        </button>
                       </div>
                     )}
                   </article>

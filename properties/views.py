@@ -142,8 +142,19 @@ class AccommodationViewSet(viewsets.ModelViewSet):
                 "owner"
             )
 
+        if self.action == "restaurar":
+            return Accommodation.objects.filter(is_deleted=True).select_related("owner")
+
         user = self.request.user
         if user.is_authenticated and user.role == user.Role.ADMINISTRADOR:
+            include_deleted = (
+                self.request.query_params.get("include_deleted") or ""
+            ).strip()
+            if include_deleted in ("1", "true", "yes") or self.action in (
+                "eliminar_admin",
+                "restaurar",
+            ):
+                return Accommodation.objects.all().select_related("owner")
             return base.select_related("owner")
 
         if user.is_authenticated and user.role == user.Role.PROPIETARIO:
@@ -157,6 +168,12 @@ class AccommodationViewSet(viewsets.ModelViewSet):
 
         pk = self.kwargs.get("pk")
         user = self.request.user
+
+        if self.action == "restaurar" and user.is_authenticated and user.role == user.Role.ADMINISTRADOR:
+            return get_object_or_404(Accommodation.objects.filter(is_deleted=True), pk=pk)
+
+        if self.action == "eliminar_admin" and user.is_authenticated and user.role == user.Role.ADMINISTRADOR:
+            return get_object_or_404(Accommodation.objects.filter(is_deleted=False), pk=pk)
 
         if self.action in _PUBLIC_DETAIL_ACTIONS and (
             not user.is_authenticated
@@ -225,14 +242,23 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             return [IsAdministrador()]
         if self.action == "aprobar":
             return [IsAdministrador()]
+        if self.action in ("eliminar_admin", "restaurar"):
+            return [IsAdministrador()]
         if self.action == "mios":
             return [IsPropietario()]
         if self.action == "create":
             return [IsPropietario()]
+        if self.action == "destroy":
+            user = self.request.user
+            if (
+                user.is_authenticated
+                and getattr(user, "role", None) == getattr(user.Role, "ADMINISTRADOR", "administrador")
+            ):
+                return [IsAdministrador()]
+            return [IsPropietario(), IsAccommodationOwner()]
         if self.action in (
             "update",
             "partial_update",
-            "destroy",
             "desactivar",
             "fotos",
             "ofertas",
@@ -273,18 +299,64 @@ class AccommodationViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         accommodation = self.get_object()
-        accommodation.is_deleted = True
-        accommodation.is_active = False
-        accommodation.save(update_fields=["is_deleted", "is_active", "updated_at"])
+        accommodation.soft_delete(by=request.user)
         log_action(
             actor=request.user,
             action="accommodation.delete",
             target_type="Accommodation",
             target_id=accommodation.pk,
             target_label=accommodation.name,
+            metadata={
+                "soft": True,
+                "by_admin": request.user.role == request.user.Role.ADMINISTRADOR,
+            },
             request=request,
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=["post"], url_path="eliminar-admin")
+    def eliminar_admin(self, request, pk=None):
+        """POST /api/v1/hospedajes/<id>/eliminar-admin/ — soft delete solo admin."""
+        accommodation = self.get_object()
+        accommodation.soft_delete(by=request.user)
+        log_action(
+            actor=request.user,
+            action="accommodation.soft_delete_admin",
+            target_type="Accommodation",
+            target_id=accommodation.pk,
+            target_label=accommodation.name,
+            request=request,
+        )
+        return Response(
+            {
+                "detail": f"Hospedaje «{accommodation.name}» eliminado (soft delete).",
+                "id": accommodation.pk,
+                "is_deleted": True,
+            }
+        )
+
+    @action(detail=True, methods=["post"], url_path="restaurar")
+    def restaurar(self, request, pk=None):
+        """POST /api/v1/hospedajes/<id>/restaurar/ — revierte soft delete (admin)."""
+        accommodation = self.get_object()
+        accommodation.restore()
+        log_action(
+            actor=request.user,
+            action="accommodation.restore",
+            target_type="Accommodation",
+            target_id=accommodation.pk,
+            target_label=accommodation.name,
+            request=request,
+        )
+        return Response(
+            {
+                "detail": f"Hospedaje «{accommodation.name}» restaurado.",
+                "id": accommodation.pk,
+                "is_deleted": False,
+                "is_active": accommodation.is_active,
+                "status": accommodation.status,
+            }
+        )
 
     def perform_update(self, serializer):
         accommodation = serializer.save()

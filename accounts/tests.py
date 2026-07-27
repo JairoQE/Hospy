@@ -679,3 +679,37 @@ def test_usuario_reservas_y_resenas_publicas(api_client, huesped, hospedaje_apro
     assert reviews.status_code == 200
     assert reviews.data["count"] == 1
     assert reviews.data["results"][0]["habitacion"] == room.number
+
+@pytest.mark.django_db
+def test_admin_soft_delete_and_restore_user(api_client, admin_user, huesped):
+    api_client.force_authenticate(user=admin_user)
+    response = api_client.post(f"/api/v1/auth/admin-usuarios/{huesped.id}/eliminar/", {}, format="json")
+    assert response.status_code == 200
+    huesped.refresh_from_db()
+    assert huesped.is_deleted is True
+    assert huesped.is_active is False
+
+    listed = api_client.get("/api/v1/auth/admin-usuarios/")
+    emails = {row["email"] for row in listed.data["results"]}
+    assert huesped.email not in emails
+
+    listed_deleted = api_client.get("/api/v1/auth/admin-usuarios/?include_deleted=1")
+    emails_del = {row["email"] for row in listed_deleted.data["results"]}
+    assert huesped.email in emails_del
+
+    restore = api_client.post(f"/api/v1/auth/admin-usuarios/{huesped.id}/restaurar/", {}, format="json")
+    assert restore.status_code == 200
+    huesped.refresh_from_db()
+    assert huesped.is_deleted is False
+    assert huesped.is_active is True
+
+
+@pytest.mark.django_db
+def test_admin_cannot_soft_delete_self(api_client, admin_user):
+    api_client.force_authenticate(user=admin_user)
+    response = api_client.post(
+        f"/api/v1/auth/admin-usuarios/{admin_user.id}/eliminar/",
+        {},
+        format="json",
+    )
+    assert response.status_code == 400

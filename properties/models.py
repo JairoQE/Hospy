@@ -65,6 +65,19 @@ class Accommodation(TimeStampedModel):
     )
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)  # soft delete (RF-15)
+    deleted_at = models.DateTimeField(
+        "fecha de eliminación",
+        null=True,
+        blank=True,
+    )
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="accommodations_soft_deleted",
+        verbose_name="eliminado por",
+    )
 
     # Ubicación (RF-16, RF-17)
     address = models.CharField(max_length=255)
@@ -157,6 +170,39 @@ class Accommodation(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+    def soft_delete(self, *, by=None):
+        from django.utils import timezone
+
+        self.is_deleted = True
+        self.is_active = False
+        self.deleted_at = timezone.now()
+        if by is not None:
+            self.deleted_by = by
+        self.save(
+            update_fields=[
+                "is_deleted",
+                "is_active",
+                "deleted_at",
+                "deleted_by",
+                "updated_at",
+            ]
+        )
+
+    def restore(self):
+        self.is_deleted = False
+        self.is_active = True
+        self.deleted_at = None
+        self.deleted_by = None
+        # Solo reactivar visibilidad si ya estaba aprobado.
+        update = [
+            "is_deleted",
+            "is_active",
+            "deleted_at",
+            "deleted_by",
+            "updated_at",
+        ]
+        self.save(update_fields=update)
 
 
 class AccommodationOffer(TimeStampedModel):

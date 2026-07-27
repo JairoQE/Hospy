@@ -230,7 +230,7 @@ class PublicUserProfileView(generics.RetrieveAPIView):
     serializer_class = PublicUserProfileSerializer
 
     def get_queryset(self):
-        return User.objects.filter(is_active=True)
+        return User.objects.filter(is_active=True, is_deleted=False)
 
 
 class OwnerStoreView(generics.RetrieveAPIView):
@@ -240,7 +240,11 @@ class OwnerStoreView(generics.RetrieveAPIView):
     serializer_class = OwnerPublicProfileSerializer
 
     def get_queryset(self):
-        return User.objects.filter(is_active=True, role=User.Role.PROPIETARIO)
+        return User.objects.filter(
+            is_active=True,
+            is_deleted=False,
+            role=User.Role.PROPIETARIO,
+        )
 
 
 class FollowUserView(APIView):
@@ -249,7 +253,7 @@ class FollowUserView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request, pk):
-        target = get_object_or_404(User, pk=pk, is_active=True)
+        target = get_object_or_404(User, pk=pk, is_active=True, is_deleted=False)
         try:
             following_now, count = toggle_follow(request.user, target)
         except ValueError as exc:
@@ -496,8 +500,18 @@ class AdminUsersListView(generics.ListAPIView):
     def get_queryset(self):
         qs = User.objects.annotate(
             bookings_count=Count("reservas", distinct=True),
-            hospedajes_count=Count("hospedajes", distinct=True),
+            hospedajes_count=Count(
+                "hospedajes",
+                filter=Q(hospedajes__is_deleted=False),
+                distinct=True,
+            ),
         ).order_by("-date_joined")
+        include_deleted = (self.request.query_params.get("include_deleted") or "").strip()
+        deleted_only = (self.request.query_params.get("deleted") or "").strip()
+        if deleted_only in ("1", "true", "yes"):
+            qs = qs.filter(is_deleted=True)
+        elif include_deleted not in ("1", "true", "yes"):
+            qs = qs.filter(is_deleted=False)
         role = (self.request.query_params.get("role") or "").strip()
         if role:
             qs = qs.filter(role=role)
@@ -518,7 +532,7 @@ class AdminAssignAdministratorView(APIView):
     permission_classes = (IsAdministrador,)
 
     def post(self, request, pk):
-        target = get_object_or_404(User, pk=pk, is_active=True)
+        target = get_object_or_404(User, pk=pk, is_active=True, is_deleted=False)
         serializer = AdminAssignAdministratorSerializer(
             data=request.data,
             context={"request": request, "target": target},
@@ -552,9 +566,113 @@ class AdminAssignAdministratorView(APIView):
                 "user": AdminUserListSerializer(
                     User.objects.annotate(
                         bookings_count=Count("reservas", distinct=True),
-                        hospedajes_count=Count("hospedajes", distinct=True),
+                        hospedajes_count=Count(
+                            "hospedajes",
+                            filter=Q(hospedajes__is_deleted=False),
+                            distinct=True,
+                        ),
                     ).get(pk=target.pk),
                 ).data,
+            }
+        )
+
+
+def _admin_user_payload(user_id: int) -> dict:
+    return AdminUserListSerializer(
+        User.objects.annotate(
+            bookings_count=Count("reservas", distinct=True),
+            hospedajes_count=Count(
+                "hospedajes",
+                filter=Q(hospedajes__is_deleted=False),
+                distinct=True,
+            ),
+        ).get(pk=user_id),
+    ).data
+
+
+class AdminSoftDeleteUserView(APIView):
+    """DELETE/POST /api/v1/auth/admin-usuarios/<pk>/eliminar/ — soft delete (solo admin)."""
+
+    permission_classes = (IsAdministrador,)
+
+    def post(self, request, pk):
+        return self._soft_delete(request, pk)
+
+    def delete(self, request, pk):
+        return self._soft_delete(request, pk)
+
+    def _soft_delete(self, request, pk):
+        target = get_object_or_404(User, pk=pk)
+        if target.pk == request.user.pk:
+            return Response(
+                {"detail": "No puedes eliminar tu propia cuenta de administrador."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if target.is_deleted:
+            return Response(
+                {
+                    "detail": "El usuario ya estaba eliminado.",
+                    "user": _admin_user_payload(target.pk),
+                }
+            )
+        if (
+            target.role == User.Role.ADMINISTRADOR
+            and User.objects.filter(
+                role=User.Role.ADMINISTRADOR,
+                is_deleted=False,
+                is_active=True,
+            ).count()
+            <= 1
+        ):
+            return Response(
+                {"detail": "No puedes eliminar al único administrador activo."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        target.soft_delete(by=request.user)
+        log_action(
+            actor=request.user,
+            action="user.soft_delete",
+            target_type="User",
+            target_id=target.pk,
+            target_label=target.email,
+            request=request,
+        )
+        return Response(
+            {
+                "detail": f"Usuario {target.email} eliminado (soft delete).",
+                "user": _admin_user_payload(target.pk),
+            }
+        )
+
+
+class AdminRestoreUserView(APIView):
+    """POST /api/v1/auth/admin-usuarios/<pk>/restaurar/ — revierte soft delete."""
+
+    permission_classes = (IsAdministrador,)
+
+    def post(self, request, pk):
+        target = get_object_or_404(User, pk=pk)
+        if not target.is_deleted:
+            return Response(
+                {
+                    "detail": "El usuario no está eliminado.",
+                    "user": _admin_user_payload(target.pk),
+                }
+            )
+        target.restore()
+        log_action(
+            actor=request.user,
+            action="user.restore",
+            target_type="User",
+            target_id=target.pk,
+            target_label=target.email,
+            request=request,
+        )
+        return Response(
+            {
+                "detail": f"Usuario {target.email} restaurado.",
+                "user": _admin_user_payload(target.pk),
             }
         )
 
@@ -569,6 +687,7 @@ class PropietariosPendientesView(generics.ListAPIView):
         return User.objects.filter(
             role=User.Role.PROPIETARIO,
             owner_status=User.OwnerStatus.PENDIENTE,
+            is_deleted=False,
         ).order_by("-date_joined")
 
 
@@ -644,6 +763,7 @@ class PatrocinadoresPendientesView(generics.ListAPIView):
         return User.objects.filter(
             role=User.Role.PATROCINADOR,
             sponsor_status=User.SponsorStatus.PENDIENTE,
+            is_deleted=False,
         ).order_by("-date_joined")
 
 

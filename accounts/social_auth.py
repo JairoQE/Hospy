@@ -37,14 +37,14 @@ def resolve_social_user(
 
     user = User.objects.filter(**{id_field: external_id}).first()
     if user:
-        if not user.is_active:
-            raise ValidationError({"detail": "Esta cuenta está desactivada."})
+        if not user.is_active or getattr(user, "is_deleted", False):
+            raise ValidationError({"detail": "Esta cuenta está desactivada o eliminada."})
         return user, False
 
     user = User.objects.filter(email__iexact=email).first()
     if user:
-        if not user.is_active:
-            raise ValidationError({"detail": "Esta cuenta está desactivada."})
+        if not user.is_active or getattr(user, "is_deleted", False):
+            raise ValidationError({"detail": "Esta cuenta está desactivada o eliminada."})
         existing_external = getattr(user, id_field)
         if existing_external and existing_external != external_id:
             label = "Google" if provider == "google" else "Facebook"

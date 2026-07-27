@@ -142,7 +142,7 @@ export function AdminUsersPage() {
   const [adminRoleLoading, setAdminRoleLoading] = useState<number | null>(null);
 
   const adminCount = useMemo(
-    () => users.filter((u) => u.role === "administrador" && u.is_active).length,
+    () => users.filter((u) => u.role === "administrador" && u.is_active && !u.is_deleted).length,
     [users],
   );
 
@@ -152,7 +152,7 @@ export function AdminUsersPage() {
     setLoading(true);
     setListError("");
     Promise.all([
-      fetchAllPages<AdminUserListItem>("/auth/admin-usuarios/"),
+      fetchAllPages<AdminUserListItem>("/auth/admin-usuarios/?include_deleted=1"),
       fetchAllPages<Booking>("/reservas/"),
       api.get<User[] | Paginated<User>>("/auth/propietarios-pendientes/"),
       api.get<User[] | Paginated<User>>("/auth/patrocinadores-pendientes/"),
@@ -345,6 +345,48 @@ export function AdminUsersPage() {
     } catch (e) {
       showAdminToast(
         e instanceof ApiError ? e.message : `No se pudo ${action}.`,
+        "error",
+      );
+    } finally {
+      setAdminRoleLoading(null);
+    }
+  };
+
+  const softDeleteUser = async (user: AdminUserListItem) => {
+    const name = displayName(user);
+    if (
+      !window.confirm(
+        `¿Eliminar a ${name} (${user.email})?\n\nEs un soft delete: no se borra de la base, pero no podrá iniciar sesión ni aparecer en listados públicos. Puedes restaurarlo después.`,
+      )
+    ) {
+      return;
+    }
+    setAdminRoleLoading(user.id);
+    try {
+      await api.post(`/auth/admin-usuarios/${user.id}/eliminar/`, {});
+      showAdminToast(`${name} eliminado (soft delete).`, "success");
+      load();
+    } catch (e) {
+      showAdminToast(
+        e instanceof ApiError ? e.message : "No se pudo eliminar el usuario.",
+        "error",
+      );
+    } finally {
+      setAdminRoleLoading(null);
+    }
+  };
+
+  const restoreUser = async (user: AdminUserListItem) => {
+    const name = displayName(user);
+    if (!window.confirm(`¿Restaurar a ${name} (${user.email})?`)) return;
+    setAdminRoleLoading(user.id);
+    try {
+      await api.post(`/auth/admin-usuarios/${user.id}/restaurar/`, {});
+      showAdminToast(`${name} restaurado.`, "success");
+      load();
+    } catch (e) {
+      showAdminToast(
+        e instanceof ApiError ? e.message : "No se pudo restaurar el usuario.",
         "error",
       );
     } finally {
@@ -701,6 +743,8 @@ export function AdminUsersPage() {
                         adminCount={adminCount}
                         adminRoleLoading={adminRoleLoading === u.id}
                         onToggleAdministrator={toggleAdministrator}
+                        onSoftDelete={softDeleteUser}
+                        onRestore={restoreUser}
                       />
                     ))}
                   </tbody>
@@ -858,6 +902,8 @@ function UserRow({
   adminCount,
   adminRoleLoading,
   onToggleAdministrator,
+  onSoftDelete,
+  onRestore,
 }: {
   user: AdminUserListItem;
   tab: UsersTab;
@@ -866,15 +912,21 @@ function UserRow({
   adminCount: number;
   adminRoleLoading: boolean;
   onToggleAdministrator: (user: AdminUserListItem, makeAdmin: boolean) => void;
+  onSoftDelete: (user: AdminUserListItem) => void;
+  onRestore: (user: AdminUserListItem) => void;
 }) {
   const name = displayName(u);
   const isAdmin = u.role === "administrador";
   const isSelf = currentUserId === u.id;
+  const isDeleted = Boolean(u.is_deleted);
   const canDemote =
-    isAdmin && !isSelf && adminCount > 1 && u.is_active;
-  const canPromote = !isAdmin && u.is_active;
+    isAdmin && !isSelf && adminCount > 1 && u.is_active && !isDeleted;
+  const canPromote = !isAdmin && u.is_active && !isDeleted;
+  const canDelete = !isSelf && !isDeleted;
   const moderationBadge =
-    u.moderation_status ? (
+    isDeleted ? (
+      <span className="badge badge-danger">Eliminado</span>
+    ) : u.moderation_status ? (
       <StatusBadge status={u.moderation_status} />
     ) : u.is_active ? (
       <span className="badge badge-ok">Activo</span>
@@ -972,6 +1024,28 @@ function UserRow({
               onClick={() => onToggleAdministrator(u, false)}
             >
               {adminRoleLoading ? "…" : "Quitar admin"}
+            </button>
+          )}
+          {canDelete && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm admin-users-admin-btn admin-users-admin-btn--danger"
+              disabled={adminRoleLoading}
+              title="Eliminar usuario (soft delete)"
+              onClick={() => onSoftDelete(u)}
+            >
+              {adminRoleLoading ? "…" : "Eliminar"}
+            </button>
+          )}
+          {isDeleted && (
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              disabled={adminRoleLoading}
+              title="Restaurar usuario eliminado"
+              onClick={() => onRestore(u)}
+            >
+              {adminRoleLoading ? "…" : "Restaurar"}
             </button>
           )}
         </div>

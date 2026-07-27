@@ -89,6 +89,16 @@ urlpatterns = [
         name="admin-usuario-administrador",
     ),
     path(
+        "admin-usuarios/<int:pk>/eliminar/",
+        views.AdminSoftDeleteUserView.as_view(),
+        name="admin-usuario-eliminar",
+    ),
+    path(
+        "admin-usuarios/<int:pk>/restaurar/",
+        views.AdminRestoreUserView.as_view(),
+        name="admin-usuario-restaurar",
+    ),
+    path(
         "propietarios-pendientes/",
         views.PropietariosPendientesView.as_view(),
         name="propietarios-pendientes",
