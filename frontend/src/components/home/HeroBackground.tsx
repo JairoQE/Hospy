@@ -51,7 +51,10 @@ export function HeroBackground({
   const { design } = useSiteDesign();
   const animStyle = normalizeHeroAnimationStyle(style ?? design.hero_animation_style);
   const isAnimated = animated ?? design.hero_animated;
-  const effectiveStyle = !isAnimated || animStyle === "static" ? "static" : animStyle;
+  // bokeh (círculos difuminados) queda desactivado: se veía mal en el home.
+  const resolvedStyle = animStyle === "bokeh" ? "gradient_shift" : animStyle;
+  const effectiveStyle =
+    !isAnimated || resolvedStyle === "static" ? "static" : resolvedStyle;
 
   const cssVars = {
     "--hero-c-deep": deep ?? design.hero_color_deep,

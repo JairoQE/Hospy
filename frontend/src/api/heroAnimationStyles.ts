@@ -82,8 +82,8 @@ export const HERO_ANIMATION_STYLE_OPTIONS: {
   },
   {
     value: "bokeh",
-    label: "Bokeh",
-    hint: "Círculos difuminados como luces de ciudad",
+    label: "Bokeh (desactivado)",
+    hint: "Se muestra como gradiente deslizante (los círculos se quitaron)",
     group: "Partículas",
   },
   {
@@ -131,6 +131,8 @@ export const HERO_ANIMATION_STYLE_OPTIONS: {
 ];
 
 export function normalizeHeroAnimationStyle(value: string | undefined | null): HeroAnimationStyle {
+  // wave_path era el divisor SVG inferior legacy; bokeh (círculos) se desactivó en el home.
+  if (value === "wave_path" || value === "bokeh") return DEFAULT_HERO_ANIMATION_STYLE;
   const found = HERO_ANIMATION_STYLE_OPTIONS.find((o) => o.value === value);
   return found?.value ?? DEFAULT_HERO_ANIMATION_STYLE;
 }
