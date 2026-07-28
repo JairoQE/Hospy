@@ -335,7 +335,7 @@ export function AdminDashboard({
           label="Centro de moderación chat"
           hint={pendingReports > 0 ? `${pendingReports} reporte(s)` : undefined}
         />
-        <QuickLink to="/admin/integracion" icon="pi-sitemap" label="APIs integradas" />
+        <QuickLink to="/admin/integracion" icon="pi-arrows-h" label="Flujo de APIs" />
         <QuickLink to="/admin/inicio" icon="pi-cog" label="Contenido del inicio" />
       </nav>
 
