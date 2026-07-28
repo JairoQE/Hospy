@@ -165,6 +165,111 @@ def test_owner_panel_bootstrap_refresca_tras_confirmar(
 
 
 @pytest.mark.django_db
+def test_admin_lista_todos_hospedajes(api_client, admin_user, hospedaje_aprobado):
+    """Admin ve todos los locales, no solo pendientes."""
+    from properties.models import Accommodation
+
+    acc, _ = hospedaje_aprobado
+    owner = acc.owner
+    Accommodation.objects.create(
+        owner=owner,
+        name="Hostal Pendiente",
+        type=Accommodation.Type.HOSTAL,
+        description="Desc",
+        address="Calle 2",
+        city="Cusco",
+        region="Cusco",
+        latitude=acc.latitude,
+        longitude=acc.longitude,
+        status=Accommodation.Status.PENDIENTE,
+        is_active=False,
+    )
+    api_client.force_authenticate(user=admin_user)
+    response = api_client.get("/api/v1/hospedajes/admin/")
+    assert response.status_code == 200
+    results = response.data["results"] if "results" in response.data else response.data
+    assert len(results) >= 2
+    statuses = {row["status"] for row in results}
+    assert "aprobado" in statuses
+    assert "pendiente" in statuses
+
+    only_hostal = api_client.get("/api/v1/hospedajes/admin/?type=hostal")
+    assert only_hostal.status_code == 200
+    hostal_rows = (
+        only_hostal.data["results"]
+        if "results" in only_hostal.data
+        else only_hostal.data
+    )
+    assert all(row["type"] == "hostal" for row in hostal_rows)
+
+    soft = api_client.post(
+        f"/api/v1/hospedajes/{acc.id}/eliminar-admin/",
+        {"motivo": "Incumplimiento de políticas de la plataforma"},
+        format="json",
+    )
+    assert soft.status_code == 200
+    assert soft.data["is_deleted"] is True
+    assert soft.data["status"] == "inactivo"
+    assert soft.data["is_active"] is False
+
+    from audit.models import AuditLog
+    from audit.actions import action_label
+    from notifications.models import InboxItem
+
+    delete_log = AuditLog.objects.filter(
+        action="accommodation.soft_delete_admin",
+        target_id=acc.id,
+    ).latest("id")
+    assert delete_log.actor_id == admin_user.id
+    assert delete_log.metadata.get("to") == "inactivo"
+    assert delete_log.metadata.get("from") == "aprobado"
+    assert "políticas" in delete_log.metadata.get("motivo", "").lower()
+    assert "soft delete" in action_label(delete_log.action).lower()
+
+    owner_notice = InboxItem.objects.filter(
+        recipient=owner,
+        kind="accommodation_soft_deleted",
+    ).first()
+    assert owner_notice is not None
+    assert "políticas" in owner_notice.body.lower()
+
+    listed = api_client.get("/api/v1/hospedajes/admin/?include_deleted=1")
+    listed_rows = listed.data["results"] if "results" in listed.data else listed.data
+    soft_row = next(r for r in listed_rows if r["id"] == acc.id)
+    assert soft_row["is_deleted"] is True
+    assert soft_row["status"] == "inactivo"
+
+    restore = api_client.post(f"/api/v1/hospedajes/{acc.id}/restaurar/", {}, format="json")
+    assert restore.status_code == 200
+    acc.refresh_from_db()
+    assert acc.is_deleted is False
+    assert acc.status == "aprobado"
+    assert acc.is_active is True
+
+    missing_motivo = api_client.post(
+        f"/api/v1/hospedajes/{acc.id}/eliminar-admin/",
+        {},
+        format="json",
+    )
+    assert missing_motivo.status_code == 400
+
+    restore_log = AuditLog.objects.filter(
+        action="accommodation.restore",
+        target_id=acc.id,
+    ).latest("id")
+    assert restore_log.actor_id == admin_user.id
+    assert restore_log.metadata.get("from") == "inactivo"
+    assert restore_log.metadata.get("to") == "aprobado"
+
+
+@pytest.mark.django_db
+def test_admin_lista_hospedajes_solo_admin(api_client, huesped, hospedaje_aprobado):
+    api_client.force_authenticate(user=huesped)
+    response = api_client.get("/api/v1/hospedajes/admin/")
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
 def test_admin_dashboard_bootstrap(api_client, admin_user, hospedaje_aprobado):
     api_client.force_authenticate(user=admin_user)
     response = api_client.get("/api/v1/admin/dashboard-bootstrap/")

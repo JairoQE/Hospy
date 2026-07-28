@@ -211,10 +211,33 @@ export interface AccommodationOffer {
   end_date: string;
   is_active: boolean;
   rooms: OfferRoomSummary[];
+  event_id?: number | null;
+  event_name?: string;
   vigente: boolean;
   dias_restantes: number;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface NearbyOfferEvent {
+  event_id: number;
+  name: string;
+  subtitle: string;
+  start_date: string;
+  end_date: string;
+  distance_km: number;
+  latitude: number;
+  longitude: number;
+  external_url?: string | null;
+  has_offer: boolean;
+  suggested_offer: {
+    title: string;
+    discount_percent: number;
+    start_date: string;
+    duration_days: number;
+    event_id: number;
+    event_name: string;
+  };
 }
 
 export interface Service {
@@ -252,6 +275,7 @@ export interface AccommodationDetail {
   description: string;
   status: string;
   is_active: boolean;
+  is_deleted?: boolean;
   rejection_reason: string;
   address: string;
   city: string;

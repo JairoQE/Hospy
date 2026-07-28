@@ -421,18 +421,21 @@ export function AccommodationDetailPage() {
               className="btn btn-outline btn-sm"
               disabled={adminDeleteLoading}
               onClick={() => {
-                if (
-                  !window.confirm(
-                    `¿Eliminar «${acc.name}» con soft delete?\nDejará de mostrarse en búsquedas y fichas públicas.`,
-                  )
-                ) {
+                const motivo = window.prompt(
+                  `Justificación para el propietario (se enviará como notificación):\n\n¿Por qué se elimina «${acc.name}»?`,
+                  "",
+                );
+                if (motivo == null) return;
+                const text = motivo.trim();
+                if (text.length < 5) {
+                  setError("Escribe una justificación breve (mínimo 5 caracteres).");
                   return;
                 }
                 setAdminDeleteLoading(true);
                 void api
-                  .post(`/hospedajes/${acc.id}/eliminar-admin/`, {})
+                  .post(`/hospedajes/${acc.id}/eliminar-admin/`, { motivo: text })
                   .then(() => {
-                    setMsg("Hospedaje eliminado (soft delete).");
+                    setMsg("Hospedaje eliminado. El propietario fue notificado.");
                     navigate("/");
                   })
                   .catch((e) => {
@@ -468,6 +471,12 @@ export function AccommodationDetailPage() {
                       ? maxDiscountPercent
                       : maxDiscountPercent.toFixed(0),
                   })}
+                </span>
+              )}
+              {activeOffers.some((o) => o.event_id != null) && (
+                <span className="property-offer-header-badge property-offer-header-badge--event">
+                  <PrimeIcon name="pi-calendar" size={12} />
+                  {t("detail.offerByEvent")}
                 </span>
               )}
             </div>

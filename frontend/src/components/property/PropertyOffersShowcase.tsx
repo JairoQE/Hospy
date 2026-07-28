@@ -88,6 +88,14 @@ export function PropertyOffersShowcase({
                 <div className="property-offer-card-badge">-{pct}%</div>
                 <div className="property-offer-card-body">
                   <strong>{title}</strong>
+                  {offer.event_id != null && (
+                    <p className="property-offer-card-event">
+                      <PrimeIcon name="pi-calendar" size={13} />
+                      {offer.event_name
+                        ? tVars("detail.offerByEventNamed", { name: offer.event_name })
+                        : t("detail.offerByEvent")}
+                    </p>
+                  )}
                   <p className="property-offer-card-dates">
                     {formatDate(offer.start_date, { language })} → {formatDate(offer.end_date, { language })}
                   </p>

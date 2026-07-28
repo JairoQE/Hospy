@@ -93,11 +93,21 @@ export function formatAuditMetadata(entry: AuditLogEntry): MetadataLine[] {
     lines.push({ label: "Campos modificados", value: (m.fields as string[]).join(", ") });
   }
   if (m.from && m.to) {
-    lines.push({ label: "Cambio", value: `${String(m.from)} → ${String(m.to)}` });
+    lines.push({ label: "Cambio de estado", value: `${String(m.from)} → ${String(m.to)}` });
   }
   if (m.motivo) lines.push({ label: "Motivo", value: String(m.motivo) });
   if (m.accion) lines.push({ label: "Resolución", value: String(m.accion) });
   if (m.status) lines.push({ label: "Estado", value: String(m.status) });
+  if (m.soft === true) lines.push({ label: "Tipo", value: "Soft delete / restauración" });
+  if (m.type) lines.push({ label: "Tipo de local", value: String(m.type) });
+  if (m.city) lines.push({ label: "Ciudad", value: String(m.city) });
+  if (m.owner_id != null) lines.push({ label: "ID propietario", value: String(m.owner_id) });
+  if (m.role) lines.push({ label: "Rol", value: String(m.role) });
+  if (m.is_deleted === true) lines.push({ label: "Eliminado", value: "Sí" });
+  if (m.is_deleted === false) lines.push({ label: "Eliminado", value: "No" });
+  if (m.is_active === true) lines.push({ label: "Activo", value: "Sí" });
+  if (m.is_active === false) lines.push({ label: "Activo", value: "No" });
+  if (m.by_admin === true) lines.push({ label: "Por administrador", value: "Sí" });
   if (m.admin_notes) lines.push({ label: "Notas del administrador", value: String(m.admin_notes) });
   if (m.warning) lines.push({ label: "Advertencia enviada", value: String(m.warning) });
   if (m.check_in && m.check_out) {
@@ -137,6 +147,7 @@ export function formatAuditMetadata(entry: AuditLogEntry): MetadataLine[] {
     "fields", "from", "to", "motivo", "accion", "status", "admin_notes",
     "warning", "check_in", "check_out", "total_amount", "rating",
     "ip_geo", "ip_flags", "payment_risk", "security_flags", "owner_ip_flags",
+    "soft", "type", "city", "owner_id", "role", "is_deleted", "is_active", "by_admin",
   ]);
   for (const [key, val] of Object.entries(m)) {
     if (known.has(key) || val === null || val === undefined || val === "") continue;

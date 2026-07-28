@@ -4847,6 +4847,53 @@ textarea:focus {
   vertical-align: middle;
 }
 
+.offer-badge--event {
+  background: #8a4b08;
+}
+
+.offer-events-card {
+  margin: 0 0 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(13, 110, 110, 0.04);
+}
+
+.offer-events-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.offer-events-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.offer-events-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+}
+
+.offer-event-hint {
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 6px;
+  background: rgba(138, 75, 8, 0.1);
+  color: #5c3a0a;
+  font-size: 0.9rem;
+}
+
 .offer-actions {
   display: flex;
   gap: 0.35rem;

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { ApiError, api } from "../api/client";
 import { formatApiError, parseFieldErrors } from "../api/errors";
 import { unwrapList } from "../api/unwrap";
-import type { AccommodationOffer, Paginated, Room } from "../api/types";
+import type { AccommodationOffer, NearbyOfferEvent, Paginated, Room } from "../api/types";
 import { roomTypeLabel } from "../utils/format";
 
 const emptyForm = () => ({
@@ -11,6 +11,8 @@ const emptyForm = () => ({
   start_date: new Date().toISOString().slice(0, 10),
   duration_days: "7",
   room_ids: [] as number[],
+  event_id: null as number | null,
+  event_name: "",
 });
 
 interface Props {
@@ -21,6 +23,7 @@ interface Props {
 export function OwnerOffersPanel({ accommodationId, accommodationStatus }: Props) {
   const [offers, setOffers] = useState<AccommodationOffer[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [nearbyEvents, setNearbyEvents] = useState<NearbyOfferEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -36,11 +39,21 @@ export function OwnerOffersPanel({ accommodationId, accommodationStatus }: Props
       .then(setOffers);
   }, [accommodationId]);
 
+  const loadNearbyEvents = useCallback(() => {
+    return api
+      .get<{ count: number; results: NearbyOfferEvent[] }>(
+        `/hospedajes/${accommodationId}/eventos-cercanos/?notify=1`,
+      )
+      .then((data) => setNearbyEvents(Array.isArray(data.results) ? data.results : []))
+      .catch(() => setNearbyEvents([]));
+  }, [accommodationId]);
+
   const load = useCallback(() => {
     setLoading(true);
     setError("");
     Promise.all([
       loadOffers(),
+      loadNearbyEvents(),
       api
         .get<Room[] | Paginated<Room>>(`/habitaciones/?accommodation=${accommodationId}`)
         .then((data) =>
@@ -49,12 +62,18 @@ export function OwnerOffersPanel({ accommodationId, accommodationStatus }: Props
     ])
       .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar ofertas"))
       .finally(() => setLoading(false));
-  }, [accommodationId, loadOffers]);
+  }, [accommodationId, loadOffers, loadNearbyEvents]);
 
   useEffect(() => {
     if (canManage) load();
     else setLoading(false);
   }, [canManage, load]);
+
+  useEffect(() => {
+    if (window.location.hash === "#ofertas") {
+      document.getElementById("ofertas")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [loading]);
 
   const toggleRoom = (roomId: number) => {
     setForm((f) => {
@@ -68,6 +87,25 @@ export function OwnerOffersPanel({ accommodationId, accommodationStatus }: Props
 
   const selectAllRooms = () => {
     setForm((f) => ({ ...f, room_ids: rooms.map((r) => r.id) }));
+  };
+
+  const openFromEvent = (event: NearbyOfferEvent) => {
+    const s = event.suggested_offer;
+    setForm({
+      title: s.title,
+      discount_percent: String(s.discount_percent),
+      start_date: s.start_date || new Date().toISOString().slice(0, 10),
+      duration_days: String(s.duration_days),
+      room_ids: rooms.map((r) => r.id),
+      event_id: s.event_id,
+      event_name: s.event_name,
+    });
+    setFormOpen(true);
+    setFieldErrors({});
+    setError("");
+    requestAnimationFrame(() => {
+      document.getElementById("ofertas")?.scrollIntoView({ behavior: "smooth" });
+    });
   };
 
   const submit = async (e: FormEvent) => {
@@ -86,6 +124,9 @@ export function OwnerOffersPanel({ accommodationId, accommodationStatus }: Props
         start_date: form.start_date,
         duration_days: Number(form.duration_days),
         room_ids: form.room_ids,
+        ...(form.event_id != null
+          ? { event_id: form.event_id, event_name: form.event_name }
+          : {}),
       });
       setForm(emptyForm());
       setFormOpen(false);
@@ -130,7 +171,7 @@ export function OwnerOffersPanel({ accommodationId, accommodationStatus }: Props
 
   if (!canManage) {
     return (
-      <section className="card section-sm">
+      <section className="card section-sm" id="ofertas">
         <h2>Ofertas y promociones</h2>
         <p className="muted">
           Cuando tu hospedaje esté aprobado podrás crear descuentos temporales en las
@@ -142,7 +183,7 @@ export function OwnerOffersPanel({ accommodationId, accommodationStatus }: Props
   }
 
   return (
-    <section className="card section-sm">
+    <section className="card section-sm" id="ofertas">
       <div className="section-head-row">
         <div>
           <h2>Ofertas y promociones</h2>
@@ -154,12 +195,60 @@ export function OwnerOffersPanel({ accommodationId, accommodationStatus }: Props
         <button
           type="button"
           className="btn btn-primary btn-sm"
-          onClick={() => setFormOpen((v) => !v)}
+          onClick={() => {
+            setForm(emptyForm());
+            setFormOpen((v) => !v);
+          }}
           disabled={rooms.length === 0}
         >
           {formOpen ? "Cancelar" : "Nueva oferta"}
         </button>
       </div>
+
+      {!loading && nearbyEvents.length > 0 && (
+        <div className="offer-events-card">
+          <h3>Eventos cerca de tu hospedaje</h3>
+          <p className="muted">
+            Crea una oferta ligada al evento para atraer huéspedes que vienen a la zona.
+          </p>
+          <ul className="offer-events-list">
+            {nearbyEvents.map((ev) => (
+              <li key={ev.event_id} className="offer-events-item">
+                <div>
+                  <strong>{ev.name}</strong>
+                  <p className="muted">
+                    {ev.distance_km} km
+                    {ev.start_date ? ` · ${ev.start_date}` : ""}
+                    {ev.end_date && ev.end_date !== ev.start_date ? ` → ${ev.end_date}` : ""}
+                    {ev.subtitle ? ` · ${ev.subtitle}` : ""}
+                    {ev.has_offer ? " · Ya tienes oferta" : ""}
+                  </p>
+                </div>
+                <div className="offer-actions">
+                  {ev.external_url && (
+                    <a
+                      className="btn btn-ghost btn-sm"
+                      href={ev.external_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Ver evento
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    disabled={ev.has_offer || rooms.length === 0}
+                    onClick={() => openFromEvent(ev)}
+                  >
+                    {ev.has_offer ? "Oferta creada" : "Crear oferta"}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {rooms.length === 0 && !loading && (
         <p className="muted">
@@ -171,6 +260,11 @@ export function OwnerOffersPanel({ accommodationId, accommodationStatus }: Props
 
       {formOpen && rooms.length > 0 && (
         <form className="offer-form" onSubmit={submit}>
+          {form.event_id != null && (
+            <p className="offer-event-hint">
+              Oferta ligada al evento: <strong>{form.event_name || form.event_id}</strong>
+            </p>
+          )}
           <fieldset className="offer-rooms-fieldset">
             <legend>Habitaciones en oferta</legend>
             <div className="offer-rooms-toolbar">
@@ -272,10 +366,14 @@ export function OwnerOffersPanel({ accommodationId, accommodationStatus }: Props
                 <strong>
                   {o.title || `${o.discount_percent}% de descuento`}
                   {o.vigente && <span className="offer-badge">Vigente</span>}
+                  {o.event_id != null && (
+                    <span className="offer-badge offer-badge--event">Por evento</span>
+                  )}
                 </strong>
                 <p className="muted">
                   {o.start_date} → {o.end_date} ({o.duration_days} días)
                   {!o.is_active && " · Pausada"}
+                  {o.event_name ? ` · Evento: ${o.event_name}` : ""}
                   {o.vigente && o.dias_restantes > 0 && (
                     <> · Quedan {o.dias_restantes} día{o.dias_restantes === 1 ? "" : "s"}</>
                   )}

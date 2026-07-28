@@ -175,6 +175,35 @@ def notify_accommodation_moderated(accommodation, approved: bool, motivo: str = 
         )
 
 
+def notify_accommodation_soft_deleted(accommodation, motivo: str) -> None:
+    """Avisa al propietario cuando un admin elimina el local (soft delete)."""
+    owner = getattr(accommodation, "owner", None)
+    if owner is None:
+        return
+    reason = (motivo or "").strip() or "Sin detalle adicional."
+    notify_user(
+        owner,
+        title="Tu hospedaje fue eliminado por administración",
+        body=(
+            f"El equipo Hospy eliminó «{accommodation.name}». "
+            f"Justificación: {reason}"
+        ),
+        link="/panel",
+        kind="accommodation_soft_deleted",
+    )
+    notify_user(
+        owner,
+        title="Mensaje del equipo Hospy",
+        body=(
+            f"Te informamos que «{accommodation.name}» ya no está publicado. "
+            f"Motivo: {reason}. Si tienes dudas, responde a este mensaje."
+        ),
+        link="/panel",
+        kind="accommodation_soft_deleted_msg",
+        as_message=True,
+    )
+
+
 def notify_booking_created_inbox(booking) -> None:
     from bookings.models import Booking
 

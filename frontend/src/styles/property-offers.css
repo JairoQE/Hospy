@@ -162,10 +162,19 @@
 }
 
 .property-offer-card-dates,
-.property-offer-card-countdown {
+.property-offer-card-countdown,
+.property-offer-card-event {
   margin: 0.35rem 0 0;
   font-size: 0.8rem;
   opacity: 0.9;
+}
+
+.property-offer-card-event {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 600;
+  color: #ffd9a8;
 }
 
 .property-offer-card-countdown {
@@ -203,6 +212,12 @@
   letter-spacing: 0.02em;
   box-shadow: 0 4px 14px rgba(123, 21, 56, 0.35);
   animation: property-offer-pulse 2.4s ease-in-out infinite;
+}
+
+.property-offer-header-badge--event {
+  background: linear-gradient(135deg, #8a4b08, #c27803);
+  box-shadow: 0 4px 14px rgba(138, 75, 8, 0.3);
+  animation: none;
 }
 
 @keyframes property-offer-pulse {

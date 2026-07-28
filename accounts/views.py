@@ -636,6 +636,12 @@ class AdminSoftDeleteUserView(APIView):
             target_type="User",
             target_id=target.pk,
             target_label=target.email,
+            metadata={
+                "soft": True,
+                "role": target.role,
+                "is_deleted": True,
+                "is_active": False,
+            },
             request=request,
         )
         return Response(
@@ -667,6 +673,12 @@ class AdminRestoreUserView(APIView):
             target_type="User",
             target_id=target.pk,
             target_label=target.email,
+            metadata={
+                "soft": True,
+                "role": target.role,
+                "is_deleted": False,
+                "is_active": True,
+            },
             request=request,
         )
         return Response(

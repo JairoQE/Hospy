@@ -176,6 +176,7 @@ class Accommodation(TimeStampedModel):
 
         self.is_deleted = True
         self.is_active = False
+        self.status = self.Status.INACTIVO
         self.deleted_at = timezone.now()
         if by is not None:
             self.deleted_by = by
@@ -183,6 +184,7 @@ class Accommodation(TimeStampedModel):
             update_fields=[
                 "is_deleted",
                 "is_active",
+                "status",
                 "deleted_at",
                 "deleted_by",
                 "updated_at",
@@ -194,10 +196,13 @@ class Accommodation(TimeStampedModel):
         self.is_active = True
         self.deleted_at = None
         self.deleted_by = None
-        # Solo reactivar visibilidad si ya estaba aprobado.
+        # Soft delete deja el local en «inactivo»; al restaurar vuelve a publicado.
+        if self.status == self.Status.INACTIVO:
+            self.status = self.Status.APROBADO
         update = [
             "is_deleted",
             "is_active",
+            "status",
             "deleted_at",
             "deleted_by",
             "updated_at",
@@ -239,11 +244,27 @@ class AccommodationOffer(TimeStampedModel):
         blank=True,
         help_text="Habitaciones incluidas en la promoción.",
     )
+    event_id = models.PositiveIntegerField(
+        "ID evento Actify",
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Si la oferta responde a un evento externo (Actify).",
+    )
+    event_name = models.CharField(
+        "nombre del evento",
+        max_length=200,
+        blank=True,
+        help_text="Denormalizado para mostrar en ficha sin consultar Actify.",
+    )
 
     class Meta:
         verbose_name = "oferta"
         verbose_name_plural = "ofertas"
         ordering = ("-start_date", "-created_at")
+        indexes = [
+            models.Index(fields=["accommodation", "event_id"]),
+        ]
 
     def __str__(self):
         label = self.title or f"{self.discount_percent}%"

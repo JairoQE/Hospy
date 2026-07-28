@@ -235,6 +235,7 @@ export function statusLabel(status: string): string {
     rechazada: "Rechazada",
     aprobado: "Aprobado",
     rechazado: "Rechazado",
+    inactivo: "Inactivo",
     aprobada: "Publicada",
   };
   return map[status] ?? status;

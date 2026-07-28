@@ -120,3 +120,39 @@ class OfferPricingTests(TestCase):
                 end,
             )
         )
+
+    def test_nearby_events_suggest_offer_and_mark_existing(self):
+        from unittest.mock import patch
+
+        from properties.event_offers import nearby_events_for_accommodation
+
+        today = timezone.localdate()
+        payload = {
+            "events": [
+                {
+                    "id": 42,
+                    "name": "Festival Lima",
+                    "start_date": today.isoformat(),
+                    "end_date": (today + timedelta(days=2)).isoformat(),
+                    "category": {"name": "Música"},
+                    "location": {
+                        "latitude": -12.05,
+                        "longitude": -77.04,
+                        "city": "Lima",
+                    },
+                    "external_url": "https://actify.example/events/42",
+                }
+            ]
+        }
+        with patch("integrations.actify.list_events", return_value=payload):
+            rows = nearby_events_for_accommodation(self.acc, radio_km=25)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["event_id"], 42)
+        self.assertFalse(rows[0]["has_offer"])
+        self.assertEqual(rows[0]["suggested_offer"]["discount_percent"], 15)
+        self.assertIn("Festival Lima", rows[0]["suggested_offer"]["title"])
+
+        self._create_offer(event_id=42, event_name="Festival Lima")
+        with patch("integrations.actify.list_events", return_value=payload):
+            rows2 = nearby_events_for_accommodation(self.acc, radio_km=25)
+        self.assertTrue(rows2[0]["has_offer"])

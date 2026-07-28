@@ -37,6 +37,8 @@ class AccommodationOfferSerializer(serializers.ModelSerializer):
             "is_active",
             "room_ids",
             "rooms",
+            "event_id",
+            "event_name",
             "vigente",
             "dias_restantes",
             "created_at",
@@ -157,6 +159,8 @@ class PublicAccommodationOfferSerializer(serializers.ModelSerializer):
             "duration_days",
             "end_date",
             "rooms",
+            "event_id",
+            "event_name",
             "vigente",
             "dias_restantes",
         )

@@ -6,6 +6,7 @@ from rest_framework import generics, permissions, status, viewsets
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from accounts.permissions import IsAdministrador, IsPropietario, IsPropietarioOrAdministrador
@@ -22,6 +23,7 @@ from .serializers import (
     AccommodationOwnerListSerializer,
     AccommodationPhotoSerializer,
     AccommodationPhotoUploadSerializer,
+    AccommodationSoftDeleteSerializer,
     AccommodationWriteSerializer,
     IntegrationAccommodationDetailSerializer,
     ServiceCreateSerializer,
@@ -37,6 +39,12 @@ from .services import (
     notify_owner_approval_safe,
     public_accommodations_queryset,
 )
+
+
+class AdminAccommodationPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = "page_size"
+    max_page_size = 200
 
 
 class ServiceViewSet(viewsets.ModelViewSet):
@@ -142,6 +150,31 @@ class AccommodationViewSet(viewsets.ModelViewSet):
                 "owner"
             )
 
+        if self.action == "admin":
+            include_deleted = (
+                self.request.query_params.get("include_deleted") or ""
+            ).strip()
+            deleted_only = (self.request.query_params.get("deleted") or "").strip()
+            qs = Accommodation.objects.all() if include_deleted in (
+                "1",
+                "true",
+                "yes",
+            ) or deleted_only in ("1", "true", "yes") else base
+            if deleted_only in ("1", "true", "yes"):
+                qs = qs.filter(is_deleted=True)
+            elif include_deleted not in ("1", "true", "yes"):
+                qs = qs.filter(is_deleted=False)
+            return (
+                qs.select_related("owner")
+                .prefetch_related("fotos", "faqs", "services")
+                .annotate(
+                    precio_desde=Min(
+                        "habitaciones__base_price",
+                        filter=Q(habitaciones__is_active=True),
+                    )
+                )
+            )
+
         if self.action == "restaurar":
             return Accommodation.objects.filter(is_deleted=True).select_related("owner")
 
@@ -240,6 +273,8 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         if self.action == "pendientes":
             return [IsAdministrador()]
+        if self.action == "admin":
+            return [IsAdministrador()]
         if self.action == "aprobar":
             return [IsAdministrador()]
         if self.action in ("eliminar_admin", "restaurar"):
@@ -263,6 +298,7 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             "fotos",
             "ofertas",
             "oferta_detail",
+            "eventos_cercanos",
         ):
             return [IsPropietario(), IsAccommodationOwner()]
         return [permissions.IsAuthenticated()]
@@ -299,6 +335,7 @@ class AccommodationViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         accommodation = self.get_object()
+        previous_status = accommodation.status
         accommodation.soft_delete(by=request.user)
         log_action(
             actor=request.user,
@@ -309,6 +346,12 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             metadata={
                 "soft": True,
                 "by_admin": request.user.role == request.user.Role.ADMINISTRADOR,
+                "from": previous_status,
+                "to": accommodation.status,
+                "type": accommodation.type,
+                "city": accommodation.city,
+                "is_deleted": True,
+                "is_active": False,
             },
             request=request,
         )
@@ -318,13 +361,31 @@ class AccommodationViewSet(viewsets.ModelViewSet):
     def eliminar_admin(self, request, pk=None):
         """POST /api/v1/hospedajes/<id>/eliminar-admin/ — soft delete solo admin."""
         accommodation = self.get_object()
+        serializer = AccommodationSoftDeleteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        motivo = serializer.validated_data["motivo"]
+        previous_status = accommodation.status
         accommodation.soft_delete(by=request.user)
+        from notifications.services import notify_accommodation_soft_deleted
+
+        notify_accommodation_soft_deleted(accommodation, motivo)
         log_action(
             actor=request.user,
             action="accommodation.soft_delete_admin",
             target_type="Accommodation",
             target_id=accommodation.pk,
             target_label=accommodation.name,
+            metadata={
+                "soft": True,
+                "from": previous_status,
+                "to": accommodation.status,
+                "type": accommodation.type,
+                "city": accommodation.city,
+                "owner_id": accommodation.owner_id,
+                "is_deleted": True,
+                "is_active": False,
+                "motivo": motivo,
+            },
             request=request,
         )
         return Response(
@@ -332,6 +393,8 @@ class AccommodationViewSet(viewsets.ModelViewSet):
                 "detail": f"Hospedaje «{accommodation.name}» eliminado (soft delete).",
                 "id": accommodation.pk,
                 "is_deleted": True,
+                "is_active": False,
+                "status": accommodation.status,
             }
         )
 
@@ -339,6 +402,7 @@ class AccommodationViewSet(viewsets.ModelViewSet):
     def restaurar(self, request, pk=None):
         """POST /api/v1/hospedajes/<id>/restaurar/ — revierte soft delete (admin)."""
         accommodation = self.get_object()
+        previous_status = accommodation.status
         accommodation.restore()
         log_action(
             actor=request.user,
@@ -346,6 +410,16 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             target_type="Accommodation",
             target_id=accommodation.pk,
             target_label=accommodation.name,
+            metadata={
+                "soft": True,
+                "from": previous_status,
+                "to": accommodation.status,
+                "type": accommodation.type,
+                "city": accommodation.city,
+                "owner_id": accommodation.owner_id,
+                "is_deleted": False,
+                "is_active": accommodation.is_active,
+            },
             request=request,
         )
         return Response(
@@ -388,6 +462,40 @@ class AccommodationViewSet(viewsets.ModelViewSet):
     def pendientes(self, request):
         """GET /api/v1/hospedajes/pendientes/ — cola de aprobación (admin)."""
         qs = self.get_queryset().order_by("created_at")
+        page = self.paginate_queryset(qs)
+        serializer = AccommodationDetailSerializer(
+            page if page is not None else qs,
+            many=True,
+            context={"request": request},
+        )
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="admin",
+        pagination_class=AdminAccommodationPagination,
+    )
+    def admin(self, request):
+        """GET /api/v1/hospedajes/admin/ — todos los locales (admin)."""
+        qs = self.get_queryset().order_by("-created_at")
+        tipo = (request.query_params.get("type") or "").strip()
+        if tipo:
+            qs = qs.filter(type=tipo)
+        estado = (request.query_params.get("status") or "").strip()
+        if estado:
+            qs = qs.filter(status=estado)
+        q = (request.query_params.get("q") or "").strip()
+        if q:
+            qs = qs.filter(
+                Q(name__icontains=q)
+                | Q(city__icontains=q)
+                | Q(owner__email__icontains=q)
+                | Q(owner__first_name__icontains=q)
+                | Q(owner__last_name__icontains=q)
+            )
         page = self.paginate_queryset(qs)
         serializer = AccommodationDetailSerializer(
             page if page is not None else qs,
@@ -448,7 +556,14 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             target_type="Accommodation",
             target_id=accommodation.pk,
             target_label=accommodation.name,
-            metadata={"motivo": motivo} if not aprobado else {},
+            metadata={
+                "from": Accommodation.Status.PENDIENTE,
+                "to": accommodation.status,
+                "type": accommodation.type,
+                "city": accommodation.city,
+                "owner_id": accommodation.owner_id,
+                **({"motivo": motivo} if not aprobado else {}),
+            },
             request=request,
         )
 
@@ -477,6 +592,13 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             target_type="Accommodation",
             target_id=accommodation.pk,
             target_label=accommodation.name,
+            metadata={
+                "from": "activo",
+                "to": "pausado",
+                "is_active": False,
+                "status": accommodation.status,
+                "type": accommodation.type,
+            },
             request=request,
         )
         return Response(
@@ -501,6 +623,13 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             target_type="Accommodation",
             target_id=accommodation.pk,
             target_label=accommodation.name,
+            metadata={
+                "from": "pausado",
+                "to": "activo",
+                "is_active": True,
+                "status": accommodation.status,
+                "type": accommodation.type,
+            },
             request=request,
         )
         return Response(
@@ -747,6 +876,33 @@ class AccommodationViewSet(viewsets.ModelViewSet):
             ).data,
             status=status.HTTP_201_CREATED,
         )
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="eventos-cercanos",
+    )
+    def eventos_cercanos(self, request, pk=None):
+        """Eventos Actify cerca del hospedaje, con sugerencia de oferta."""
+        accommodation = self.get_object()
+        try:
+            radio = float(request.query_params.get("radio_km") or 25)
+        except (TypeError, ValueError):
+            radio = 25.0
+        radio = max(1.0, min(100.0, radio))
+        notify = str(request.query_params.get("notify") or "").lower() in (
+            "1",
+            "true",
+            "yes",
+        )
+        from properties.event_offers import nearby_events_for_accommodation
+
+        events = nearby_events_for_accommodation(
+            accommodation,
+            radio_km=radio,
+            notify=notify,
+        )
+        return Response({"count": len(events), "results": events})
 
     @action(
         detail=True,

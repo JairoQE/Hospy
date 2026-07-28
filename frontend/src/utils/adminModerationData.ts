@@ -2,6 +2,32 @@ export type ModerationTab = "todos" | "hospedajes" | "cuentas" | "reportes";
 
 export type ModerationAgeFilter = "all" | "7d" | "30d";
 
+export type AccommodationTypeFilter =
+  | "all"
+  | "hotel"
+  | "hostal"
+  | "hospedaje"
+  | "casa_departamento";
+
+export type AccommodationStatusFilter =
+  | "all"
+  | "pendiente"
+  | "aprobado"
+  | "rechazado"
+  | "inactivo"
+  | "eliminado";
+
+export const ACCOMMODATION_TYPE_CARDS: {
+  id: Exclude<AccommodationTypeFilter, "all">;
+  label: string;
+  icon: string;
+}[] = [
+  { id: "hotel", label: "Hoteles", icon: "pi-building" },
+  { id: "hostal", label: "Hostales", icon: "pi-home" },
+  { id: "hospedaje", label: "Hospedajes", icon: "pi-map-marker" },
+  { id: "casa_departamento", label: "Casa o departamento", icon: "pi-th-large" },
+];
+
 export const REJECT_PRESETS_ACCOMMODATION = [
   { value: "fotos", label: "Fotos insuficientes o de baja calidad" },
   { value: "ubicacion", label: "Ubicación incorrecta o incompleta" },

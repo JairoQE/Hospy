@@ -315,6 +315,7 @@ class AccommodationDetailSerializer(serializers.ModelSerializer):
             "description",
             "status",
             "is_active",
+            "is_deleted",
             "rejection_reason",
             "address",
             "city",
@@ -354,6 +355,7 @@ class AccommodationDetailSerializer(serializers.ModelSerializer):
         read_only_fields = (
             "id",
             "status",
+            "is_deleted",
             "rejection_reason",
             "average_rating",
             "created_at",
@@ -627,3 +629,17 @@ class AccommodationApprovalSerializer(serializers.Serializer):
                 {"motivo": "Indica el motivo del rechazo."}
             )
         return data
+
+
+class AccommodationSoftDeleteSerializer(serializers.Serializer):
+    """Justificación obligatoria al eliminar un local (admin)."""
+
+    motivo = serializers.CharField(min_length=5, max_length=1000)
+
+    def validate_motivo(self, value):
+        text = (value or "").strip()
+        if len(text) < 5:
+            raise serializers.ValidationError(
+                "Escribe una justificación breve (mínimo 5 caracteres)."
+            )
+        return text

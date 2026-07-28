@@ -26,6 +26,7 @@ import type {
 } from "../api/types";
 import { AdminUsersToastHost, showAdminToast } from "../components/admin/AdminUsersToast";
 import { RejectReasonPanel } from "../components/admin/moderation/RejectReasonPanel";
+import { SoftDeleteReasonPanel } from "../components/admin/moderation/SoftDeleteReasonPanel";
 import { PrimeIcon } from "../components/PrimeIcon";
 import { UserNameWithBadge } from "../components/UserNameWithBadge";
 import {
@@ -34,12 +35,15 @@ import {
   isWithinAgeFilter,
   isModerationAlreadyHandledError,
   matchesSearchQuery,
+  ACCOMMODATION_TYPE_CARDS,
   REJECT_PRESETS_ACCOUNT,
   REJECT_PRESETS_ACCOMMODATION,
+  type AccommodationStatusFilter,
+  type AccommodationTypeFilter,
   type ModerationAgeFilter,
   type ModerationTab,
 } from "../utils/adminModerationData";
-import { displayName, formatDate, formatMoney, typeLabel } from "../utils/format";
+import { displayName, formatDate, formatMoney, statusLabel, typeLabel } from "../utils/format";
 import { resolveMediaUrl } from "../utils/media";
 import { formatRelativeTime } from "../utils/relativeTime";
 
@@ -49,6 +53,21 @@ type RejectState = {
 };
 
 const emptyReject = (): RejectState => ({ preset: "", custom: "" });
+
+async function fetchAllPages<T>(path: string): Promise<T[]> {
+  const all: T[] = [];
+  let page = 1;
+  for (;;) {
+    const data = await api.get<Paginated<T>>(
+      `${path}${path.includes("?") ? "&" : "?"}page=${page}&page_size=100`,
+    );
+    all.push(...unwrapList(data));
+    if (!("next" in data) || !data.next) break;
+    page += 1;
+    if (page > 50) break;
+  }
+  return all;
+}
 
 export function AdminModerationPage() {
   const location = useLocation();
@@ -61,15 +80,19 @@ export function AdminModerationPage() {
   const [messageReports, setMessageReports] = useState<MessageReport[]>([]);
   const [refundDisputes, setRefundDisputes] = useState<DisputedRefund[]>([]);
   const [refundWarnings, setRefundWarnings] = useState<Record<number, string>>({});
-  const [pending, setPending] = useState<AccommodationDetail[]>([]);
+  const [accommodations, setAccommodations] = useState<AccommodationDetail[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [ageFilter, setAgeFilter] = useState<ModerationAgeFilter>("all");
+  const [typeFilter, setTypeFilter] = useState<AccommodationTypeFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<AccommodationStatusFilter>("all");
 
   const [selectedAcc, setSelectedAcc] = useState<Set<number>>(new Set());
   const [rejectingAcc, setRejectingAcc] = useState<number | null>(null);
+  const [deletingAcc, setDeletingAcc] = useState<number | null>(null);
+  const [deleteMotivo, setDeleteMotivo] = useState("");
   const [rejectingOwner, setRejectingOwner] = useState<number | null>(null);
   const [rejectingSponsor, setRejectingSponsor] = useState<number | null>(null);
 
@@ -89,9 +112,7 @@ export function AdminModerationPage() {
       api.get<User[] | Paginated<User>>("/auth/propietarios-pendientes/"),
       api.get<User[] | Paginated<User>>("/auth/patrocinadores-pendientes/"),
       api.get<SponsorAdReport[] | Paginated<SponsorAdReport>>("/anuncios/reportados/"),
-      api.get<Paginated<AccommodationDetail> | AccommodationDetail[]>(
-        "/hospedajes/pendientes/",
-      ),
+      fetchAllPages<AccommodationDetail>("/hospedajes/admin/?include_deleted=1"),
       fetchMessageReports("pendiente").catch(() => [] as MessageReport[]),
       fetchDisputedRefunds().catch(() => [] as DisputedRefund[]),
     ])
@@ -99,7 +120,7 @@ export function AdminModerationPage() {
         setPendingOwners(unwrapList(owners));
         setPendingSponsors(unwrapList(sponsors));
         setAdReports(unwrapList(reports));
-        setPending(unwrapList(hospedajes));
+        setAccommodations(hospedajes);
         setMessageReports(messages);
         setRefundDisputes(refunds);
       })
@@ -123,36 +144,82 @@ export function AdminModerationPage() {
     }
   }, [location.hash, searchParams]);
 
+  const typeCounts = useMemo(() => {
+    const counts: Record<Exclude<AccommodationTypeFilter, "all">, number> = {
+      hotel: 0,
+      hostal: 0,
+      hospedaje: 0,
+      casa_departamento: 0,
+    };
+    for (const h of accommodations) {
+      if (h.is_deleted) continue;
+      if (h.type in counts) {
+        counts[h.type as keyof typeof counts] += 1;
+      }
+    }
+    return counts;
+  }, [accommodations]);
+
   const metrics = useMemo(
-    () => ({
-      hospedajes: pending.length,
-      propietarios: pendingOwners.length,
-      patrocinadores: pendingSponsors.length,
-      reportes: adReports.length + messageReports.length + refundDisputes.length,
-      total:
-        pending.length +
-        pendingOwners.length +
-        pendingSponsors.length +
-        adReports.length +
-        messageReports.length +
-        refundDisputes.length,
-    }),
-    [pending, pendingOwners, pendingSponsors, adReports, messageReports, refundDisputes],
+    () => {
+      const active = accommodations.filter((h) => !h.is_deleted);
+      const pending = active.filter((h) => h.status === "pendiente");
+      return {
+        hospedajes: active.length,
+        pendientes: pending.length,
+        eliminados: accommodations.filter((h) => h.is_deleted).length,
+        propietarios: pendingOwners.length,
+        patrocinadores: pendingSponsors.length,
+        reportes: adReports.length + messageReports.length + refundDisputes.length,
+        total:
+          pending.length +
+          pendingOwners.length +
+          pendingSponsors.length +
+          adReports.length +
+          messageReports.length +
+          refundDisputes.length,
+      };
+    },
+    [
+      accommodations,
+      pendingOwners,
+      pendingSponsors,
+      adReports,
+      messageReports,
+      refundDisputes,
+    ],
   );
 
-  const filteredPending = useMemo(
+  const filteredAccommodations = useMemo(
     () =>
-      pending.filter(
-        (h) =>
-          matchesSearchQuery(search, [
+      accommodations.filter((h) => {
+        if (statusFilter === "eliminado") {
+          if (!h.is_deleted) return false;
+        } else {
+          if (h.is_deleted) return false;
+          if (statusFilter !== "all" && h.status !== statusFilter) return false;
+        }
+        if (typeFilter !== "all" && h.type !== typeFilter) return false;
+        if (
+          !matchesSearchQuery(search, [
             h.name,
             h.city,
             h.owner_email,
             h.propietario_nombre,
             String(h.id),
-          ]) && isWithinAgeFilter(h.created_at, ageFilter),
-      ),
-    [pending, search, ageFilter],
+          ])
+        ) {
+          return false;
+        }
+        return isWithinAgeFilter(h.created_at, ageFilter);
+      }),
+    [accommodations, typeFilter, statusFilter, search, ageFilter],
+  );
+
+  const selectablePending = useMemo(
+    () =>
+      filteredAccommodations.filter((h) => h.status === "pendiente" && !h.is_deleted),
+    [filteredAccommodations],
   );
 
   const filteredOwners = useMemo(
@@ -362,15 +429,46 @@ export function AdminModerationPage() {
         </Link>
       </header>
 
-      {!loading && (
+      {!loading && tab === "hospedajes" && (
+        <section className="admin-users-kpi-grid" aria-label="Locales por tipo">
+          {ACCOMMODATION_TYPE_CARDS.map((card) => {
+            const count = typeCounts[card.id];
+            const active = typeFilter === card.id;
+            return (
+              <button
+                key={card.id}
+                type="button"
+                className={`admin-kpi-card admin-kpi-card--clickable${active ? " is-active" : ""}`}
+                onClick={() => setTypeFilter(active ? "all" : card.id)}
+              >
+                <div className="admin-kpi-card-top">
+                  <span className="admin-kpi-icon">
+                    <PrimeIcon name={card.icon} size={18} />
+                  </span>
+                </div>
+                <p className="admin-kpi-value">{count}</p>
+                <p className="admin-kpi-label">{card.label}</p>
+                <p className="admin-kpi-sublabel">
+                  {metrics.pendientes > 0 && card.id === typeFilter
+                    ? `${filteredAccommodations.filter((h) => h.status === "pendiente").length} pendientes en filtro`
+                    : "Clic para filtrar"}
+                </p>
+              </button>
+            );
+          })}
+        </section>
+      )}
+
+      {!loading && tab !== "hospedajes" && (
         <section className="admin-users-kpi-grid" aria-label="Resumen de pendientes">
           <article className="admin-kpi-card">
             <p className="admin-kpi-value">{metrics.total}</p>
             <p className="admin-kpi-label">Total pendientes</p>
           </article>
           <article className="admin-kpi-card">
-            <p className="admin-kpi-value">{metrics.hospedajes}</p>
-            <p className="admin-kpi-label">Hospedajes</p>
+            <p className="admin-kpi-value">{metrics.pendientes}</p>
+            <p className="admin-kpi-label">Hospedajes por revisar</p>
+            <p className="admin-kpi-sublabel">{metrics.hospedajes} en total</p>
           </article>
           <article className="admin-kpi-card">
             <p className="admin-kpi-value">{metrics.propietarios + metrics.patrocinadores}</p>
@@ -415,14 +513,14 @@ export function AdminModerationPage() {
               placeholder="Buscar por título, nombre, correo o ID…"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              aria-label="Buscar pendientes"
+              aria-label="Buscar locales"
             />
           </div>
           <div className="admin-users-toolbar-actions">
             <button type="submit" className="btn btn-primary btn-sm">
               Buscar
             </button>
-            {(search || ageFilter !== "all") && (
+            {(search || ageFilter !== "all" || typeFilter !== "all" || statusFilter !== "all") && (
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
@@ -430,6 +528,8 @@ export function AdminModerationPage() {
                   setSearchInput("");
                   setSearch("");
                   setAgeFilter("all");
+                  setTypeFilter("all");
+                  setStatusFilter("all");
                 }}
               >
                 Limpiar
@@ -456,6 +556,32 @@ export function AdminModerationPage() {
             </button>
           ))}
         </div>
+        {showHospedajes && (
+          <div className="admin-users-filters">
+            <span className="admin-users-filters-label">Estado</span>
+            {(
+              [
+                ["all", "Todos"],
+                ["pendiente", "Pendientes"],
+                ["aprobado", "Aprobados"],
+                ["rechazado", "Rechazados"],
+                ["eliminado", "Eliminados"],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={`admin-users-chip${statusFilter === id ? " is-active" : ""}`}
+                onClick={() => setStatusFilter(id)}
+              >
+                {label}
+                {id === "eliminado" && metrics.eliminados > 0
+                  ? ` (${metrics.eliminados})`
+                  : ""}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {loading && <p className="admin-loading">Cargando cola de moderación…</p>}
@@ -463,46 +589,84 @@ export function AdminModerationPage() {
       {!loading && showHospedajes && (
         <section className="admin-mod-section" id="hospedajes-pendientes">
           <div className="admin-mod-section-head">
-            <h2 className="admin-section-title">Hospedajes pendientes</h2>
-            {filteredPending.length > 0 && tab === "hospedajes" && (
+            <h2 className="admin-section-title">
+              Locales ({filteredAccommodations.length})
+              {metrics.pendientes > 0 && (
+                <span className="admin-users-badge admin-users-badge--warn" style={{ marginLeft: 8 }}>
+                  {metrics.pendientes} pendientes
+                </span>
+              )}
+            </h2>
+            {selectablePending.length > 0 && tab === "hospedajes" && (
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={() =>
                   setSelectedAcc(
-                    selectedAcc.size === filteredPending.length
+                    selectedAcc.size === selectablePending.length
                       ? new Set()
-                      : new Set(filteredPending.map((h) => h.id)),
+                      : new Set(selectablePending.map((h) => h.id)),
                   )
                 }
               >
-                {selectedAcc.size === filteredPending.length
+                {selectedAcc.size === selectablePending.length
                   ? "Quitar selección"
-                  : "Seleccionar todos"}
+                  : "Seleccionar pendientes"}
               </button>
             )}
           </div>
-          {filteredPending.length === 0 ? (
-            <ModEmpty icon="pi-home" title="Sin hospedajes pendientes" />
+          {filteredAccommodations.length === 0 ? (
+            <ModEmpty icon="pi-home" title="Sin locales" />
           ) : (
             <div className="admin-mod-card-grid">
-              {filteredPending.map((h) => {
+              {filteredAccommodations.map((h) => {
                 const photo =
                   h.fotos?.find((f) => f.is_primary) ?? h.fotos?.[0];
                 const imgUrl = resolveMediaUrl(photo?.image_url ?? photo?.image);
                 const rej = getReject(rejectAcc, h.id, setRejectAcc);
                 const waiting = daysPending(h.created_at);
+                const isDeleted = Boolean(h.is_deleted);
+                const isPending = h.status === "pendiente" && !isDeleted;
                 return (
-                  <article key={h.id} className="admin-mod-card">
+                  <article
+                    key={h.id}
+                    className={`admin-mod-card${isDeleted ? " admin-mod-card--deleted" : ""}`}
+                  >
                     <div className="admin-mod-card-top">
-                      <label className="admin-mod-check">
-                        <input
-                          type="checkbox"
-                          checked={selectedAcc.has(h.id)}
-                          onChange={() => toggleAcc(h.id)}
-                        />
-                      </label>
-                      {waiting >= 3 && (
+                      {isPending ? (
+                        <label className="admin-mod-check">
+                          <input
+                            type="checkbox"
+                            checked={selectedAcc.has(h.id)}
+                            onChange={() => toggleAcc(h.id)}
+                          />
+                        </label>
+                      ) : (
+                        <span />
+                      )}
+                      {isDeleted ? (
+                        <>
+                          <span className="admin-users-badge admin-users-badge--danger">
+                            Eliminado
+                          </span>
+                          <span className="admin-users-badge admin-users-badge--danger">
+                            {statusLabel("inactivo")}
+                          </span>
+                        </>
+                      ) : (
+                        <span
+                          className={`admin-users-badge${
+                            h.status === "aprobado"
+                              ? " admin-users-badge--ok"
+                              : h.status === "pendiente"
+                                ? " admin-users-badge--warn"
+                                : " admin-users-badge--danger"
+                          }`}
+                        >
+                          {statusLabel(h.status)}
+                        </span>
+                      )}
+                      {isPending && waiting >= 3 && (
                         <span className="admin-users-badge admin-users-badge--warn">
                           {waiting} días esperando
                         </span>
@@ -536,7 +700,7 @@ export function AdminModerationPage() {
                         </p>
                         <p className="admin-mod-desc">{h.description.slice(0, 160)}…</p>
                         <p className="muted admin-mod-meta">
-                          Enviado {formatRelativeTime(h.created_at)} ·{" "}
+                          Creado {formatRelativeTime(h.created_at)} ·{" "}
                           <Link to={`/hospedajes/${h.id}`} target="_blank" rel="noreferrer">
                             Ver ficha
                           </Link>
@@ -564,45 +728,116 @@ export function AdminModerationPage() {
                           moderateAccommodation(h.id, false, motivo);
                         }}
                       />
+                    ) : deletingAcc === h.id ? (
+                      <SoftDeleteReasonPanel
+                        motivo={deleteMotivo}
+                        onMotivoChange={setDeleteMotivo}
+                        busy={moderating.has(`acc-del-${h.id}`)}
+                        onCancel={() => {
+                          setDeletingAcc(null);
+                          setDeleteMotivo("");
+                        }}
+                        onConfirm={() => {
+                          const motivo = deleteMotivo.trim();
+                          if (motivo.length < 5) {
+                            showAdminToast(
+                              "Escribe una justificación breve para el propietario.",
+                              "error",
+                            );
+                            return;
+                          }
+                          void runModeration(
+                            `acc-del-${h.id}`,
+                            () =>
+                              api.post(`/hospedajes/${h.id}/eliminar-admin/`, {
+                                motivo,
+                              }),
+                            () => {
+                              setDeletingAcc(null);
+                              setDeleteMotivo("");
+                              setAccommodations((prev) =>
+                                prev.map((x) =>
+                                  x.id === h.id
+                                    ? {
+                                        ...x,
+                                        is_deleted: true,
+                                        is_active: false,
+                                        status: "inactivo",
+                                      }
+                                    : x,
+                                ),
+                              );
+                            },
+                            "Hospedaje eliminado y propietario notificado.",
+                          );
+                        }}
+                      />
                     ) : (
                       <div className="admin-mod-actions">
-                        <button
-                          type="button"
-                          className="btn btn-primary btn-sm"
-                          disabled={moderating.has(`acc-${h.id}`)}
-                          onClick={() => moderateAccommodation(h.id, true)}
-                        >
-                          {moderating.has(`acc-${h.id}`) ? "Procesando…" : "Aprobar"}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-outline btn-sm admin-mod-btn-reject"
-                          onClick={() => setRejectingAcc(h.id)}
-                        >
-                          Rechazar
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm admin-mod-btn-reject"
-                          disabled={moderating.has(`acc-del-${h.id}`)}
-                          onClick={() => {
-                            if (
-                              !window.confirm(
-                                `¿Eliminar «${h.name}» con soft delete?\nNo se borra de la base; deja de mostrarse públicamente.`,
-                              )
-                            ) {
-                              return;
-                            }
-                            void runModeration(
-                              `acc-del-${h.id}`,
-                              () => api.post(`/hospedajes/${h.id}/eliminar-admin/`, {}),
-                              () => setPending((prev) => prev.filter((x) => x.id !== h.id)),
-                              "Hospedaje eliminado (soft delete).",
-                            );
-                          }}
-                        >
-                          Eliminar
-                        </button>
+                        {isPending && (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn-primary btn-sm"
+                              disabled={moderating.has(`acc-${h.id}`)}
+                              onClick={() => moderateAccommodation(h.id, true)}
+                            >
+                              {moderating.has(`acc-${h.id}`) ? "Procesando…" : "Aprobar"}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-sm admin-mod-btn-reject"
+                              onClick={() => {
+                                setDeletingAcc(null);
+                                setRejectingAcc(h.id);
+                              }}
+                            >
+                              Rechazar
+                            </button>
+                          </>
+                        )}
+                        {isDeleted ? (
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            disabled={moderating.has(`acc-res-${h.id}`)}
+                            onClick={() => {
+                              void runModeration(
+                                `acc-res-${h.id}`,
+                                () => api.post(`/hospedajes/${h.id}/restaurar/`, {}),
+                                () =>
+                                  setAccommodations((prev) =>
+                                    prev.map((x) =>
+                                      x.id === h.id
+                                        ? {
+                                            ...x,
+                                            is_deleted: false,
+                                            is_active: true,
+                                            status: "aprobado",
+                                          }
+                                        : x,
+                                    ),
+                                  ),
+                                "Hospedaje restaurado.",
+                              );
+                            }}
+                          >
+                            {moderating.has(`acc-res-${h.id}`) ? "Restaurando…" : "Restaurar"}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm admin-mod-btn-reject"
+                            disabled={moderating.has(`acc-del-${h.id}`)}
+                            onClick={() => {
+                              setRejectingAcc(null);
+                              setDeleteMotivo("");
+                              setDeletingAcc(h.id);
+                            }}
+                          >
+                            Eliminar
+                          </button>
+                        )}
                       </div>
                     )}
                   </article>
