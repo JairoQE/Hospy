@@ -15,7 +15,6 @@ export type HeroAnimationStyle =
   | "travel_routes"
   | "floating_pins"
   | "ken_burns"
-  | "wave_path"
   | "static";
 
 export const DEFAULT_HERO_ANIMATION_STYLE: HeroAnimationStyle = "gradient_shift";
@@ -117,12 +116,6 @@ export const HERO_ANIMATION_STYLE_OPTIONS: {
     group: "Olas",
   },
   {
-    value: "wave_path",
-    label: "Ola del divisor animada",
-    hint: "La curva inferior blanca se mueve",
-    group: "Olas",
-  },
-  {
     value: "static",
     label: "Estático",
     hint: "Gradiente fijo sin movimiento",
@@ -131,6 +124,8 @@ export const HERO_ANIMATION_STYLE_OPTIONS: {
 ];
 
 export function normalizeHeroAnimationStyle(value: string | undefined | null): HeroAnimationStyle {
+  // wave_path era el divisor SVG inferior; ya no existe.
+  if (value === "wave_path") return DEFAULT_HERO_ANIMATION_STYLE;
   const found = HERO_ANIMATION_STYLE_OPTIONS.find((o) => o.value === value);
   return found?.value ?? DEFAULT_HERO_ANIMATION_STYLE;
 }

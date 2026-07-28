@@ -35,7 +35,7 @@
   background-size: 100% 100%;
 }
 
-/* —— wave_path: fondo con gradiente + ola inferior animada —— */
+/* —— wave_path (legacy): mismo comportamiento que gradient_shift —— */
 .home-hero-background--wave_path .home-hero-bg-layer--base {
   background-size: 200% 200%;
   animation: hero-gradient var(--hero-gradient-duration, 14s) ease infinite;
@@ -470,7 +470,6 @@
   50% { d: path("M0,40 C320,80 480,16 720,48 C960,80 1120,8 1440,48 L1440,80 L0,80 Z"); }
 }
 
-/* CSS `d` animation not supported in all browsers — fallback transform */
 @supports not (d: path("")) {
   .home-hero-wave.is-animated {
     animation: hero-wave-sway var(--hero-gradient-duration, 14s) ease-in-out infinite;
