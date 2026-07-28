@@ -97,23 +97,25 @@
   z-index: 10;
   overflow: visible;
   padding: 0;
-  margin: 0 0 0;
-  background: transparent;
+  margin: 0;
+  /* Cualquier hueco hereda el color de página, nunca un segundo degradado */
+  background: var(--bg);
   color: #fff;
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
-  /* Evita franja residual entre ola y la sección siguiente */
-  line-height: normal;
 }
 
 .home-hero-main {
   position: relative;
   z-index: 2;
-  overflow: visible;
-  padding: 2.75rem 0 2.75rem;
-  /* El degradado vive solo aquí; no hay segunda capa debajo de la ola */
+  overflow: hidden;
+  padding: 2.75rem 0 0;
+  /* Reserva la franja de la ola; el SVG absolute la cubre al 100% */
+  padding-bottom: 64px;
   background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .home-hero--v2:has(.hero-destination.has-suggestions) {
@@ -122,6 +124,7 @@
 
 .home-hero--v2:has(.hero-destination.has-suggestions) .home-hero-main {
   z-index: 12;
+  overflow: visible;
 }
 
 html[data-home-entrance="0"] .fade-in,
@@ -136,31 +139,31 @@ html[data-home-entrance="0"] .tab-panel-fade {
   z-index: 2;
   overflow: visible;
   text-align: center;
-  padding-bottom: 0.5rem;
+  padding-bottom: 1.25rem;
 }
 
 .home-hero--v2:has(.hero-destination.has-suggestions) .home-hero-inner {
   z-index: 12;
 }
 
-/* Ola única de cierre: solapa el borde inferior del bloque con degradado */
+/* Única ola: pegada al borde inferior del bloque, sin hermanos debajo */
 .home-hero-wave {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
   display: block;
   width: 100%;
-  height: 48px;
-  margin: -48px 0 0;
+  height: 64px;
+  margin: 0;
   padding: 0;
   border: 0;
-  position: relative;
-  z-index: 3;
   pointer-events: none;
-  vertical-align: bottom;
-  /* Mata el hairline subpíxel contra el fondo de la página */
-  margin-bottom: -1px;
+  line-height: 0;
 }
 
 .home-hero-wave path {
-  /* Mismo color que el body / siguiente sección */
   fill: var(--bg);
 }
 
@@ -1993,18 +1996,17 @@ html[data-home-entrance="0"] .tab-panel-fade {
 @media (max-width: 768px) {
   .home-hero-main {
     padding-top: 1.5rem;
-    padding-bottom: 2.25rem;
+    padding-bottom: 52px;
   }
 
   .home-hero--v2 .home-hero-inner {
-    padding-bottom: 0.35rem;
+    padding-bottom: 0.75rem;
     padding-left: 1rem;
     padding-right: 1rem;
   }
 
   .home-hero-wave {
-    height: 40px;
-    margin-top: -40px;
+    height: 52px;
   }
 
   .hero-search--v2 {
@@ -2120,7 +2122,10 @@ html[data-home-entrance="0"] .tab-panel-fade {
 .home-page--v2 .home-content {
   position: relative;
   z-index: 1;
-  padding-top: 1.5rem;
+  padding-top: 1.25rem;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .home-page--v2 .home-block-title {
