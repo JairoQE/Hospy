@@ -96,7 +96,7 @@
   position: relative;
   z-index: 10;
   overflow: visible;
-  padding: 2.75rem 0 4.25rem;
+  padding: 2.75rem 0 0;
   margin-bottom: 0;
   background: transparent;
   color: #fff;
@@ -121,11 +121,25 @@ html[data-home-entrance="0"] .tab-panel-fade {
   z-index: 2;
   overflow: visible;
   text-align: center;
-  padding-bottom: 0.5rem;
+  padding-bottom: 3.5rem;
 }
 
 .home-hero--v2:has(.hero-destination.has-suggestions) .home-hero-inner {
   z-index: 12;
+}
+
+.home-hero-wave {
+  display: block;
+  width: 100%;
+  height: 56px;
+  position: relative;
+  z-index: 1;
+  margin-top: -1px;
+  pointer-events: none;
+}
+
+.home-hero--v2:has(.hero-destination.has-suggestions) .home-hero-wave {
+  z-index: 0;
 }
 
 .home-hero-title {

@@ -1,7 +1,8 @@
 import type { GeolocationStatus } from "../../hooks/useGeolocation";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
+import { useSiteDesign } from "../../context/SiteDesignContext";
 import { HomeHeroSearch } from "./HomeHeroSearch";
-import { HeroBackground } from "./HeroBackground";
+import { HeroBackground, heroWaveAnimated } from "./HeroBackground";
 import type { SearchFilters } from "../SearchBar";
 
 type Props = {
@@ -12,6 +13,8 @@ type Props = {
 
 export function HomeHero({ onSearch, geoStatus, geoHint }: Props) {
   const { t } = useLocaleCurrency();
+  const { design } = useSiteDesign();
+  const waveAnim = heroWaveAnimated(design.hero_animation_style, design.hero_animated);
 
   return (
     <section className="home-hero home-hero--v2" aria-labelledby="home-hero-title" data-tour="home-hero">
@@ -29,6 +32,17 @@ export function HomeHero({ onSearch, geoStatus, geoHint }: Props) {
           </p>
         )}
       </div>
+      <svg
+        className={`home-hero-wave${waveAnim ? " is-animated" : ""}`}
+        viewBox="0 0 1440 80"
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <path
+          fill="var(--bg)"
+          d="M0,48 C320,96 480,0 720,32 C960,64 1120,16 1440,40 L1440,80 L0,80 Z"
+        />
+      </svg>
     </section>
   );
 }

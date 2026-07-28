@@ -57,8 +57,142 @@ const HOSPY_OUTBOUND = {
   docs: "/desarrolladores",
 };
 
-/** Cómo Hospy consume las 3 APIs partner (entrada / proxy). */
-const PARTNER_INBOUND = [
+/** APIs / servicios externos que Hospy consume (entrada). */
+const CONSUMED_APIS = [
+  {
+    id: "IF-03",
+    name: "Google Identity",
+    domain: "Auth social",
+    icon: "pi-google",
+    direction: "Hospy → Google OAuth / OIDC",
+    auth: "GOOGLE_OAUTH_CLIENT_ID (+ client secret en backend)",
+    upstream: "accounts.google.com / oauth2",
+    code: "accounts (auth Google)",
+    how: [
+      "El front obtiene el token de Google Sign-In.",
+      "Hospy valida el token en /api/v1/auth/google/.",
+      "Se crea o vincula la sesión JWT de Hospy.",
+    ],
+    proxyEndpoints: [
+      { method: "POST", path: "/auth/google/", desc: "Login / registro con Google" },
+    ],
+    usedIn: "Entrar y Registrarse con Google",
+  },
+  {
+    id: "IF-04",
+    name: "Meta (Facebook)",
+    domain: "Auth social",
+    icon: "pi-facebook",
+    direction: "Hospy → Facebook Graph API",
+    auth: "FACEBOOK_APP_ID + FACEBOOK_APP_SECRET",
+    upstream: "graph.facebook.com",
+    code: "accounts (auth Facebook)",
+    how: [
+      "El front obtiene el access token de Facebook Login.",
+      "Hospy lo valida en /api/v1/auth/facebook/.",
+      "Se crea o vincula la sesión JWT de Hospy.",
+    ],
+    proxyEndpoints: [
+      { method: "POST", path: "/auth/facebook/", desc: "Login / registro con Facebook" },
+    ],
+    usedIn: "Entrar y Registrarse con Facebook",
+  },
+  {
+    id: "IF-05",
+    name: "Cloudinary",
+    domain: "Media / CDN",
+    icon: "pi-images",
+    direction: "Hospy → Cloudinary",
+    auth: "USE_CLOUDINARY + CLOUDINARY_CLOUD_NAME (y credenciales)",
+    upstream: "api.cloudinary.com / res.cloudinary.com",
+    code: "storage / django-cloudinary",
+    how: [
+      "Al subir fotos de hospedajes, Hospy envía el archivo a Cloudinary.",
+      "Guarda la URL pública CDN en la base de datos.",
+      "El front y la API de integración sirven esas URLs.",
+    ],
+    proxyEndpoints: [
+      { method: "—", path: "(upload interno)", desc: "Subida desde panel propietario / admin" },
+    ],
+    usedIn: "Fotos de locales, galerías, cards",
+  },
+  {
+    id: "IF-06",
+    name: "Supabase PostgreSQL",
+    domain: "Persistencia",
+    icon: "pi-database",
+    direction: "Hospy → PostgreSQL",
+    auth: "DATABASE_URL (conexión Postgres)",
+    upstream: "Supabase Postgres (wire protocol)",
+    code: "Django ORM / config/settings",
+    how: [
+      "Django se conecta a Postgres gestionado en Supabase.",
+      "Todo el dominio (usuarios, locales, reservas) vive ahí.",
+      "Health check verifica database.status = ok.",
+    ],
+    proxyEndpoints: [
+      { method: "GET", path: "/health/", desc: "Incluye estado de la base (fuera de /api/v1)" },
+    ],
+    usedIn: "Toda la persistencia de Hospy",
+    absoluteBase: true,
+  },
+  {
+    id: "IF-07",
+    name: "ip.guide",
+    domain: "Geo / seguridad",
+    icon: "pi-globe",
+    direction: "Hospy → ip.guide",
+    auth: "IP_GUIDE_ENABLED (cliente HTTP)",
+    upstream: "ip.guide",
+    code: "integrations/ipguide.py",
+    how: [
+      "El backend consulta ip.guide con la IP del cliente.",
+      "Obtiene país / ciudad aproximada y señales de riesgo.",
+      "Expone sugerencias en /api/v1/geo/sugerencias/.",
+    ],
+    proxyEndpoints: [
+      { method: "GET", path: "/geo/sugerencias/", desc: "Locale y pistas por IP" },
+    ],
+    usedIn: "Geo banner, locale, alertas de seguridad admin",
+  },
+  {
+    id: "IF-08",
+    name: "Google Gemini",
+    domain: "LLM / Hospix",
+    icon: "pi-comments",
+    direction: "Hospy → Gemini API",
+    auth: "GEMINI_API_KEY",
+    upstream: "generativelanguage.googleapis.com",
+    code: "hospix / Gemini client",
+    how: [
+      "Hospy guarda GEMINI_API_KEY en Cloud Run.",
+      "El chat Hospix llama a Gemini desde el backend.",
+      "El front solo usa /api/v1/hospix/chat/ (sin ver la key).",
+    ],
+    proxyEndpoints: [
+      { method: "POST", path: "/hospix/chat/", desc: "Mensajes del asistente Hospix" },
+    ],
+    usedIn: "Widget Hospix (asistente conversacional)",
+  },
+  {
+    id: "IF-09",
+    name: "Cloudflare Turnstile",
+    domain: "Anti-bot",
+    icon: "pi-shield",
+    direction: "Hospy → Turnstile verify",
+    auth: "TURNSTILE_SITE_KEY + TURNSTILE_SECRET_KEY",
+    upstream: "challenges.cloudflare.com",
+    code: "accounts login / Turnstile verify",
+    how: [
+      "El front renderiza el widget Turnstile (site key pública).",
+      "Al login, envía el token al backend.",
+      "Hospy verifica el token con el secret en Cloudflare.",
+    ],
+    proxyEndpoints: [
+      { method: "POST", path: "/auth/login/", desc: "Login con captcha Turnstile" },
+    ],
+    usedIn: "Protección anti-bot en autenticación",
+  },
   {
     id: "IF-10",
     name: "Actify",
@@ -67,16 +201,17 @@ const PARTNER_INBOUND = [
     direction: "Hospy → Actify",
     auth: "Bearer ACTIFY_API_KEY",
     upstream: "https://actify.qd.je/api/v1",
+    code: "integrations/actify.py",
     how: [
       "Hospy guarda ACTIFY_API_KEY en Cloud Run.",
-      "El backend (integrations/actify.py) consulta el catálogo Actify.",
-      "El front y otros clientes usan el proxy Hospy /api/v1/eventos/ (sin exponer la key).",
+      "El backend consulta el catálogo Actify.",
+      "El front usa el proxy /api/v1/eventos/ (sin exponer la key).",
     ],
     proxyEndpoints: [
       { method: "GET", path: "/eventos/", desc: "Listado de eventos" },
       { method: "GET", path: "/eventos/{id}/", desc: "Detalle + aforo" },
     ],
-    usedIn: "Búsquedas destacadas, mapa cercano, ofertas por evento",
+    usedIn: "Destacados, mapa cercano, ofertas por evento",
   },
   {
     id: "IF-11",
@@ -86,24 +221,17 @@ const PARTNER_INBOUND = [
     direction: "Hospy → Conecta Tingo",
     auth: "Query api_key = CONECTA_TINGO_API_KEY",
     upstream: "https://conectatingo.com/api/integracion",
+    code: "integrations/conecta_tingo.py",
     how: [
       "Hospy guarda CONECTA_TINGO_API_KEY en Cloud Run.",
-      "El backend (integrations/conecta_tingo.py) pide hotspots / demanda.",
-      "Se expone al front vía proxy /api/v1/lugares-turisticos/.",
+      "El backend pide hotspots / demanda.",
+      "Se expone al front vía /api/v1/lugares-turisticos/.",
     ],
     proxyEndpoints: [
-      {
-        method: "GET",
-        path: "/lugares-turisticos/",
-        desc: "Hotspots y lugares",
-      },
-      {
-        method: "GET",
-        path: "/lugares-turisticos/{slug}/",
-        desc: "Detalle de un lugar",
-      },
+      { method: "GET", path: "/lugares-turisticos/", desc: "Hotspots y lugares" },
+      { method: "GET", path: "/lugares-turisticos/{slug}/", desc: "Detalle de un lugar" },
     ],
-    usedIn: "Explorar cerca, destacados de lugares, mapa del local",
+    usedIn: "Explorar cerca, destacados, mapa del local",
   },
   {
     id: "IF-12",
@@ -113,18 +241,15 @@ const PARTNER_INBOUND = [
     direction: "Hospy → RestoPoint",
     auth: "Header X-API-Key = RESTOPOINT_API_KEY",
     upstream: "API RestoPoint (Cloud Run)",
+    code: "integrations/restopoint.py",
     how: [
       "Hospy guarda RESTOPOINT_API_KEY en Cloud Run.",
-      "El backend (integrations/restopoint.py) lista restaurantes con lat/lng.",
-      "El front consume el proxy /api/v1/restaurantes/.",
+      "El backend lista restaurantes con lat/lng.",
+      "El front consume /api/v1/restaurantes/.",
     ],
     proxyEndpoints: [
       { method: "GET", path: "/restaurantes/", desc: "Catálogo de restaurantes" },
-      {
-        method: "GET",
-        path: "/restaurantes/{id}/",
-        desc: "Detalle de un restaurante",
-      },
+      { method: "GET", path: "/restaurantes/{id}/", desc: "Detalle de un restaurante" },
     ],
     usedIn: "Destacados, cerca del hospedaje, hero de contexto",
   },
@@ -139,9 +264,8 @@ export function AdminIntegrationsPage() {
         <div>
           <h1>Integración</h1>
           <p className="muted">
-            Cómo Hospy <strong>expone</strong> hospedajes a otros sistemas y cómo{" "}
-            <strong>consume</strong> eventos (Actify), lugares (Conecta Tingo) y restaurantes
-            (RestoPoint).
+            Cómo Hospy <strong>expone</strong> hospedajes a otros sistemas y todas las APIs /
+            servicios externos que <strong>consume</strong> (auth, media, geo, LLM, partners…).
           </p>
         </div>
       </header>
@@ -272,61 +396,73 @@ function FlujoApisPanel() {
         <header className="admin-flujo-section-head">
           <h2>2. APIs que Hospy consume</h2>
           <p className="muted">
-            Las 3 integraciones partner: Hospy guarda la API Key del tercero, consulta su API desde
-            el backend y reexpone un proxy en <code>/api/v1/</code> para el front (sin filtrar las
-            keys).
+            Inventario completo de servicios externos: Hospy guarda credenciales en el backend
+            (Cloud Run), llama a la API del tercero y, cuando aplica, reexpone un endpoint propio en{" "}
+            <code>/api/v1/</code> para el front (sin filtrar las keys).
           </p>
         </header>
 
         <div className="admin-flujo-partners">
-          {PARTNER_INBOUND.map((partner) => (
-            <article key={partner.id} className="admin-flujo-card admin-flujo-card--in">
-              <div className="admin-flujo-card-top">
-                <div className="admin-flujo-partner-title">
-                  <span className="admin-flujo-partner-icon" aria-hidden>
-                    <PrimeIcon name={partner.icon} size={18} />
-                  </span>
-                  <div>
-                    <p className="admin-api-card-id">
-                      {partner.id} · {partner.domain}
-                    </p>
-                    <h3>{partner.name}</h3>
-                    <p className="admin-flujo-dir">{partner.direction}</p>
+          {CONSUMED_APIS.map((api) => {
+            const root =
+              "absoluteBase" in api && api.absoluteBase
+                ? API_BASE.replace(/\/api\/v1\/?$/, "")
+                : API_BASE;
+            return (
+              <article key={api.id} className="admin-flujo-card admin-flujo-card--in">
+                <div className="admin-flujo-card-top">
+                  <div className="admin-flujo-partner-title">
+                    <span className="admin-flujo-partner-icon" aria-hidden>
+                      <PrimeIcon name={api.icon} size={18} />
+                    </span>
+                    <div>
+                      <p className="admin-api-card-id">
+                        {api.id} · {api.domain}
+                      </p>
+                      <h3>{api.name}</h3>
+                      <p className="admin-flujo-dir">{api.direction}</p>
+                    </div>
                   </div>
+                  <StatusPill ok={statusOf(api.id)} loading={loading} />
                 </div>
-                <StatusPill ok={statusOf(partner.id)} loading={loading} />
-              </div>
 
-              <dl className="admin-flujo-meta">
-                <div>
-                  <dt>Auth hacia el partner</dt>
-                  <dd>
-                    <code>{partner.auth}</code>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Upstream</dt>
-                  <dd>
-                    <code>{partner.upstream}</code>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Uso en Hospy</dt>
-                  <dd>{partner.usedIn}</dd>
-                </div>
-              </dl>
+                <dl className="admin-flujo-meta">
+                  <div>
+                    <dt>Auth hacia el partner</dt>
+                    <dd>
+                      <code>{api.auth}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Upstream</dt>
+                    <dd>
+                      <code>{api.upstream}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Código</dt>
+                    <dd>
+                      <code>{api.code}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Uso en Hospy</dt>
+                    <dd>{api.usedIn}</dd>
+                  </div>
+                </dl>
 
-              <h4 className="admin-flujo-subtitle">Cómo funciona</h4>
-              <ol className="admin-flujo-steps">
-                {partner.how.map((step) => (
-                  <li key={step}>{step}</li>
-                ))}
-              </ol>
+                <h4 className="admin-flujo-subtitle">Cómo funciona</h4>
+                <ol className="admin-flujo-steps">
+                  {api.how.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ol>
 
-              <h4 className="admin-flujo-subtitle">Proxy Hospy (lo que usa el front)</h4>
-              <EndpointList base={API_BASE} items={[...partner.proxyEndpoints]} />
-            </article>
-          ))}
+                <h4 className="admin-flujo-subtitle">Endpoints Hospy relacionados</h4>
+                <EndpointList base={root} items={[...api.proxyEndpoints]} />
+              </article>
+            );
+          })}
         </div>
       </section>
     </div>

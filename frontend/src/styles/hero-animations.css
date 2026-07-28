@@ -6,24 +6,6 @@
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
-  /*
-   * Ola limpia: máscara en dos capas (cuerpo + borde ondulado).
-   * Evita el SVG blanco encima del gradiente (franja + línea recta).
-   */
-  -webkit-mask-image:
-    linear-gradient(#fff 0 0),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 64' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' d='M0 24C240 56 480 0 720 28s480 40 720 0V64H0z'/%3E%3C/svg%3E");
-  -webkit-mask-size: 100% calc(100% - 52px), 100% 64px;
-  -webkit-mask-position: top, bottom;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-composite: source-over;
-  mask-image:
-    linear-gradient(#fff 0 0),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 64' preserveAspectRatio='none'%3E%3Cpath fill='%23fff' d='M0 24C240 56 480 0 720 28s480 40 720 0V64H0z'/%3E%3C/svg%3E");
-  mask-size: 100% calc(100% - 52px), 100% 64px;
-  mask-position: top, bottom;
-  mask-repeat: no-repeat;
-  mask-composite: add;
 }
 
 .home-hero-bg-layer {
@@ -53,7 +35,7 @@
   background-size: 100% 100%;
 }
 
-/* —— wave_path (legacy): mismo comportamiento que gradient_shift —— */
+/* —— wave_path: fondo con gradiente + ola inferior animada —— */
 .home-hero-background--wave_path .home-hero-bg-layer--base {
   background-size: 200% 200%;
   animation: hero-gradient var(--hero-gradient-duration, 14s) ease infinite;
@@ -477,9 +459,33 @@
   50% { background-position: 100% 50%; }
 }
 
+/* —— bottom wave divider animation —— */
+.home-hero-wave.is-animated path {
+  animation: hero-wave-morph var(--hero-gradient-duration, 14s) ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes hero-wave-morph {
+  0%, 100% { d: path("M0,48 C320,96 480,0 720,32 C960,64 1120,16 1440,40 L1440,80 L0,80 Z"); }
+  50% { d: path("M0,40 C320,80 480,16 720,48 C960,80 1120,8 1440,48 L1440,80 L0,80 Z"); }
+}
+
+/* CSS `d` animation not supported in all browsers — fallback transform */
+@supports not (d: path("")) {
+  .home-hero-wave.is-animated {
+    animation: hero-wave-sway var(--hero-gradient-duration, 14s) ease-in-out infinite;
+  }
+}
+
+@keyframes hero-wave-sway {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-1.5%); }
+}
+
 /* —— disabled animations —— */
 html[data-hero-animated="0"] .home-hero-background [class*="animation"],
-html[data-hero-animated="0"] .home-hero-background * {
+html[data-hero-animated="0"] .home-hero-background *,
+html[data-hero-animated="0"] .home-hero-wave.is-animated {
   animation: none !important;
 }
 
@@ -490,7 +496,8 @@ html[data-hero-animated="0"] .home-hero-background--grain .home-hero-bg-layer--b
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home-hero-background * {
+  .home-hero-background *,
+  .home-hero-wave.is-animated {
     animation: none !important;
   }
 }
@@ -500,7 +507,4 @@ html[data-hero-animated="0"] .home-hero-background--grain .home-hero-bg-layer--b
   position: absolute;
   inset: 0;
   border-radius: 12px 12px 0 0;
-  -webkit-mask-image: none;
-  mask-image: none;
-  clip-path: none;
 }
