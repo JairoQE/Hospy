@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { fetchActifyEvent } from "../../api/actify";
 import { fetchNearbyExplore } from "../../api/nearby";
 import type { AccommodationListItem, FeaturedSearchItem } from "../../api/types";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { formatDate, formatMoney } from "../../utils/format";
+import { formatLocationLabel, reverseGeocodeLabel } from "../../utils/geocode";
 import { resolveMediaUrl } from "../../utils/media";
 import { PrimeIcon } from "../PrimeIcon";
 import { NearbyContextMap } from "./NearbyContextMap";
@@ -89,6 +91,55 @@ export function NearbyContextHero({
   const [places, setPlaces] = useState(
     [] as Awaited<ReturnType<typeof fetchNearbyExplore>>["lugares"],
   );
+  const [resolvedLocation, setResolvedLocation] = useState<string | null>(
+    () => item.location_label || item.location_city || null,
+  );
+
+  useEffect(() => {
+    const initial = item.location_label || item.location_city || null;
+    setResolvedLocation(initial);
+    if (initial) return;
+    if (lat == null || lng == null) return;
+
+    let cancelled = false;
+    const eventId = item.event_id ?? item.search.event_id;
+
+    void (async () => {
+      if (item.kind === "event" && eventId != null) {
+        try {
+          const ev = await fetchActifyEvent(eventId);
+          const label = formatLocationLabel(
+            ev.location?.address,
+            ev.location?.city,
+          );
+          if (label && !cancelled) {
+            setResolvedLocation(label);
+            return;
+          }
+        } catch {
+          /* Actify detalle opcional */
+        }
+      }
+      try {
+        const label = await reverseGeocodeLabel(Number(lat), Number(lng));
+        if (label && !cancelled) setResolvedLocation(label);
+      } catch {
+        /* Nominatim opcional */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    item.location_label,
+    item.location_city,
+    item.kind,
+    item.event_id,
+    item.search.event_id,
+    lat,
+    lng,
+  ]);
 
   useEffect(() => {
     if (lat == null || lng == null) return;
@@ -157,14 +208,13 @@ export function NearbyContextHero({
                 <span>{item.capacity_label}</span>
               </li>
             ) : null}
-            {item.location_label || item.location_city || (lat != null && lng != null) ? (
+            {resolvedLocation || radio ? (
               <li>
                 <PrimeIcon name="pi-map-marker" size={15} />
                 <span>
-                  {item.location_label ||
-                    item.location_city ||
-                    `${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)}`}
-                  {radio ? ` · ${tVars("home.nearbyContextRadius", { km: radio })}` : ""}
+                  {resolvedLocation
+                    ? `${resolvedLocation}${radio ? ` · ${tVars("home.nearbyContextRadius", { km: radio })}` : ""}`
+                    : tVars("home.nearbyContextRadius", { km: radio })}
                 </span>
               </li>
             ) : null}

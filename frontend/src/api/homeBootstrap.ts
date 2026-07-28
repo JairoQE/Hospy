@@ -12,7 +12,8 @@ export type HomeBootstrapPayload = {
   tile_stats: TileStatsMap;
 };
 
-const CACHE_KEY = "hospy_home_bootstrap_v11";
+/** v12: incluye location_label / location_city en eventos y POIs. */
+const CACHE_KEY = "hospy_home_bootstrap_v12";
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
 type CacheEntry = {

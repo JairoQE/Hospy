@@ -757,6 +757,51 @@ export function HomePage() {
     }
   }, [location.search, location.state, loadList, navigate, t, tVars]);
 
+  /** Cuando llegan destacados (o se refresca el bootstrap), completa dirección del hero. */
+  useEffect(() => {
+    if (!nearbyContext) return;
+    if (nearbyContext.location_label || nearbyContext.location_city) return;
+
+    if (nearbyContext.kind === "event") {
+      const eventId = Number(nearbyContext.event_id ?? nearbyContext.search.event_id);
+      if (!Number.isFinite(eventId)) return;
+      const fromFeatured = featuredEvents.find(
+        (e) => Number(e.event_id ?? e.search.event_id) === eventId,
+      );
+      if (!fromFeatured?.location_label && !fromFeatured?.location_city) return;
+      setNearbyContext((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...fromFeatured,
+              search: { ...fromFeatured.search, ...prev.search },
+            }
+          : prev,
+      );
+      return;
+    }
+
+    if (nearbyContext.kind === "restaurant") {
+      const rid = String(
+        nearbyContext.restaurant_id || nearbyContext.search.restaurant_id || "",
+      );
+      if (!rid) return;
+      const fromFeatured = featuredRestaurants.find(
+        (r) => String(r.restaurant_id || r.search.restaurant_id || "") === rid,
+      );
+      if (!fromFeatured?.location_label && !fromFeatured?.location_city) return;
+      setNearbyContext((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...fromFeatured,
+              search: { ...fromFeatured.search, ...prev.search },
+            }
+          : prev,
+      );
+    }
+  }, [featuredEvents, featuredRestaurants, nearbyContext]);
+
   const retrySearch = () => {
 
     const last = lastQueryRef.current;
