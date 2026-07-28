@@ -95,19 +95,33 @@
 .home-hero--v2 {
   position: relative;
   z-index: 10;
-  overflow: hidden;
-  padding: 2.75rem 0 3.25rem;
-  margin-bottom: 0;
+  overflow: visible;
+  padding: 0;
+  margin: 0 0 0;
   background: transparent;
   color: #fff;
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
+  /* Evita franja residual entre ola y la sección siguiente */
+  line-height: normal;
+}
+
+.home-hero-main {
+  position: relative;
+  z-index: 2;
+  overflow: visible;
+  padding: 2.75rem 0 2.75rem;
+  /* El degradado vive solo aquí; no hay segunda capa debajo de la ola */
+  background: transparent;
 }
 
 .home-hero--v2:has(.hero-destination.has-suggestions) {
   z-index: 100;
-  overflow: visible;
+}
+
+.home-hero--v2:has(.hero-destination.has-suggestions) .home-hero-main {
+  z-index: 12;
 }
 
 html[data-home-entrance="0"] .fade-in,
@@ -122,11 +136,32 @@ html[data-home-entrance="0"] .tab-panel-fade {
   z-index: 2;
   overflow: visible;
   text-align: center;
-  padding-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
 }
 
 .home-hero--v2:has(.hero-destination.has-suggestions) .home-hero-inner {
   z-index: 12;
+}
+
+/* Ola única de cierre: solapa el borde inferior del bloque con degradado */
+.home-hero-wave {
+  display: block;
+  width: 100%;
+  height: 48px;
+  margin: -48px 0 0;
+  padding: 0;
+  border: 0;
+  position: relative;
+  z-index: 3;
+  pointer-events: none;
+  vertical-align: bottom;
+  /* Mata el hairline subpíxel contra el fondo de la página */
+  margin-bottom: -1px;
+}
+
+.home-hero-wave path {
+  /* Mismo color que el body / siguiente sección */
+  fill: var(--bg);
 }
 
 .home-hero-title {
@@ -1956,14 +1991,20 @@ html[data-home-entrance="0"] .tab-panel-fade {
 /* Responsive hero móvil */
 
 @media (max-width: 768px) {
-  .home-hero--v2 {
+  .home-hero-main {
     padding-top: 1.5rem;
+    padding-bottom: 2.25rem;
   }
 
   .home-hero--v2 .home-hero-inner {
-    padding-bottom: 2.5rem;
+    padding-bottom: 0.35rem;
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+
+  .home-hero-wave {
+    height: 40px;
+    margin-top: -40px;
   }
 
   .hero-search--v2 {
