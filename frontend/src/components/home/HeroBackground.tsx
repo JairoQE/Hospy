@@ -13,15 +13,6 @@ const PARTICLES = Array.from({ length: 28 }, (_, i) => ({
   size: `${2 + (i % 3)}px`,
 }));
 
-const BOKEH = [
-  { w: 120, h: 120, l: "8%", t: "15%", d: "0s" },
-  { w: 80, h: 80, l: "72%", t: "8%", d: "2s" },
-  { w: 160, h: 160, l: "55%", t: "45%", d: "1s" },
-  { w: 90, h: 90, l: "25%", t: "55%", d: "3s" },
-  { w: 70, h: 70, l: "85%", t: "60%", d: "1.5s" },
-  { w: 110, h: 110, l: "40%", t: "20%", d: "2.5s" },
-];
-
 const PINS = [
   { l: "12%", t: "22%", d: "0s" },
   { l: "78%", t: "18%", d: "1.2s" },
@@ -51,10 +42,7 @@ export function HeroBackground({
   const { design } = useSiteDesign();
   const animStyle = normalizeHeroAnimationStyle(style ?? design.hero_animation_style);
   const isAnimated = animated ?? design.hero_animated;
-  // bokeh (círculos difuminados) queda desactivado: se veía mal en el home.
-  const resolvedStyle = animStyle === "bokeh" ? "gradient_shift" : animStyle;
-  const effectiveStyle =
-    !isAnimated || resolvedStyle === "static" ? "static" : resolvedStyle;
+  const effectiveStyle = !isAnimated || animStyle === "static" ? "static" : animStyle;
 
   const cssVars = {
     "--hero-c-deep": deep ?? design.hero_color_deep,
@@ -117,26 +105,6 @@ export function HeroBackground({
                   height: p.size,
                   animationDelay: p.delay,
                   animationDuration: p.duration,
-                } as CSSProperties
-              }
-            />
-          ))}
-        </div>
-      )}
-
-      {effectiveStyle === "bokeh" && (
-        <div className="home-hero-bokeh">
-          {BOKEH.map((b, i) => (
-            <span
-              key={i}
-              className="home-hero-bokeh-dot"
-              style={
-                {
-                  width: b.w,
-                  height: b.h,
-                  left: b.l,
-                  top: b.t,
-                  animationDelay: b.d,
                 } as CSSProperties
               }
             />
