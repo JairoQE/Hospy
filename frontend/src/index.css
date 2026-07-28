@@ -5129,6 +5129,29 @@ textarea:focus {
   position: relative;
   padding: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-card-action {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-top: 1px solid var(--border, #e2e8f0);
+  border-radius: 0;
+  background: var(--primary, #0d6e6e);
+  color: #fff;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 650;
+  cursor: pointer;
+  text-align: center;
+}
+
+.map-card-action:hover {
+  filter: brightness(1.05);
 }
 
 .property-map-wrap {
@@ -5142,6 +5165,10 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+}
+
+.map-card .property-map-with-legend {
+  gap: 0;
 }
 
 .property-map-legend {

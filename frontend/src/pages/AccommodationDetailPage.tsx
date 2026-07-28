@@ -1047,9 +1047,12 @@ export function AccommodationDetailPage() {
               longitude={lng}
               name={acc.name}
               className="property-map-sidebar"
-              {...mapNearbyProps}
+              nearbyRestaurants={nearbyRestaurants}
+              nearbyPlaces={nearbyPlaces}
+              nearbyEvents={nearbyEvents}
+              showNearbyLegend={false}
             />
-            <button type="button" className="map-overlay-btn" onClick={() => setMapOpen(true)}>
+            <button type="button" className="map-card-action" onClick={() => setMapOpen(true)}>
               {t("detail.viewOnMap")}
             </button>
           </div>
