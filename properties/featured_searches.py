@@ -278,12 +278,20 @@ def build_featured_events(limit: int = DEFAULT_LIMIT) -> list[dict]:
         name = event.get("name") or f"Evento {event.get('id')}"
         # Solo imagen real de Actify si existe; si no, visual decorativo (sin fotos inventadas).
         image_url = event.get("image_url") or None
+        address = str(loc.get("address") or "").strip()
+        city = str(loc.get("city") or "").strip()
+        if address and city and city.lower() not in address.lower():
+            location_label = f"{address}, {city}"
+        else:
+            location_label = address or city
         results.append(
             {
                 "kind": "event",
                 "name": name,
                 "slug": f"evento-{event.get('id')}",
-                "subtitle": category.get("name") or loc.get("city") or "",
+                "subtitle": category.get("name") or city or "",
+                "location_label": location_label or None,
+                "location_city": city or None,
                 "hotels_count": stats["hotels_count"],
                 "price_from": stats["price_from"],
                 "rating_avg": stats["rating_avg"],
@@ -306,6 +314,7 @@ def build_featured_events(limit: int = DEFAULT_LIMIT) -> list[dict]:
                     "radio_km": NEARBY_RADIUS_KM,
                     "event_id": event.get("id"),
                     "label": name,
+                    "ciudad": city or None,
                 },
             }
         )
@@ -347,6 +356,8 @@ def _build_places_from_conecta_tingo(limit: int) -> list[dict]:
                 "name": spot.get("name") or "Lugar",
                 "slug": spot.get("slug") or "lugar",
                 "subtitle": " · ".join(subtitle_parts),
+                "location_label": zone or None,
+                "location_city": zone or None,
                 "hotels_count": stats["hotels_count"],
                 "price_from": stats["price_from"],
                 "rating_avg": stats["rating_avg"],
@@ -363,6 +374,7 @@ def _build_places_from_conecta_tingo(limit: int) -> list[dict]:
                     "radio_km": NEARBY_RADIUS_KM,
                     "label": spot.get("name") or "",
                     "zona": zone,
+                    "ciudad": zone or None,
                 },
             }
         )
@@ -443,7 +455,12 @@ def build_featured_restaurants(limit: int = DEFAULT_LIMIT) -> list[dict]:
         stats = _nearby_stats(lat, lng)
         city = row.get("city") or ""
         district = row.get("district") or ""
+        address = str(row.get("address") or "").strip()
         subtitle = " · ".join(p for p in (district, city) if p)
+        if address and subtitle and subtitle.lower() not in address.lower():
+            location_label = f"{address}, {subtitle}"
+        else:
+            location_label = address or subtitle
         rating = row.get("avg_rating")
         capacity = row.get("total_capacity")
         results.append(
@@ -452,6 +469,8 @@ def build_featured_restaurants(limit: int = DEFAULT_LIMIT) -> list[dict]:
                 "name": row.get("name") or f"Restaurante {row.get('id')}",
                 "slug": f"resto-{row.get('id')}",
                 "subtitle": subtitle,
+                "location_label": location_label or None,
+                "location_city": city or None,
                 "hotels_count": stats["hotels_count"],
                 "price_from": stats["price_from"],
                 "rating_avg": float(rating) if rating is not None else stats["rating_avg"],
@@ -471,6 +490,7 @@ def build_featured_restaurants(limit: int = DEFAULT_LIMIT) -> list[dict]:
                     "radio_km": NEARBY_RADIUS_KM,
                     "restaurant_id": row.get("id"),
                     "label": row.get("name") or "",
+                    "ciudad": city or None,
                 },
             }
         )

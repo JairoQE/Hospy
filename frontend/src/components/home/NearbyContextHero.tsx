@@ -157,11 +157,13 @@ export function NearbyContextHero({
                 <span>{item.capacity_label}</span>
               </li>
             ) : null}
-            {lat != null && lng != null ? (
+            {item.location_label || item.location_city || (lat != null && lng != null) ? (
               <li>
                 <PrimeIcon name="pi-map-marker" size={15} />
                 <span>
-                  {Number(lat).toFixed(4)}, {Number(lng).toFixed(4)}
+                  {item.location_label ||
+                    item.location_city ||
+                    `${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)}`}
                   {radio ? ` · ${tVars("home.nearbyContextRadius", { km: radio })}` : ""}
                 </span>
               </li>

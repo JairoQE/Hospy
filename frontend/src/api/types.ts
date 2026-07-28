@@ -339,6 +339,9 @@ export interface FeaturedSearchItem {
   name: string;
   slug: string;
   subtitle?: string;
+  /** Dirección legible (ej. Actify: calle + distrito + ciudad). */
+  location_label?: string | null;
+  location_city?: string | null;
   hotels_count: number;
   price_from: number | null;
   rating_avg?: number | null;
