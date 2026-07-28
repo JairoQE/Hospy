@@ -1,3 +1,4 @@
+import type { NearbyExploreItem } from "../api/nearby";
 import { useLocaleCurrency } from "../context/LocaleCurrencyContext";
 import { PropertyMap } from "./PropertyMap";
 
@@ -8,9 +9,22 @@ interface Props {
   longitude: number;
   name: string;
   address: string;
+  nearbyRestaurants?: NearbyExploreItem[];
+  nearbyPlaces?: NearbyExploreItem[];
+  nearbyEvents?: NearbyExploreItem[];
 }
 
-export function MapModal({ open, onClose, latitude, longitude, name, address }: Props) {
+export function MapModal({
+  open,
+  onClose,
+  latitude,
+  longitude,
+  name,
+  address,
+  nearbyRestaurants,
+  nearbyPlaces,
+  nearbyEvents,
+}: Props) {
   const { t } = useLocaleCurrency();
 
   if (!open) return null;
@@ -33,6 +47,10 @@ export function MapModal({ open, onClose, latitude, longitude, name, address }: 
           scrollWheelZoom
           zoom={16}
           className="map-modal-map"
+          nearbyRestaurants={nearbyRestaurants}
+          nearbyPlaces={nearbyPlaces}
+          nearbyEvents={nearbyEvents}
+          showNearbyLegend
         />
         <a
           className="btn btn-primary map-modal-link"

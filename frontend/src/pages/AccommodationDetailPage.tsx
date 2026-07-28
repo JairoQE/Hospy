@@ -21,6 +21,7 @@ import { NearbyExploreSection } from "../components/property/NearbyExploreSectio
 import { PriceTrendSection } from "../components/property/PriceTrendSection";
 import { PhotoGallery } from "../components/PhotoGallery";
 import { LazyPropertyMap } from "../components/LazyPropertyMap";
+import { useNearbyExplore } from "../hooks/useNearbyExplore";
 import type {
   AccommodationDetail,
   AccommodationOffer,
@@ -300,6 +301,21 @@ export function AccommodationDetailPage() {
 
   const lat = acc ? Number(acc.latitude) : 0;
   const lng = acc ? Number(acc.longitude) : 0;
+  const nearbyExplore = useNearbyExplore(
+    Number.isFinite(lat) && lat !== 0 ? lat : null,
+    Number.isFinite(lng) && lng !== 0 ? lng : null,
+    acc?.city ?? "",
+    25,
+  );
+  const nearbyRestaurants = nearbyExplore.data?.restaurantes ?? [];
+  const nearbyPlaces = nearbyExplore.data?.lugares ?? [];
+  const nearbyEvents = nearbyExplore.data?.eventos ?? [];
+  const mapNearbyProps = {
+    nearbyRestaurants,
+    nearbyPlaces,
+    nearbyEvents,
+    showNearbyLegend: true as const,
+  };
   const score = acc ? toTenPointScore(Number(acc.average_rating)) : 0;
   const stars = ratingStars(score);
   const topReview = reviews[0];
@@ -404,6 +420,9 @@ export function AccommodationDetailPage() {
         longitude={lng}
         name={acc.name}
         address={fullAddress}
+        nearbyRestaurants={nearbyRestaurants}
+        nearbyPlaces={nearbyPlaces}
+        nearbyEvents={nearbyEvents}
       />
       <div className="container">
         <nav className="property-breadcrumb">
@@ -546,7 +565,14 @@ export function AccommodationDetailPage() {
           </section>
 
           {Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0 ? (
-            <NearbyExploreSection lat={lat} lng={lng} city={acc.city} />
+            <NearbyExploreSection
+              lat={lat}
+              lng={lng}
+              city={acc.city}
+              data={nearbyExplore.data}
+              loading={nearbyExplore.loading}
+              error={nearbyExplore.error}
+            />
           ) : null}
 
           <OwnerStoreBanner accommodation={acc} />
@@ -971,6 +997,7 @@ export function AccommodationDetailPage() {
               name={acc.name}
               address={fullAddress}
               className="property-map-large"
+              {...mapNearbyProps}
             />
             <button type="button" className="btn btn-ghost" onClick={() => setMapOpen(true)}>
               {t("detail.viewLargeMap")}
@@ -1020,6 +1047,7 @@ export function AccommodationDetailPage() {
               longitude={lng}
               name={acc.name}
               className="property-map-sidebar"
+              {...mapNearbyProps}
             />
             <button type="button" className="map-overlay-btn" onClick={() => setMapOpen(true)}>
               {t("detail.viewOnMap")}

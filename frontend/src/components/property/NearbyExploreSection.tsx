@@ -1,14 +1,10 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import {
-  fetchNearbyExplore,
-  type NearbyExploreItem,
-  type NearbyExploreResponse,
-} from "../../api/nearby";
+import type { NearbyExploreItem, NearbyExploreResponse } from "../../api/nearby";
 import { useLocaleCurrency } from "../../context/LocaleCurrencyContext";
 import { resolveMediaUrl } from "../../utils/media";
 import { formatDate } from "../../utils/format";
 import { NearbyItemPreviewModal } from "./NearbyItemPreviewModal";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import "./NearbyExploreSection.css";
 
 type Props = {
@@ -16,6 +12,10 @@ type Props = {
   lng: number;
   city?: string;
   radioKm?: number;
+  /** Si se pasa, no vuelve a pedir /alrededores (evita doble fetch con el mapa). */
+  data?: NearbyExploreResponse | null;
+  loading?: boolean;
+  error?: boolean;
 };
 
 function NearbyCard({
@@ -98,40 +98,12 @@ function NearbyGroup({
 export function NearbyExploreSection({
   lat,
   lng,
-  city = "",
-  radioKm = 25,
+  data = null,
+  loading = false,
+  error = false,
 }: Props) {
   const { t } = useLocaleCurrency();
-  const [data, setData] = useState<NearbyExploreResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [selected, setSelected] = useState<NearbyExploreItem | null>(null);
-
-  useEffect(() => {
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setError("");
-    void fetchNearbyExplore({ lat, lng, radio_km: radioKm, ciudad: city })
-      .then((res) => {
-        if (!cancelled) setData(res);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setData(null);
-          setError(t("detail.nearbyError"));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [lat, lng, city, radioKm, t]);
 
   const hasAny =
     (data?.restaurantes.length || 0) +
@@ -154,7 +126,7 @@ export function NearbyExploreSection({
       </p>
 
       {loading ? <p className="muted">{t("detail.nearbyLoading")}</p> : null}
-      {error ? <p className="form-error">{error}</p> : null}
+      {error ? <p className="form-error">{t("detail.nearbyError")}</p> : null}
 
       {!loading && data ? (
         <>

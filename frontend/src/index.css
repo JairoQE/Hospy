@@ -5138,6 +5138,36 @@ textarea:focus {
   border-radius: var(--radius);
 }
 
+.property-map-with-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.property-map-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.15rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.85rem;
+  font-size: 0.72rem;
+  color: var(--muted, #64748b);
+}
+
+.property-map-legend-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  margin-right: 0.3rem;
+  vertical-align: middle;
+}
+
+.map-card .property-map-legend {
+  padding: 0.35rem 0.65rem 0.55rem;
+}
+
 .property-map-wrap--empty {
   display: grid;
   place-items: center;
