@@ -212,8 +212,3 @@ export function HeroBackground({
   );
 }
 
-export function heroWaveAnimated(style?: HeroAnimationStyle, animated?: boolean): boolean {
-  const s = normalizeHeroAnimationStyle(style);
-  return Boolean(animated) && (s === "wave_layers" || s === "parallax_waves");
-}
-
