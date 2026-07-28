@@ -3782,7 +3782,7 @@ html[data-sidebar-animated="0"] .admin-sidebar-bg {
   }
 }
 
-/* —— Integración: APIs externas —— */
+/* -- Integracion: APIs externas -- */
 
 .admin-integ-tabs {
   display: flex;
@@ -3964,7 +3964,7 @@ html[data-sidebar-animated="0"] .admin-sidebar-bg {
   margin-bottom: 0.75rem;
 }
 
-/* —— Integración: flujo Hospy expone / consume —— */
+/* -- Integracion: flujo Hospy expone / consume -- */
 
 .admin-flujo-legend {
   display: flex;
