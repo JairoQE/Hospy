@@ -2007,6 +2007,13 @@ img {
   box-sizing: border-box;
 }
 
+/* Home v2: el degradado vive solo en HeroBackground; sin franjas bajo la ola */
+.home-hero.home-hero--v2 {
+  background: var(--bg);
+  background-image: none;
+  padding: 0;
+}
+
 .home-hero-inner {
   text-align: center;
 }
@@ -2900,6 +2907,12 @@ html[data-browse-marquee="0"] .browse-carousel-marquee {
     margin: 0;
     width: 100%;
     padding: 1.75rem 0 1.5rem;
+  }
+
+  .home-hero.home-hero--v2 {
+    padding: 0;
+    background: var(--bg);
+    background-image: none;
   }
 
   .home-hero-inner {

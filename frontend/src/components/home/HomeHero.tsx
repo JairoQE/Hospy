@@ -16,7 +16,10 @@ export function HomeHero({ onSearch, geoStatus, geoHint }: Props) {
   return (
     <section className="home-hero home-hero--v2" aria-labelledby="home-hero-title" data-tour="home-hero">
       <div className="home-hero-main">
-        <HeroBackground />
+        {/* Degradado recortado: no puede asomar debajo de la ola */}
+        <div className="home-hero-paint" aria-hidden>
+          <HeroBackground />
+        </div>
         <div className="container home-hero-inner">
           <h1 id="home-hero-title" className="home-hero-title">
             {t("home.heroTitle")}{" "}
@@ -30,19 +33,19 @@ export function HomeHero({ onSearch, geoStatus, geoHint }: Props) {
             </p>
           )}
         </div>
-        {/* Ola única, dentro del mismo bloque del degradado (absolute bottom) */}
-        <svg
-          className="home-hero-wave"
-          viewBox="0 0 1440 80"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path
-            fill="var(--bg)"
-            d="M0,36 C180,68 360,12 540,36 C720,60 900,16 1080,40 C1260,64 1380,24 1440,40 L1440,80 L0,80 Z"
-          />
-        </svg>
       </div>
+      {/* Única ola blanca: en flujo, solapa el borde inferior del degradado */}
+      <svg
+        className="home-hero-wave"
+        viewBox="0 0 1440 80"
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <path
+          fill="var(--bg)"
+          d="M0,36 C180,68 360,12 540,36 C720,60 900,16 1080,40 C1260,64 1380,24 1440,40 L1440,80 L0,80 Z"
+        />
+      </svg>
     </section>
   );
 }
